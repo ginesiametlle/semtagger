@@ -40,9 +40,9 @@ if [ ! -d ${POSDATA_HOME} ] || [ ! -d ${SEMDATA_HOME} ] || [ ${newdata} -ge 1 ];
     for pdir in ${PMB_HOME}/data/* ; do
         # iterate over d-parts in p-parts
         for ddir in ${pdir}/* ; do
-			      for l in ${PMB_LANGS[@]} ; do
-				        if [ -f ${ddir}/${l}.drs.xml ]; then
-            		    python3 ${UTILDIR}/extract_tags.py ${ddir}/${l}.drs.xml \
+            for l in ${PMB_LANGS[@]} ; do
+                if [ -f ${ddir}/${l}.drs.xml ]; then
+                    python3 ${UTILDIR}/extract_tags.py ${ddir}/${l}.drs.xml \
                             ${POSDATA_HOME}/pmb_${l}.txt \
                             ${SEMDATA_HOME}/pmb_${l}.txt
                     # feedback output
@@ -50,10 +50,10 @@ if [ ! -d ${POSDATA_HOME} ] || [ ! -d ${SEMDATA_HOME} ] || [ ${newdata} -ge 1 ];
                     if ! ((${numsents} % 200)) && [ ${numsents} -ge 200 ] ; then
                         echo "[INFO] Processed ${numsents} sentences..."
                     fi
-				        fi
-			      done
+                fi
+            done
         done
     done
 fi
-echo '[INFO] Extraction of sem-tag data completed'
+echo '[INFO] Extraction of tag data completed'
 
