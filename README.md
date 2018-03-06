@@ -2,7 +2,7 @@
 
 ### About this repository
 
-A universal semantic tagger.
+A universal semantic tagger (work in progress).
 
 ### References
 
