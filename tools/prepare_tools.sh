@@ -2,13 +2,12 @@
 # this script downloads and installs external tools
 
 
-ELEPHANT_DIR="${TOOLDIR}/elephant-master"
-
 # download and install the Elephant tokenizer
+ELEPHANT_DIR="${DIR_TOOLS}/elephant-master"
 echo '[INFO] Preparing the Elephant tokenizer...'
-if [ ! -d "${ELEPHANT_DIR}" ] || [ $newtools -ge 1 ]; then
+if [ ! -d "${ELEPHANT_DIR}" ] || [ ${GET_TOOLS} -ge 1 ]; then
     rm -rf ${ELEPHANT_DIR}
-    pushd ${TOOLDIR} > /dev/null
+    pushd ${DIR_TOOLS} > /dev/null
     wget -q "https://github.com/hslh/elephant/archive/master.zip"
     unzip "master.zip"
     rm -f "master.zip"
