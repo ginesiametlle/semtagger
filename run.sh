@@ -8,6 +8,13 @@ PARAMS_TRAIN=0
 # predict sem-tags for unlabeled data with option --predict, -p
 PARAMS_PREDICT=0
 
+# point to a file containing untagged sentence data with option --input, -i
+PRED_INPUT=${DIR_DATA}/sample/sample_en.off
+
+# point to a file containing tag predictions for the input file with option --output, -o
+PRED_OUTPUT=${DIR_DATA}/sample/sample_en.sem
+
+
 # set bash to 'debug' mode, it will exit on :
 # -e 'error', -u 'undefined variable', -o ... 'error in pipeline', -x 'print commands'
 set -e
@@ -31,42 +38,47 @@ for arg in "$@"; do
     case "$arg" in
         "--train") set -- "$@" "-t" ;;
         "--predict") set -- "$@" "-p" ;;
+        "--input") set -- "$@" "-i" ;;
+        "--output") set -- "$@" "-o" ;;
         *) set -- "$@" "$arg"
     esac
 done
 
-while getopts s:tp option
+while getopts s:tpio option
 do
     case "${option}"
     in
         t) PARAMS_TRAIN=1;;
         p) PARAMS_PREDICT=1;;
+        i) PRED_INPUT=1;;
+        o) PRED_OUTPUT=1;;
     esac
 done
 
 
 if [ ${PARAMS_TRAIN} -ge 1 ]; then
-	# DOWNLOAD AND PREPARE DATA
-	echo '[INFO] Preparing data...'
-	. ${DIR_DATA}/prepare_data.sh
-	echo '[INFO] Finished preparing data'
 
-	# SETUP REQUIRED TOOLS
-	echo '[INFO] Setting up required tools...'
-	. ${DIR_TOOLS}/prepare_tools.sh
-	echo '[INFO] Finished setting up tools'
+	  # DOWNLOAD AND PREPARE DATA
+	  echo '[INFO] Preparing data...'
+	  . ${DIR_DATA}/prepare_data.sh
+	  echo '[INFO] Finished preparing data'
 
-	# TRAIN A MODEL
-	echo "[INFO] Training a ${MODEL_TYPE} model for semantic tagging..."
-	. ${DIR_MODELS}/semtagger_train.sh
-	echo '[INFO] A model was succesfully trained'
+	  # SETUP REQUIRED TOOLS
+	  echo '[INFO] Setting up required tools...'
+	  . ${DIR_TOOLS}/prepare_tools.sh
+	  echo '[INFO] Finished setting up tools'
+
+	  # TRAIN A MODEL
+	  echo "[INFO] Training a ${MODEL_TYPE} model for semantic tagging..."
+	  . ${DIR_MODELS}/semtagger_train.sh
+	  echo "[INFO] A ${MODEL_TYPE} model was succesfully trained"
 fi
 
 
 if [ ${PARAMS_PREDICT} -ge 1 ]; then
-	# PREDICT USING A TRAINED MODEL
-	echo "[INFO] Predicting sem-tags using a ${MODEL_TYPE} model..."
-	. ${DIR_MODELS}/semtagger_predict.sh
-	echo '[INFO] Finished tagging'
+	  # PREDICT USING A TRAINED MODEL
+	  echo "[INFO] Predicting sem-tags using a ${MODEL_TYPE} model..."
+	  . ${DIR_MODELS}/semtagger_predict.sh
+	  echo '[INFO] Finished tagging'
 fi
 

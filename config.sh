@@ -41,7 +41,10 @@ GET_MODEL=0
 PMB_VER="1.0.0"
 
 # root directory where to store the PMB (string)
-PMB_ROOT=${DIR_DATA}/pmb-${PMB_VER}
+PMB_ROOT=${DIR_DATA}/pmb/pmb-${PMB_VER}
+
+# directory where to store data extracted from the PMB (string)
+PMB_EXTDIR=${DIR_DATA}/pmb
 
 # languages of the PMB (iso 639-1) for which to extract tagged sentences (array)
 # allowed values: "en", "de", "it", "nl"
@@ -55,8 +58,8 @@ PMB_LANGS=("en")
 GLOVE_ROOT=${DIR_DATA}/embeddings
 
 # pretrained version of the embeddings to use (string)
-# allowed values: "glove.6B", "glove.42B.300d", "glove.840B.300d"
-GLOVE_MODEL="glove.6B"
+# allowed values: "glove.6B.{50/100/200/300}d", "glove.42B.300d", "glove.840B.300d"
+GLOVE_MODEL="glove.6B.50d"
 
 ######################
 ## MODEL PARAMETERS ##
@@ -86,13 +89,13 @@ MODEL_ACTIVATION_HIDDEN="tanh"
 # allowed values: "sigmoid"
 MODEL_ACTIVATION_OUTPUT="sigmoid"
 
-# optimizer (string)
-# allowed values: "sgd"
-MODEL_OPTIMIZER="sgd"
-
 # loss function (string)
 # allowed values: "mse"
 MODEL_LOSS="mse"
+
+# optimizer (string)
+# allowed values: "sgd"
+MODEL_OPTIMIZER="sgd"
 
 # learning rate (float, default: 0.1)
 MODEL_LEARNING_RATE=0.1
@@ -108,18 +111,18 @@ MODEL_BATCH_SIZE=32
 ##########################
 
 # proportion of tagged sentences to use for training (float, default: 0.80)
-RUN_TRAIN_RATIO=0.80
+RUN_TEST_SIZE=0.20
 
-# estimate hyperparameters on cross-validation or use fixed values (boolean, default: false)
+# estimate hyperparameters on cross-validation or use fixed values (boolean, default: 0)
 RUN_CROSS_VAL=0
 
+# maximum sequence length allowed
+RUN_MAX_LEN=16
+
 #################
-## PREDICTIONS ##
+## OTHER TOOLS ##
 #################
 
-# file containing untagged sentence data
-PRED_INPUT=${DIR_DATA}/sample/toy.off
-
-# file containing the tag predictions for the input file
-PRED_OUTPUT=${DIR_DATA}/sample/toy.sem
+# root directory where to store the Elephant tokenizer
+ELEPHANT_DIR="${DIR_TOOLS}/elephant"
 

@@ -2,80 +2,97 @@ import codecs
 import numpy as np
 import sys
 
-def load_embeddings_file(file_name, sep=" ",lower=False):
+
+def load_conll(conll_file, lower = False):
     """
-    load embeddings file
+    Reads a file in the conll format
+        Inputs:
+            - conll_file: path to a file with data
+            - lower: lowercase (or not) words in the input data
+        Outputs:
+            - tag2idx: maps each tag to a numerical index
+            - sents: list of sentences represented as [(w1, tag1), ..., (wN, tagN)]
     """
-    emb={}
-    for line in open(file_name, errors='ignore', encoding='utf-8'):
+    sents = []
+    tag2idx = {}
+    next_words = []
+    next_tags = []
+
+    # iterate over lines in the input file
+    for line in codecs.open(conll_file, errors = 'ignore', encoding = 'utf-8'):
+        # discard newline character
+        line = line[:-1]
+
+        # keep adding words while in the middle of a sentence
+        if line:
+            if len(line.split('\t')) != 2:
+                raise IOError('Exception in `load_conll`: Input file has the wrong format')
+            else:
+                word, tag = line.split('\t')
+                if lower:
+                    word = word.lower()
+                next_words.append(word)
+                next_tags.append(tag)
+                if tag not in tag2idx:
+                    tag2idx[tag] = len(tag2idx)
+
+        # stack the current sentence upon seeing an empty line
+        else:
+            if next_words:
+                sents.append(list(zip(next_words, next_tags)))
+            next_words = []
+            next_tags = []
+
+    # double check the last sentence
+    if next_words:
+        sents.append(list(zip(next_words, next_tags)))
+    return tag2idx, sents
+
+
+def load_embeddings(emb_file, sep = ' ', lower = False):
+    """
+    Loads pre-trained word embeddings (GloVe)
+        Inputs:
+            - emb_file: path to a file with pre-trained embeddings
+			- sep: separator between embedding dimensions
+            - lower: lowercase (or not) words in the embedding vocabulary
+        Outputs:
+            - word2idx: maps words to an index in the embedding matrix
+            - emb_matrix: Embedding matrix
+    """
+    word2emb = {}
+    word2idx = {}
+
+    # read and store all word vectors
+    for line in open(emb_file, errors = 'ignore', encoding = 'utf-8'):
         try:
             fields = line.strip().split(sep)
-            vec = [float(x) for x in fields[1:]]
+            vec = np.asarray(fields[1:], dtype='float32')
             word = fields[0]
             if lower:
                 word = word.lower()
-            emb[word] = vec
-        except ValueError:
-            print("Error converting: {}".format(line))
+            word2emb[word] = vec
+            if word not in word2idx:
+                word2idx[word] = len(word2idx) + 1
+        except Exception as e:
+            print('Exception in `load_embeddings`:', e)
 
-    print("loaded pre-trained embeddings (word->emb_vec) size: {} (lower: {})".format(len(emb.keys()), lower))
-    return emb, len(emb[word])
+    # add an empty word to the embedding with index 0
+    word2idx[''] = 0
 
-def read_conll_file(file_name, raw=False):
-    """
-    read in conll file
-    word1    tag1
-    ...      ...
-    wordN    tagN
-    Sentences MUST be separated by newlines!
-    :param file_name: file to read in
-    :param raw: if raw text file (with one sentence per line) -- adds 'DUMMY' label
-    :return: generator of instances ((list of  words, list of tags) pairs)
-    """
-    current_words = []
-    current_tags = []
-    
-    for line in codecs.open(file_name, encoding='utf-8'):
-        #line = line.strip()
-        line = line[:-1]
+    # create an embedding matrix
+    vocab_size = len(word2emb) + 1
+    emb_dim = word2emb[word].shape[0]
+    emb_matrix = np.zeros((vocab_size, emb_dim))
+    for word, idx in word2idx.items():
+        if word in word2emb:
+            vec = word2emb[word]
+            if vec is not None and vec.shape[0] == emb_dim:
+                emb_matrix[idx] = np.asarray(vec)
 
-        if line:
-            if raw:
-                current_words = line.split() ## simple splitting by space
-                current_tags = ['DUMMY' for _ in current_words]
-                yield (current_words, current_tags)
-
-            else:
-                if len(line.split("\t")) != 2:
-                    if len(line.split("\t")) == 1: # emtpy words in gimpel
-                        raise IOError("Issue with input file - doesn't have a tag or token?")
-                    else:
-                        print("erroneous line: {} (line number: {}) ".format(line), file=sys.stderr)
-                        exit()
-                else:
-                    word, tag = line.split('\t')
-                current_words.append(word)
-                current_tags.append(tag)
-
-        else:
-            if current_words and not raw: #skip emtpy lines
-                yield (current_words, current_tags)
-            current_words = []
-            current_tags = []
-
-    # check for last one
-    if current_tags != [] and not raw:
-        yield (current_words, current_tags)
-
-    
-if __name__=="__main__":
-    allsents=[]
-    unique_tokens=set()
-    unique_tokens_lower=set()
-    for words, tags in read_conll_file("data/da-ud-train.conllu"):
-        allsents.append(words)
-        unique_tokens.update(words)
-        unique_tokens_lower.update([w.lower() for w in words])
-    assert(len(allsents)==4868)
-assert(len(unique_tokens)==17552)
+    # print embedding data and return results
+    print('[INFO] Loaded pre-trained embeddings')
+    print('[INFO] Embedding vocabulary:', emb_matrix.shape[0], '(lowercase: ' + str(lower) + ')')
+    print('[INFO] Embedding dimensions:', emb_matrix.shape[1])
+    return word2idx, np.asarray(emb_matrix)
 
