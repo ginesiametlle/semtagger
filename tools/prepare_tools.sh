@@ -4,7 +4,7 @@
 
 # download and install the Elephant tokenizer
 echo '[INFO] Preparing the Elephant tokenizer...'
-if [ ! -d "${ELEPHANT_DIR}" ] || [ ${GET_TOOLS} -ge 1 ]; then
+if [ ! -d "${ELEPHANT_DIR}" ] || [ ! ${GET_TOOLS} -eq 0 ]; then
     rm -rf ${ELEPHANT_DIR}
     mkdir -p ${ELEPHANT_DIR}
     pushd ${ELEPHANT_DIR} > /dev/null

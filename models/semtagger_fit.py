@@ -1,73 +1,75 @@
-import codecs
-import numpy as np
+#!/usr/bin/python3
+# this script trains a neural model for semantic tagging
+
 import sys
-import os
-import time
-import argparse
-from collections import defaultdict
+sys.path.append(sys.argv[1])
 
-from loader import load_embeddings, load_conll
+import random
+import numpy as np
 
-import pandas as pd
+#import os
+#import time
+#import argparse
+#from collections import defaultdict
+#import pandas as pd
+#from keras.utils import to_categorical
+#from sklearn.model_selection import train_test_split
+#from keras.models import Model, Input
+#from keras.layers import LSTM, GRU, Embedding, Dense, TimeDistributed, Dropout, Bidirectional
+#from keras_contrib.layers import CRF
+#import matplotlib.pyplot as plt
 
-from keras.preprocessing.sequence import pad_sequences
-from keras.utils import to_categorical
-from sklearn.model_selection import train_test_split
+from models.argparser import get_args
+from models.loader import load_word_embeddings, load_conll, write_conll
+from utils.input2feats import tagged_sents2feats
 
+# set random seeds to ensure comparability of results
+random.seed(7937)
+np.random.seed(7937)
 
-from keras.models import Model, Input
-from keras.layers import LSTM, Embedding, Dense, TimeDistributed, Dropout, Bidirectional
-from keras_contrib.layers import CRF
+# define padding words to use and their tags
+# these are appended to the beginning and the end of the input sentences
+pad_words = {}
+pad_words['begin'] = '<s>'
+pad_words['end'] = '</s>'
+pad_words['pad'] = '<pad>'
 
+# define aliases to use for out-of-vocabulary (oov) words
+# these are employed to replace oov words in the input sentences
+oov_words = {}
+oov_words['number'] = '<num>'
+oov_words['unknown'] = '<unk>'
 
-import matplotlib.pyplot as plt
+# default sem-tag to which special words are mapped
+DEFAULT_TAG = 'NIL'
 
-#from models import lstm, lstm_crf, bi_lstm, bi_lstm_crf
-# here we will load the embeddings, train and perform cross validaiton, plus saving the model 
+# obtain arguments
+args = get_args()
 
+# load word embedding vectors
+word2idx, emb_matrix, emb_dim = load_word_embeddings(args.embeddings,
+                                                oovs = list(oov_words.values()),
+                                                pads = list(pad_words.values()),
+                                                sep = ' ',
+                                                lower = False)
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--data', help='File containing sem-tagged sentences', type=str, required=True)
-parser.add_argument('--embeddings', help='File containing pretrained GloVe embeddings', type=str, required=True)
-parser.add_argument('--output', help='Output hdf5 model file', type=str, required=True)
-parser.add_argument('--lang', help='Language code as in ISO 639-1', type=str, default='en')
-parser.add_argument('--test_size', help='Proportion of the sentences to use as a test set', type=float, default=0.2)
-parser.add_argument('--cross-validate', help='Estimate hyperparameters using cross-validation', type=bool, default=False)
-parser.add_argument('--model', help='Type of neural model', type=str, default='bi-lstm')
-parser.add_argument('--iterations', help='Number of iterations', type=int, default=30)
-parser.add_argument('--num-hidden', help='Number of hidden units', type=int, default=100)
-parser.add_argument('--activation-hidden', help='Activation function for the hidden units', type=str, default='tanh')
-parser.add_argument('--activation-output', help='Activation function for the output unit', type=str, default='sigmoid')
-parser.add_argument('--loss', help='Loss function', type=str, default='mse')
-parser.add_argument('--optimizer', help='Optimization algorithm to use', type=str, default='sgd')
-parser.add_argument('--learning-rate', help='Learning rate', type=float, default=0.1)
-parser.add_argument('--dropout', help='Dropout rate to use', type=float, default=0.2)
-parser.add_argument('--batch-size', help='Batch size', type=int, default=32)
-parser.add_argument('--max_sent_len', help='Maximum length of a word sequence', type=int, default=10)
-args = parser.parse_args()
+# read and pad input sentences and their tags
+tag2idx, sents, max_len = load_conll(args.raw_data,
+                            set(word2idx.keys()),
+                            oovs = oov_words,
+                            pads = pad_words,
+                            default_tag = DEFAULT_TAG,
+                            len_perc = args.max_len_perc,
+                            lower = False)
 
-# for padding
-# use index 0 for words
-# use NIL tag for tags
+# output processed sentences for reference
+write_conll(args.data, sents)
 
+# map read sentences and their tags to a feature vector
+X, y = tagged_sents2feats(sents)
+sys.exit()
 
-print(args.data)
-print(args.embeddings)
-print(args.max_sent_len)
-#print(args.output)
-#print(args.lang)
-#print(args.test_size)
-
-tag2idx, sents = load_conll(args.data)
-#print(sorted([len(x) for x in sents]))
-#print(sents[0])
-
-word2idx, emb_matrix = load_embeddings(args.embeddings)
-n_words = len(word2idx)
-#print(word2idx[''])
-#print(emb_matrix[word2idx['']])
-#print(emb_matrix[word2idx['cat']])
-
+# START THE FUN
 
 # LOOK OUT FOR A LOT OF OOVS
 X = [[word2idx[w[0]] if w[0] in word2idx else 0 for w in s] for s in sents]
@@ -85,11 +87,10 @@ y = [to_categorical(i, num_classes=n_tags) for i in y]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=args.test_size)
 
 
-
 input = Input(shape=(args.max_sent_len,))
 model = Embedding(input_dim=n_words, output_dim=50,
                   input_length=args.max_sent_len, mask_zero=True)(input)  # 50-dim embedding
-model = Bidirectional(LSTM(units=50, return_sequences=True,
+model = Bidirectional(GRU(units=50, return_sequences=True,
                            recurrent_dropout=0.1))(model)  # variational biLSTM
 model = TimeDistributed(Dense(50, activation="relu"))(model)  # a dense layer as suggested by neuralNer
 crf = CRF(n_tags)  # CRF layer
@@ -99,7 +100,7 @@ model = Model(input, out)
 model.compile(optimizer="rmsprop", loss=crf.loss_function, metrics=[crf.accuracy])
 model.summary()
 
-history = model.fit(X_train, np.array(y_train), batch_size=32, epochs=15, validation_split=0.1, verbose=1)
+history = model.fit(X_train, np.array(y_train), batch_size=32, epochs=20, validation_split=0.1, verbose=1)
 
 
 hist = pd.DataFrame(history.history)
@@ -112,16 +113,37 @@ plt.show()
 
 
 # do some silly predictions
-i = 50
+#i = 50
 
-p = model.predict(np.array([X_test[i]]))
+p = model.predict(np.array(X_test))
 p = np.argmax(p, axis=-1)
-true = np.argmax(y_test[i], -1)
-print("{:15}||{:5}||{}".format("Word", "True", "Pred"))
-print(30 * "=")
-for w, t, pred in zip(X_test[i], true, p[0]):
-    if w != 0:
-        print("{:15}: {:5} {}".format(str(w), str(t), str(pred)))
+true = np.argmax(y_test, -1)
+lengths = [len(s) for s in sents]
+total = 0
+correct = 0
+
+for triple in zip(p, true, lengths):
+    pred_tags = triple[0]
+    true_tags = triple[1]
+    l = triple[2]
+    for n in range(min(args.max_sent_len,l)):
+        total += 1
+        if pred_tags[n] == true_tags[n]:
+            correct += 1
+
+print('Accuracy on the test set: ', correct/total)
+
+#for predtags in p:
+#    for truetags in true:
+        # determine the real length of the sentence
+
+#print(p)
+#print(true)
+#print("{:15}||{:5}||{}".format("Word", "True", "Pred"))
+#print(30 * "=")
+#for w, t, pred in zip(X_test[i], true, p[0]):
+#    if w != 0:
+#        print("{:15}: {:5} {}".format(str(w), str(t), str(pred)))
 
 
 

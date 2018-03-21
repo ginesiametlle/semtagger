@@ -1,6 +1,7 @@
 #!/bin/bash
 # this script defines configuration options
 
+
 ######################
 ## BASE DIRECTORIES ##
 ######################
@@ -31,7 +32,7 @@ GET_EMBS=0
 GET_TOOLS=0
 
 # trains a semantic tagger model overwritting existing models (boolean, default: 0)
-GET_MODEL=0
+GET_MODEL=1
 
 ###########################
 ## PARALLEL MEANING BANK ##
@@ -66,27 +67,31 @@ GLOVE_MODEL="glove.6B.50d"
 ######################
 
 # type of neural model to use (string)
-# allowed values: "lstm", "lstm-crf", "bi-lstm", "bi-lstm-crf"
-MODEL_TYPE="lstm"
+# allowed values: "rnn", "lstm", "blstm", "gru", "bgru"
+MODEL_TYPE="blstm"
 
-# directory where to store the trained models (string)
-MODEL_ROOT=${DIR_MODELS}/${MODEL_TYPE}
+# directory where to store the trained model (string)
+MODEL_ROOT=${DIR_MODELS}/bin
 
-# training iterations (int, default: 30)
-MODEL_ITERS=10
+# training epochs (int, default: 10)
+MODEL_EPOCHS=10
 
-# hidden units of the neural model (int, default: 100)
-MODEL_SIZE_HIDDEN=10
+# units in the first layer of the neural model (int, default: 50)
+MODEL_SIZE=50
 
-# noise parameter sigma (float, default: 0.2)
-MODEL_SIGMA=0.2
+# number of recurrent layers of the neural model
+# note that the number of hidden units is halved on each layer (int, default: 2)
+MODEL_LAYERS=2
+
+# noise parameter sigma (float, default: 0.1)
+MODEL_SIGMA=0.1
 
 # activation function on hidden layers (string)
-# allowed values: "tanh"
+# allowed values: "tanh", "relu"
 MODEL_ACTIVATION_HIDDEN="tanh"
 
 # activation function on the output layer (string)
-# allowed values: "sigmoid"
+# allowed values: "sigmoid", "crf"
 MODEL_ACTIVATION_OUTPUT="sigmoid"
 
 # loss function (string)
@@ -94,17 +99,23 @@ MODEL_ACTIVATION_OUTPUT="sigmoid"
 MODEL_LOSS="mse"
 
 # optimizer (string)
-# allowed values: "sgd"
+# allowed values: "sgd", "adam"
 MODEL_OPTIMIZER="sgd"
 
 # learning rate (float, default: 0.1)
 MODEL_LEARNING_RATE=0.1
 
-# dropout rate on each layer (float, default: 0.2)
-MODEL_DROPOUT=0.2
+# dropout rate on each layer (float, default: 0.1)
+MODEL_DROPOUT=0.1
 
 # batch size (int, default: 32)
 MODEL_BATCH_SIZE=32
+
+# use batch normalization (boolean, default: 1)
+MODEL_BATCH_NORMALIZATION=1
+
+# keras verbose (boolean, default: False)
+MODEL_VERBOSE=0
 
 ##########################
 ## TRAINING AND TESTING ##
@@ -113,11 +124,14 @@ MODEL_BATCH_SIZE=32
 # proportion of tagged sentences to use for training (float, default: 0.80)
 RUN_TEST_SIZE=0.20
 
-# estimate hyperparameters on cross-validation or use fixed values (boolean, default: 0)
+# run cross-validation (boolean, default: 0)
 RUN_CROSS_VAL=0
 
-# maximum sequence length allowed
-RUN_MAX_LEN=16
+# maximum sequence length allowed as a percentile (float, default: 0.9)
+RUN_LEN_PERC=0.85
+
+# handle multi-word expressions (boolean, default: 1)
+RUN_MWE=1
 
 #################
 ## OTHER TOOLS ##

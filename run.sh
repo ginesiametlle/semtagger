@@ -56,8 +56,7 @@ do
 done
 
 
-if [ ${PARAMS_TRAIN} -ge 1 ]; then
-
+if [ ! ${PARAMS_TRAIN} -eq 0 ]; then
 	  # DOWNLOAD AND PREPARE DATA
 	  echo '[INFO] Preparing data...'
 	  . ${DIR_DATA}/prepare_data.sh
@@ -69,16 +68,16 @@ if [ ${PARAMS_TRAIN} -ge 1 ]; then
 	  echo '[INFO] Finished setting up tools'
 
 	  # TRAIN A MODEL
-	  echo "[INFO] Training a ${MODEL_TYPE} model for semantic tagging..."
+	  echo "[INFO] Training ${MODEL_TYPE} models for semantic tagging..."
 	  . ${DIR_MODELS}/semtagger_train.sh
 	  echo "[INFO] A ${MODEL_TYPE} model was succesfully trained"
 fi
 
 
-if [ ${PARAMS_PREDICT} -ge 1 ]; then
+if [ ! ${PARAMS_PREDICT} -eq 0 ]; then
 	  # PREDICT USING A TRAINED MODEL
 	  echo "[INFO] Predicting sem-tags using a ${MODEL_TYPE} model..."
 	  . ${DIR_MODELS}/semtagger_predict.sh
-	  echo '[INFO] Finished tagging'
+    echo '[INFO] Finished tagging'
 fi
 

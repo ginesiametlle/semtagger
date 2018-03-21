@@ -4,7 +4,7 @@
 
 # download the PMB
 echo "[INFO] Downloading the PMB (version ${PMB_VER})..."
-if [ ! -d ${PMB_ROOT} ] || [ ${GET_PMB} -ge 1 ]; then
+if [ ! -d ${PMB_ROOT} ] || [ ! ${GET_PMB} -eq 0 ]; then
     rm -rf ${PMB_ROOT}
     mkdir -p ${PMB_ROOT}
     pushd ${PMB_ROOT} > /dev/null
@@ -21,7 +21,7 @@ echo '[INFO] Finished downloading the PMB'
 # extract semantic tags from sentences in the PMB
 echo '[INFO] Extracting tag data from the PMB...'
 for l in ${PMB_LANGS[@]} ; do
-    if [ ! -d ${PMB_EXTDIR}/${l} ] || [ ${GET_PMB} -ge 1 ]; then
+    if [ ! -d ${PMB_EXTDIR}/${l} ] || [ ! ${GET_PMB} -eq 0 ]; then
     	  rm -rf ${PMB_EXTDIR}/${l}
     	  mkdir -p ${PMB_EXTDIR}/${l}
 	      # iterate over p-parts in the PMB
@@ -30,8 +30,8 @@ for l in ${PMB_LANGS[@]} ; do
 	          # iterate over d-parts in p-parts
 	          for ddir in ${pdir}/* ; do
                 if [ -f ${ddir}/${l}.drs.xml ]; then
-                    python3 ${DIR_UTILS}/extract_tags.py ${ddir}/${l}.drs.xml \
-                            ${PMB_EXTDIR}/${l}/sents_${l}.sem
+                    python3 ${DIR_UTILS}/extract_pmb_tags.py ${ddir}/${l}.drs.xml \
+                            ${PMB_EXTDIR}/${l}/pmb_${l}.sem
                     # feedback output
                     numsents=$((${numsents} + 1))
                     if ! ((${numsents} % 200)) && [ ${numsents} -ge 200 ] ; then
@@ -40,6 +40,7 @@ for l in ${PMB_LANGS[@]} ; do
                 fi
             done
         done
+        echo "[INFO] Extracted data contains ${numsents} sentences"
     fi
 done
 echo '[INFO] Extraction of tag data completed'
@@ -47,7 +48,7 @@ echo '[INFO] Extraction of tag data completed'
 
 # download glove embeddings
 echo "[INFO] Downloading ${GLOVE_MODEL} word embeddings..."
-if [ ! -d ${GLOVE_ROOT} ] || [ ${GET_EMBS} -ge 1 ]; then
+if [ ! -d ${GLOVE_ROOT} ] || [ ! -f ${GLOVE_ROOT}/${GLOVE_MODEL}.txt ] || [ ! ${GET_EMBS} -eq 0 ]; then
     rm -rf ${GLOVE_ROOT}
     mkdir -p ${GLOVE_ROOT}
     pushd ${GLOVE_ROOT} > /dev/null

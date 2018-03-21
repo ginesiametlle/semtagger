@@ -29,7 +29,7 @@ for token in root.iter('tagtoken'):
             sem += [tag.text]
 
     if len(tok) == len(sem):
-        sem_sent += [x for x in zip(tok, sem) if x[0] != "ø"]
+        sem_sent += [x for x in zip(tok, sem)]
 
 with open(sem_file, 'a+') as ofile:
     if sem_sent:

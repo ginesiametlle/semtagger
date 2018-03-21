@@ -2,7 +2,19 @@
 
 ### About this repository
 
-A universal semantic tagger (work in progress).
+A universal semantic tagger.
+
+### Training a neural model
+
+```$ ./run.sh --train```
+
+### Using a trained model
+
+```$ ./run.sh --predict --input [INPUT_CONLL_FILE] --output [OUTPUT_CONLL_FILE]```
+
+### Configuration
+
+Please edit [config.sh](./config.sh) for fine-grained control.
 
 ### References
 
