@@ -98,6 +98,9 @@ def load_conll(conll_file, vocab = {}, oovs = {}, pads = {}, default_tag = 'NIL'
     tag2idx = {}
     tag2idx[default_tag] = len(tag2idx)
 
+    # special characters used for splitting words
+    split_chars = set([',', '.', ':', '-', '~', "'", '"'])
+
     sents = []
     lengths = []
     if 'begin' in pads:
@@ -121,41 +124,30 @@ def load_conll(conll_file, vocab = {}, oovs = {}, pads = {}, default_tag = 'NIL'
                 if word != 'ø':
                     if lower:
                         word = word.lower()
-                    if vocab:
-                        if word not in vocab:
-                            if word.isdigit() and 'number' in oovs:
-                                word = oovs['number']
-                        # DO MORE HERE FOR COMPOUND WORDS!
-                        # AN IDEA NEXT ->
 
-                        #def attempt_reconstruction(complex_token, word_to_id):
-                        #    constituents = re.split('[~-]+', complex_token)
-                        #    token_ids = [word_to_id[token] for token in constituents if token in word_to_id]
-                        #
-                        #    if len(token_ids) == 0:
-                        #        return word_to_id[UNKNOWN]
-                        #    else:
-                        #        word_to_id[complex_token] = len(word_to_id)
-                        #        token_ids.append(word_to_id[complex_token])
-                        #        return token_ids
-                        #
-
-                        #if token not in splittable and re.match('^[0-9\.\,-]+$', token):
-                        #    curr_X.append(word_to_id[NUMBER])
-                        #elif token in word_to_id:
-                        #    curr_X.append(word_to_id[token])
-                        #elif token.lower() in word_to_id:
-                        #    curr_X.append(word_to_id[token.lower()])
-                        #elif token.upper() in word_to_id:
-                        #    curr_X.append(word_to_id[token.upper()])
-                        #elif token.capitalize() in word_to_id:
-                        #    curr_X.append(word_to_id[token.capitalize()])
-                        #elif is_training and args.mwe and ('~' in token or '-' in token):
-                        #    curr_X.append(attempt_reconstruction(token, word_to_id))
-                        #else:
-                        #    print("unk*****", token) #if token not in embeddings it's UNK (or mwu if option off)
-                        #    curr_X.append(word_to_id[UNKNOWN])
-                        #    curr_y.append(tag_to_id[tag])
+                    # use an heuristic and try to map oov words
+                    if vocab and word not in vocab and word not in split_chars:
+                        if re.match('^[0-9\.\,-]+$', word):
+                            word = oovs['number']
+                        elif word.lower() in vocab:
+                            word = word.lower()
+                        elif word.upper() in vocab:
+                            word = word.upper()
+                        elif word.capitalize() in vocab:
+                            word = word.capitalize()
+                        elif '~' in word or '-' in word:
+                            # attempt to split multi-word expressions
+                            constituents = re.split('[-~]+', word)
+                            if all([True if c in vocab else False for c in constituents]):
+                                next_words += constituents[:-1]
+                                next_tags += ([tag] * (len(constituents) - 1))
+                                word = constituents[-1]
+                            else:
+                                print('[INFO] Word ' + word + ' not in the embedding vocabulary')
+                                word = oovs['unknown']
+                        else:
+                            print('[INFO] Word ' + word + ' not in the embedding vocabulary')
+                            word = oovs['unknown']
 
                     next_words.append(word)
                     next_tags.append(tag)
@@ -184,8 +176,8 @@ def load_conll(conll_file, vocab = {}, oovs = {}, pads = {}, default_tag = 'NIL'
             next_tags.append(default_tag)
         sents.append(list(zip(next_words, next_tags)))
         lengths.append(len(sents[-1]))
-
-    # compute the allowed sentence length
+        
+    # find the allowed sentence length
     max_len = sorted(lengths)[math.ceil((len(lengths)-1) * len_perc)]
     print('[INFO] Sentence length percentile: ' + str(len_perc))
     print('[INFO] Max allowed sentence length: ' + str(max_len))

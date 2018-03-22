@@ -1,6 +1,11 @@
 
 # Maps parameters to keras objects a la Planck
 
+
+# implement
+
+get_optimizer
+
 import dynet
 """
 various helper mappings

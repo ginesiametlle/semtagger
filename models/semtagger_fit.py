@@ -7,13 +7,14 @@ sys.path.append(sys.argv[1])
 import random
 import numpy as np
 
+from sklearn.model_selection import train_test_split
+
 #import os
 #import time
 #import argparse
 #from collections import defaultdict
 #import pandas as pd
 #from keras.utils import to_categorical
-#from sklearn.model_selection import train_test_split
 #from keras.models import Model, Input
 #from keras.layers import LSTM, GRU, Embedding, Dense, TimeDistributed, Dropout, Bidirectional
 #from keras_contrib.layers import CRF
@@ -21,7 +22,12 @@ import numpy as np
 
 from models.argparser import get_args
 from models.loader import load_word_embeddings, load_conll, write_conll
-from utils.input2feats import tagged_sents2feats
+
+from utils.input2feats import wordsents2sym
+from utils.mapper import get_optimizer, get_loss
+
+from models.nnmodels import get_model
+
 
 # set random seeds to ensure comparability of results
 random.seed(7937)
@@ -54,38 +60,59 @@ word2idx, emb_matrix, emb_dim = load_word_embeddings(args.embeddings,
                                                 lower = False)
 
 # read and pad input sentences and their tags
-tag2idx, sents, max_len = load_conll(args.raw_data,
-                            set(word2idx.keys()),
-                            oovs = oov_words,
-                            pads = pad_words,
-                            default_tag = DEFAULT_TAG,
-                            len_perc = args.max_len_perc,
-                            lower = False)
+tag2idx, word_sents, max_len = load_conll(args.raw_data,
+                                     set(word2idx.keys()),
+                                     oovs = oov_words,
+                                     pads = pad_words,
+                                     default_tag = DEFAULT_TAG,
+                                     len_perc = args.max_len_perc,
+                                     lower = False)
 
 # output processed sentences for reference
-write_conll(args.data, sents)
+write_conll(args.data, word_sents)
 
-# map read sentences and their tags to a feature vector
-X, y = tagged_sents2feats(sents)
+# map word sentences and their tags to a symbolic representation
+X_word, y_word, nb_classes = wordsents2sym(word_sents, max_len, word2idx, tag2idx,
+                   oov_words['unknown'], DEFAULT_TAG,
+                   pad_words['pad'], DEFAULT_TAG)
+
+# split word data into training and test
+print('[INFO] Splitting word data into training and test...')
+X_word_train, X_word_test, y_word_train, y_word_test = train_test_split(X_word, y_word, test_size=args.test_size)
+print('[INFO] Training split for words contains:', X_word_train.shape, '-->', y_word_train.shape)
+print('[INFO] Test split for words contains:', X_word_test.shape, '-->', y_word_test.shape)
+
+# build inputs and outputs for the model
+X_train = [X_word_train, ]
+y_train = [y_word_train, ]
+X_test = [X_word_test, ]
+y_test = [y_word_test, ]
+
+# build the specified neural model
+model = get_model(args.model, args.model_size, args.num_layers, args.noise_sigma, args.hidden_activation,
+                  args.output_activation, args.dropout, args.batch_normalization)
+
+
+# WE CAN HAVE VARIOUS LOSSES, WITH WEIGHTS, AND VARIOUS METRICS
+
+#model.compile(optimizer = )
+
+#model_outputs = [y_train, ]
+#model_losses = ['categorical_crossentropy', ]
+#model_loss_weights = [1.0, ]
+#model_metrics = [actual_accuracy, ]
+
+#model = build_model()
+
+#model.compile(optimizer='adam',
+#              loss=model_losses,
+#              loss_weights=model_loss_weights,
+#              metrics=model_metrics)
+#model.summary()
+
+print(X_train)
+print(y_train)
 sys.exit()
-
-# START THE FUN
-
-# LOOK OUT FOR A LOT OF OOVS
-X = [[word2idx[w[0]] if w[0] in word2idx else 0 for w in s] for s in sents]
-X = pad_sequences(maxlen=args.max_sent_len, sequences=X, padding="post", value=0)
-#print(X)
-
-n_tags = len(tag2idx)
-#print(n_tags)
-y = [[tag2idx[w[1]] for w in s] for s in sents]
-y = pad_sequences(maxlen=args.max_sent_len, sequences=y, padding="post", value=tag2idx["NIL"])
-y = [to_categorical(i, num_classes=n_tags) for i in y]
-#print(y)
-
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=args.test_size)
-
 
 input = Input(shape=(args.max_sent_len,))
 model = Embedding(input_dim=n_words, output_dim=50,

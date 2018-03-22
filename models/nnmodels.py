@@ -1,14 +1,29 @@
+#!/usr/bin/python3
+# this script defines the structure of possible neural models
 
-# define a generic class for model
-# with extensions for lstm, bi-lstm, etc
-
-# PARAMS THAT ARE NEEDED
-
-from layers import embedding_layer, dense_layer, lstm_layer, gru_layer
+from keras.models import Model, Input
+from keras.layers import Embedding, Dense, LSTM, GRU, Dropout
 from keras.layers import TimeDistributed, Bidirectional
+from keras_contrib.layers import CRF
 
 
-input = Input(shape=(args.max_sent_len,))
+
+def get_model(args, max_len, num_words, emb_dim, num_tags):
+    if args.model == 'lstm':
+        return get_lstm(args, max_len, num_words, emb_dim, num_tags)
+    elif args.model == 'gru':
+        return get_gru(args, max_len, num_words, emb_dim, num_tags)
+    elif args.model = 'blstm':
+        return get_blstm(args, max_len, num_words, emb_dim, num_tags)
+    return get_bgru(args, max_len, num_words, emb_dim, num_tags)
+
+
+def get_lstm(args, max_len, num_words, emb_dim, num_tags):
+    word_input = Input(shape=(args.max_len, ), dtype = 'int32')
+    model = Embedding(num_words, emb_dim, )
+
+
+
 model = Embedding(input_dim=n_words, output_dim=50,
                   input_length=args.max_sent_len, mask_zero=True)(input)  # 50-dim embedding
 model = Bidirectional(GRU(units=50, return_sequences=True,

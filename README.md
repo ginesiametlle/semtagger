@@ -2,19 +2,27 @@
 
 ### About this repository
 
-A universal semantic tagger.
+An easy to use (but powerful) universal semantic tagger.
+
+Reasonably recent versions of ```numpy```, ```h5py```, ```sklearn``` and ```keras``` (possibly with a ```tensorflow``` backend) are expected.
 
 ### Training a neural model
 
 ```$ ./run.sh --train```
 
-### Using a trained model
+### Using a trained model to predict sem-tags
 
 ```$ ./run.sh --predict --input [INPUT_CONLL_FILE] --output [OUTPUT_CONLL_FILE]```
 
+### Jointly training and predicting
+
+```$ ./run.sh --train --predict --input [INPUT_CONLL_FILE] --output [OUTPUT_CONLL_FILE]```
+
 ### Configuration
 
-Please edit [config.sh](./config.sh) for fine-grained control.
+One can edit [config.sh](./config.sh) for fine control over mostly anything.
+
+Please note that trained models are by default stored in the [models](./models) directory.
 
 ### References
 
