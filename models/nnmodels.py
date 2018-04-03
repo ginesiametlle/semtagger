@@ -2,64 +2,55 @@
 # this script defines the structure of possible neural models
 
 from keras.models import Model, Input
-from keras.layers import Embedding, Dense, LSTM, GRU, Dropout
+from keras.initializers import glorot_normal
+from keras.layers import Dense, LSTM, GRU
+from keras.layers import Embedding, BatchNormalization, Dropout
 from keras.layers import TimeDistributed, Bidirectional
 from keras_contrib.layers import CRF
 
-
-
-def get_model(args, max_len, num_words, emb_dim, num_tags):
-    if args.model == 'lstm':
-        return get_lstm(args, max_len, num_words, emb_dim, num_tags)
-    elif args.model == 'gru':
-        return get_gru(args, max_len, num_words, emb_dim, num_tags)
-    elif args.model = 'blstm':
-        return get_blstm(args, max_len, num_words, emb_dim, num_tags)
-    return get_bgru(args, max_len, num_words, emb_dim, num_tags)
-
-
-def get_lstm(args, max_len, num_words, emb_dim, num_tags):
-    word_input = Input(shape=(args.max_len, ), dtype = 'int32')
-    model = Embedding(num_words, emb_dim, )
+from utils.mapper_keras import get_optimizer, get_loss
+from models.metrics import strict_accuracy
 
 
 
-model = Embedding(input_dim=n_words, output_dim=50,
-                  input_length=args.max_sent_len, mask_zero=True)(input)  # 50-dim embedding
-model = Bidirectional(GRU(units=50, return_sequences=True,
-                           recurrent_dropout=0.1))(model)  # variational biLSTM
-model = TimeDistributed(Dense(50, activation="relu"))(model)  # a dense layer as suggested by neuralNer
-crf = CRF(n_tags)  # CRF layer
-out = crf(model)  # output
-
-model = Model(input, out)
-model.compile(optimizer="rmsprop", loss=crf.loss_function, metrics=[crf.accuracy])
-model.summary()
+def get_layer(args, num_units):
+    base_layer = GRU(units=num_units, activation=args.hidden_activation, dropout=args.dropout, recurrent_dropout=args.dropout, return_sequences=True)
+    if args.model == 'lstm' or args.model == 'blstm':
+        base_layer = LSTM(units=num_units, activation=args.hidden_activation, dropout=args.dropout, recurrent_dropout=args.dropout, return_sequences=True)
+    if args.model == 'blstm' or args.model == 'bgru':
+        base_layer = Bidirectional(base, merge_mode='concat')
+    return base_layer
 
 
-
-
-def get_bilstm(params):
-    model = Sequential()
-    model.add(Embedding(
-        input_dim = params.num_words,
-        output_dim = params.num_feats,
-        input_length = params.max_sent_len,
-        mask_zero = True
-    )
-    model.add(Bidirectional)
-
-
-def get_model(model_name, model_params):
-    # use bidirectional gru as a default model
-    if model_name == 'rnn':
-        return get_rnn(model_params)
-    if model_name == 'lstm':
-        return get_lstm(model_params)
-    elif model_name == 'gru':
-        return get_gru(model_name)
-    elif model_name == 'bi-lstm':
-        return get_bilstm(model_params)
+def get_model(args, max_len, num_words, emb_dim, num_tags, rnd_seed):
+    # word input layer
+    word_input = Input(shape=(max_len, ), dtype = 'int32')
+    # word embedding layer
+    model = Embedding(num_words, emb_dim, embeddings_initializer = glorot_normal(rnd_seed), input_length = max_len)(word_input)
+    # batch normalization
+    if args.batch_normalization:
+        model = BatchNormalization(model)
+    # bidirectional lstm layers
+    num_units = args.model_size
+    for _ in range(args.num_layers):
+        layer = get_layer(args, num_units)
+        model = layer(model)
+        # batch normalization
+        if args.batch_normalization:
+            model = BatchNormalization(model)
+        # halve hidden units for each new layer
+        num_units = int(num_units / 2)
+    # output layer
+    if args.output_activation == 'softmax':
+        tag_output = TimeDistributed(Dense(num_tags, activation=args.activation))(model)
     else:
-        return get_bigru(model_params)
+        # add a dense layer followed by a crf layer
+        model = TimeDistributed(Dense(args.model_size, activation=args.activation))(model)
+        crf = CRF(num_tags)
+        tag_output = crf(model)
+    # define input and output
+    model_input = [word_input, ]
+    model_output = [tag_output, ]
+    model = Model(input = model_input, output = model_output)
+    return model
 

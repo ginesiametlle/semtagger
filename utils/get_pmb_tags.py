@@ -3,7 +3,7 @@
 
 import sys
 import string
-import xml.etree.ElementTree as ET
+import xml.etree.cElementTree as ET
 
 # source xml file for a d-part in the PMB
 ifile = sys.argv[1]

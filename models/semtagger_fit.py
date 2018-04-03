@@ -3,35 +3,26 @@
 
 import sys
 sys.path.append(sys.argv[1])
-
+import os
 import random
+
 import numpy as np
+import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 
-#import os
-#import time
-#import argparse
-#from collections import defaultdict
-#import pandas as pd
-#from keras.utils import to_categorical
-#from keras.models import Model, Input
-#from keras.layers import LSTM, GRU, Embedding, Dense, TimeDistributed, Dropout, Bidirectional
-#from keras_contrib.layers import CRF
-#import matplotlib.pyplot as plt
-
 from models.argparser import get_args
-from models.loader import load_word_embeddings, load_conll, write_conll
-
-from utils.input2feats import wordsents2sym
-from utils.mapper import get_optimizer, get_loss
-
+from models.loader import load_embeddings, load_conll, write_conll
 from models.nnmodels import get_model
+from models.metrics import strict_accuracy
+
+from utils.convert_input2feats import wordsents2sym
 
 
 # set random seeds to ensure comparability of results
-random.seed(7937)
-np.random.seed(7937)
+rnd_seed = 7937
+random.seed(rnd_seed)
+np.random.seed(rnd_seed)
 
 # define padding words to use and their tags
 # these are appended to the beginning and the end of the input sentences
@@ -52,29 +43,46 @@ DEFAULT_TAG = 'NIL'
 # obtain arguments
 args = get_args()
 
+if not args.use_words and not args.use_chars:
+    print('[ERROR] Cannot use words nor character features')
+    print('[ERROR] A neural model will not be trained...')
+    sys.exit()
+
 # load word embedding vectors
-word2idx, emb_matrix, emb_dim = load_word_embeddings(args.embeddings,
-                                                oovs = list(oov_words.values()),
-                                                pads = list(pad_words.values()),
-                                                sep = ' ',
-                                                lower = False)
+if args.use_words:
+    word2idx, wemb_matrix, wemb_dim = load_embeddings(args.word_embeddings,
+                                                      oovs = list(oov_words.values()),
+                                                      pads = list(pad_words.values()),
+                                                      sep = ' ',
+                                                      lower = False)
+
+# load character embedding vectors
+if args.use_chars:
+    char2idx, cemb_matrix, cemb_dim = load_embeddings(args.char_embeddings,
+                                                      oovs = list(oov_words.values()),
+                                                      pads = list(pad_words.values()),
+                                                      sep = ' ',
+                                                      lower = False)
 
 # read and pad input sentences and their tags
-tag2idx, word_sents, max_len = load_conll(args.raw_data,
-                                     set(word2idx.keys()),
-                                     oovs = oov_words,
-                                     pads = pad_words,
-                                     default_tag = DEFAULT_TAG,
-                                     len_perc = args.max_len_perc,
-                                     lower = False)
+tag2idx, word_sents, max_wlen = load_conll_words(args.raw_pmb_data,
+                                           extra = args.raw_extra_data,
+                                           vocab = set(word2idx.keys()),
+                                           oovs = oov_words,
+                                           pads = pad_words,
+                                           default_tag = DEFAULT_TAG,
+                                           len_perc = args.max_len_perc,
+                                           lower = False)
+
+#char_sents, max_clen = load_conll_chars()
 
 # output processed sentences for reference
 write_conll(args.data, word_sents)
 
 # map word sentences and their tags to a symbolic representation
 X_word, y_word, nb_classes = wordsents2sym(word_sents, max_len, word2idx, tag2idx,
-                   oov_words['unknown'], DEFAULT_TAG,
-                   pad_words['pad'], DEFAULT_TAG)
+                                           oov_words['unknown'], DEFAULT_TAG,
+                                           pad_words['pad'], DEFAULT_TAG)
 
 # split word data into training and test
 print('[INFO] Splitting word data into training and test...')
@@ -88,46 +96,21 @@ y_train = [y_word_train, ]
 X_test = [X_word_test, ]
 y_test = [y_word_test, ]
 
-# build the specified neural model
-model = get_model(args.model, args.model_size, args.num_layers, args.noise_sigma, args.hidden_activation,
-                  args.output_activation, args.dropout, args.batch_normalization)
+# build the specified neural model with Keras
+model = get_model(args, max_len, len(vocab), emb_dim, nb_classes, rnd_seed)
 
-
-# WE CAN HAVE VARIOUS LOSSES, WITH WEIGHTS, AND VARIOUS METRICS
-
-#model.compile(optimizer = )
-
-#model_outputs = [y_train, ]
-#model_losses = ['categorical_crossentropy', ]
-#model_loss_weights = [1.0, ]
-#model_metrics = [actual_accuracy, ]
-
-#model = build_model()
-
-#model.compile(optimizer='adam',
-#              loss=model_losses,
-#              loss_weights=model_loss_weights,
-#              metrics=model_metrics)
-#model.summary()
-
-print(X_train)
-print(y_train)
-sys.exit()
-
-input = Input(shape=(args.max_sent_len,))
-model = Embedding(input_dim=n_words, output_dim=50,
-                  input_length=args.max_sent_len, mask_zero=True)(input)  # 50-dim embedding
-model = Bidirectional(GRU(units=50, return_sequences=True,
-                           recurrent_dropout=0.1))(model)  # variational biLSTM
-model = TimeDistributed(Dense(50, activation="relu"))(model)  # a dense layer as suggested by neuralNer
-crf = CRF(n_tags)  # CRF layer
-out = crf(model)  # output
-
-model = Model(input, out)
-model.compile(optimizer="rmsprop", loss=crf.loss_function, metrics=[crf.accuracy])
+# compile the Keras model
+# HOW TO ACCOUNT FOR VARIOUS INPUTS (CHARS, AUX LOSS)
+model_losses = [get_loss(args.loss), ]   # when the model has multiple outputs
+model_loss_weights = [1.0, ]
+model_metrics = [strict_accuracy, ]
+model.compile(optimizer=get_optimizer(args.optimizer), loss=model_losses, loss_weights = model_loss_weights, metrics = model_metrics)
 model.summary()
 
-history = model.fit(X_train, np.array(y_train), batch_size=32, epochs=20, validation_split=0.1, verbose=1)
+sys.exit()
+
+
+history = model.fit(X_train, np.array(y_train), batch_size=32, epochs=20, validation_split=0.1, verbose=args.verbose)
 
 
 hist = pd.DataFrame(history.history)
@@ -142,7 +125,7 @@ plt.show()
 # do some silly predictions
 #i = 50
 
-p = model.predict(np.array(X_test))
+p = model.predict(np.array(X_test), verbose=min(1, args.verbose))
 p = np.argmax(p, axis=-1)
 true = np.argmax(y_test, -1)
 lengths = [len(s) for s in sents]

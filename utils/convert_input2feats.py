@@ -57,3 +57,4 @@ def wordsents2sym(sents, max_len, word2idx, tag2idx, def_word, def_tag, pad_word
     print('[INFO] Output word data shape:', np.asarray(y).shape)
 
     return X, y, nb_classes
+

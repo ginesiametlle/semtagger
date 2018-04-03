@@ -8,9 +8,9 @@ import re
 import numpy as np
 
 
-def load_word_embeddings(emb_file, oovs = [], pads = [], sep = ' ', lower = False):
+def load_embeddings(emb_file, oovs = [], pads = [], sep = ' ', lower = False):
     """
-    Loads pre-trained word embeddings (GloVe)
+    Loads pre-trained word (or other units) embeddings
         Inputs:
             - emb_file: path to a file with pre-trained embeddings
             - pads: list with delimiter words to include in the embeddings
@@ -79,11 +79,18 @@ def load_word_embeddings(emb_file, oovs = [], pads = [], sep = ' ', lower = Fals
     return word2idx, np.asarray(emb_matrix), emb_dim
 
 
-def load_conll(conll_file, vocab = {}, oovs = {}, pads = {}, default_tag = 'NIL', len_perc = 1.0, lower = False):
+
+
+### NEED MORE WORK HERE! SPLIT SENTENCES IN MULTIPLE ONES!
+### IF A SENTENCE CONTAINS A . IN THE MIDDLE AND MORE THAN 3 TOKENS AFTER IT, IT CAN BE USED FOR SPLITTING!
+### SPLIT SENTENCES SO THAT LENGTHS ARE MORE UNIFORM
+
+def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, default_tag = 'NIL', len_perc = 1.0, lower = False):
     """
     Reads a file in the conll format and produces processed sentences
         Inputs:
             - conll_file: path to a file with data
+            - extra: path to a file with extra data
             - vocab: set containing all words to use as vocabulary
             - len_perc: percentile of allowed sentence lengths
             - oovs: dictionary with aliases to replace oovs with (valid keys: number, unknown)

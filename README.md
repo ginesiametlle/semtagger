@@ -4,25 +4,25 @@
 
 An easy to use (but powerful) universal semantic tagger.
 
-Reasonably recent versions of ```numpy```, ```h5py```, ```sklearn``` and ```keras``` (possibly with a ```tensorflow``` backend) are expected.
+Reasonably recent versions of ```python3```, ```numpy```, ```h5py```, ```sklearn``` and ```keras``` (possibly with a ```tensorflow``` backend) are expected.
 
 ### Training a neural model
 
-```$ ./run.sh --train```
+```$ ./run.sh --train [--model MODEL_FILE]```
 
 ### Using a trained model to predict sem-tags
 
-```$ ./run.sh --predict --input [INPUT_CONLL_FILE] --output [OUTPUT_CONLL_FILE]```
+```$ ./run.sh --predict --input INPUT_CONLL_FILE --output OUTPUT_CONLL_FILE [--model MODEL_FILE]```
 
 ### Jointly training and predicting
 
-```$ ./run.sh --train --predict --input [INPUT_CONLL_FILE] --output [OUTPUT_CONLL_FILE]```
+```$ ./run.sh --train --predict --input INPUT_CONLL_FILE --output OUTPUT_CONLL_FILE [--model MODEL_FILE]```
 
 ### Configuration
 
 One can edit [config.sh](./config.sh) for fine control over mostly anything.
 
-Please note that trained models are by default stored in the [models](./models) directory.
+In particular, note that trained models are stored/loaded using the defined default directory when the ```--model``` option is missing.
 
 ### References
 

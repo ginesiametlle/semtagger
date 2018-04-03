@@ -2,26 +2,6 @@
 # this is a general setup script for this project
 
 
-# train a tagger model with option --train, -t
-PARAMS_TRAIN=0
-
-# predict sem-tags for unlabeled data with option --predict, -p
-PARAMS_PREDICT=0
-
-# point to a file containing untagged sentence data with option --input, -i
-PRED_INPUT=${DIR_DATA}/sample/sample_en.off
-
-# point to a file containing tag predictions for the input file with option --output, -o
-PRED_OUTPUT=${DIR_DATA}/sample/sample_en.sem
-
-
-# set bash to 'debug' mode, it will exit on :
-# -e 'error', -u 'undefined variable', -o ... 'error in pipeline', -x 'print commands'
-set -e
-set -u
-set -o pipefail
-#set -x
-
 # ensure script runs from the root directory
 DIR_ROOT=${PWD}
 if ! [ -x ${DIR_ROOT}/run.sh ]; then
@@ -32,6 +12,28 @@ fi
 # load configuration options
 . ${DIR_ROOT}/config.sh
 
+# train a tagger model with option --train, -t
+PARAMS_TRAIN=0
+
+# predict sem-tags for unlabeled data with option --predict, -p
+PARAMS_PREDICT=0
+
+# point to a file containing untagged sentence data with option --input, -i
+PRED_INPUT=${DIR_DATA}/sample/qa_en.off
+
+# point to a file containing tag predictions for the input file with option --output, -o
+PRED_OUTPUT=${DIR_DATA}/sample/qa_en.gold
+
+# point to a file containing the model to store/load with option --model, -m
+MODEL_GIVEN_PATH=${MODEL_ROOT}/${MODEL_TYPE}-${MODEL_SIZE}-${MODEL_LAYERS}-${MODEL_ACTIVATION_OUTPUT}-${l}.model
+
+# set bash to 'debug' mode, it will exit on :
+# -e 'error', -u 'undefined variable', -o ... 'error in pipeline', -x 'print commands'
+set -e
+set -u
+set -o pipefail
+#set -x
+
 # transform long options to short ones and parse them
 for arg in "$@"; do
     shift
@@ -40,20 +42,38 @@ for arg in "$@"; do
         "--predict") set -- "$@" "-p" ;;
         "--input") set -- "$@" "-i" ;;
         "--output") set -- "$@" "-o" ;;
+        "--model") set -- "$@" "-m" ;;
         *) set -- "$@" "$arg"
     esac
 done
 
-while getopts s:tpio option
+while getopts s:tpi:o:m: option
 do
     case "${option}"
     in
         t) PARAMS_TRAIN=1;;
         p) PARAMS_PREDICT=1;;
-        i) PRED_INPUT=1;;
-        o) PRED_OUTPUT=1;;
+        i) PRED_INPUT=${OPTARG};;
+        o) PRED_OUTPUT=${OPTARG};;
+        m) MODEL_GIVEN_PATH=${OPTARG};;
     esac
 done
+
+# check for correctness of the configuration file
+n_pmb_langs=${#PMB_LANGS[@]}
+n_pretrained=${#EMB_PRETRAINED[@]}
+n_extra_files=${#PMB_EXTRA_SRC[@]}
+n_extra_langs=${#PMB_EXTRA_LANGS[@]}
+
+if [ ${n_pmb_langs} -ne ${n_pretrained} ]; then
+    echo "[ERROR] The specified numbers of PMB languages and their corresponding pretrained embedding files do not match (please fix config.sh)"
+    exit
+fi
+
+if [ ${n_extra_files} -ne ${n_extra_langs} ] && [ ! ${PMB_EXTRA_DATA} -eq 0 ]; then
+    echo "[ERROR] The specified numbers of additional data files and their corresponding languages do not match (please fix config.sh)"
+    exit
+fi
 
 
 if [ ! ${PARAMS_TRAIN} -eq 0 ]; then

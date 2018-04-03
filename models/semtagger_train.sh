@@ -4,24 +4,35 @@
 
 # employ a model for each target language
 for l in ${PMB_LANGS[@]} ; do
-    modelname=${MODEL_TYPE}-${MODEL_SIZE}-${MODEL_LAYERS}-${MODEL_ACTIVATION_OUTPUT}-${l}
 
     # use an existing model if it exists
-    if [ -d ${MODEL_ROOT}/${modelname} ] && [ ${GET_MODEL} -eq 0 ]; then
+    if [ -f ${MODEL_GIVEN_PATH} ] && [ ${GET_MODEL} -eq 0 ]; then
         echo "[INFO] A matching trained model was found for '${l}'"
-        echo "[INFO] Using the model in ${MODEL_ROOT}/${modelname} (see configuration file)"
+        echo "[INFO] Using the model in ${MODEL_GIVEN_PATH}"
 
     # train a new model
     else
         echo "[INFO] Training a new model for language '${l}'..."
-        echo "[INFO] The new model will be stored in ${MODEL_ROOT}/${modelname}"
-        rm -rf ${MODEL_ROOT}/${modelname}
-        mkdir -p ${MODEL_ROOT}/${modelname}
+        echo "[INFO] The new model will be stored in ${MODEL_GIVEN_PATH}"
+        rm -f ${MODEL_GIVEN_PATH}
+        mkdir -p $(dirname ${MODEL_GIVEN_PATH})
+
+        # determine the location of the embeddings given the language
+        if [ ${l} == "en" ]; then
+            FIT_WEMB=${EMB_ROOT}/${l}/${EMB_GLOVE_MODEL}.txt
+        else
+            FIT_WEMB=${EMB_ROOT}/${l}/polyglot_${l}.txt
+        fi
+
         python3 ${DIR_MODELS}/semtagger_fit.py ${DIR_ROOT} \
-                --raw_data ${PMB_EXTDIR}/${l}/pmb_${l}.sem \
+                --raw_pmb_data ${PMB_EXTDIR}/${l}/pmb_${l}.sem \
+                --raw_extra_data ${PMB_EXTDIR}/${l}/extra_${l}.sem \
                 --data ${PMB_EXTDIR}/${l}/sents_${l}.sem \
-                --embeddings ${GLOVE_ROOT}/${GLOVE_MODEL}.txt \
-                --output ${MODEL_ROOT}/${modelname} \
+                --word_embeddings ${FIT_WEMB} \
+                --char_embeddings ${EMB_ROOT}/${l}/chars_${l}.txt \
+                --use_words ${EMB_USE_WORDS} \
+                --use_chars ${EMB_USE_CHARS} \
+                --output ${MODEL_GIVEN_PATH} \
                 --lang ${l} \
                 --model ${MODEL_TYPE} \
                 --epochs ${MODEL_EPOCHS} \
@@ -32,13 +43,12 @@ for l in ${PMB_LANGS[@]} ; do
                 --output_activation ${MODEL_ACTIVATION_OUTPUT} \
                 --loss ${MODEL_LOSS} \
                 --optimizer ${MODEL_OPTIMIZER} \
-                --learning_rate ${MODEL_LEARNING_RATE} \
                 --dropout ${MODEL_DROPOUT} \
                 --batch_size ${MODEL_BATCH_SIZE} \
                 --batch_normalization ${MODEL_BATCH_NORMALIZATION} \
                 --verbose ${MODEL_VERBOSE} \
                 --test_size ${RUN_TEST_SIZE} \
-                --cross_validate ${RUN_CROSS_VAL} \
+                --grid_search ${RUN_GRID_SEARCH} \
                 --max_len_perc ${RUN_LEN_PERC} \
                 --multi_word ${RUN_MWE}
     fi
