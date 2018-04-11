@@ -4,7 +4,7 @@
 
 An easy to use (but powerful) universal semantic tagger.
 
-Reasonably recent versions of ```python3```, ```numpy```, ```h5py```, ```sklearn``` and ```keras``` (possibly with a ```tensorflow``` backend) are expected.
+Reasonably recent versions of ```python3```, ```numpy```, ```h5py```, ```sklearn``` and ```keras``` (with a ```tensorflow``` backend when possible) are expected.
 
 ### Training a neural model
 
@@ -22,7 +22,7 @@ Reasonably recent versions of ```python3```, ```numpy```, ```h5py```, ```sklearn
 
 One can edit [config.sh](./config.sh) for fine control over mostly anything.
 
-In particular, note that trained models are stored/loaded using the defined default directory when the ```--model``` option is missing.
+Note that trained models are stored/loaded using the defined default directory when the ```--model``` option is not provided.
 
 ### References
 
