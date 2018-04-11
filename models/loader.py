@@ -1,7 +1,8 @@
 #!/usr/bin/python3
-# this script provides procedures for reading embedding and input files
+# this script provides procedures for reading and transforming embedding and input files
 
 import sys
+import os.path
 import codecs
 import math
 import re
@@ -20,6 +21,7 @@ def load_embeddings(emb_file, oovs = [], pads = [], sep = ' ', lower = False):
         Outputs:
             - word2idx: maps words to an index in the embedding matrix
             - emb_matrix: Embedding matrix
+            - emb_dim: Dimension of the embedding vectors
     """
     word2emb = {}
     word2idx = {}
@@ -79,13 +81,7 @@ def load_embeddings(emb_file, oovs = [], pads = [], sep = ' ', lower = False):
     return word2idx, np.asarray(emb_matrix), emb_dim
 
 
-
-
-### NEED MORE WORK HERE! SPLIT SENTENCES IN MULTIPLE ONES!
-### IF A SENTENCE CONTAINS A . IN THE MIDDLE AND MORE THAN 3 TOKENS AFTER IT, IT CAN BE USED FOR SPLITTING!
-### SPLIT SENTENCES SO THAT LENGTHS ARE MORE UNIFORM
-
-def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, default_tag = 'NIL', len_perc = 1.0, lower = False):
+def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, default_tag = 'NIL', len_perc = 1.0, lower = False, mwe = True):
     """
     Reads a file in the conll format and produces processed sentences
         Inputs:
@@ -96,12 +92,15 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, default
             - oovs: dictionary with aliases to replace oovs with (valid keys: number, unknown)
             - pads: dictionary with delimiter words to include in the sentences (valid keys: begin, end)
             - lower: lowercase (or not) words in the input data
+            - mwe: handle multi-word expressions
         Outputs:
             - tag2idx: maps each tag to a numerical index
-            - sents: list of sentences represented as [(w1, tag1), ..., (wN, tagN)]
+            - sents: list of sentences represented as [(w1, tag1, x1), ..., (wN, tagN, x1)],
+                     where wi: mapped word, tagi: sem-tag, xi: original word
+            - max_len: maximum number of words per sentence allowed
     """
 
-    # note: all padding words are assigned the NIL (empty semantics) semantic tag
+    # note: all padding words are assigned the default (empty semantics) semantic tag
     tag2idx = {}
     tag2idx[default_tag] = len(tag2idx)
 
@@ -113,82 +112,125 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, default
     if 'begin' in pads:
         next_words = [pads['begin']]
         next_tags = [default_tag]
+        next_syms = ['']
+        sent_base_length = 1
     else:
         next_words = []
         next_tags = []
+        next_syms = []
+        sent_base_length = 0
 
-    # iterate over lines in the input file
-    for line in codecs.open(conll_file, mode = 'r', errors = 'ignore', encoding = 'utf-8'):
-        # discard newline character
-        line = line[:-1]
+    # select files to use
+    input_files = [conll_file]
+    if extra and os.path.isfile(extra):
+        input_files += [extra]
 
-        # keep adding words while in the middle of a sentence
-        if line:
-            if len(line.split('\t')) != 2:
-                raise IOError('[WARNING] Exception in `load_conll`: Input file has the wrong format')
-            else:
-                word, tag = line.split('\t')
-                if word != 'ø':
-                    if lower:
-                        word = word.lower()
+    # counters
+    num_raw_sents = 0
+    num_sents = 0
+    num_oovs = 0
 
-                    # use an heuristic and try to map oov words
-                    if vocab and word not in vocab and word not in split_chars:
-                        if re.match('^[0-9\.\,-]+$', word):
-                            word = oovs['number']
-                        elif word.lower() in vocab:
+    # iterate over lines in the input files
+    for ifile in input_files:
+        for line in codecs.open(ifile, mode = 'r', errors = 'ignore', encoding = 'utf-8'):
+            # discard newline character
+            line = line[:-1]
+
+            # keep adding words while in the middle of a sentence
+            if line:
+                if len(line.split('\t')) != 2:
+                    raise IOError('[WARNING] Exception in `load_conll`: Input file has the wrong format')
+                else:
+                    word, tag = line.split('\t')
+                    sym = word
+                    if word != 'ø':
+                        if lower:
                             word = word.lower()
-                        elif word.upper() in vocab:
-                            word = word.upper()
-                        elif word.capitalize() in vocab:
-                            word = word.capitalize()
-                        elif '~' in word or '-' in word:
-                            # attempt to split multi-word expressions
-                            constituents = re.split('[-~]+', word)
-                            if all([True if c in vocab else False for c in constituents]):
-                                next_words += constituents[:-1]
-                                next_tags += ([tag] * (len(constituents) - 1))
-                                word = constituents[-1]
+
+                        # use an heuristic and try to map oov words
+                        if vocab and word not in vocab and word not in split_chars:
+                            if re.match('^[0-9\.\,-]+$', word):
+                                word = oovs['number']
+                            elif word.lower() in vocab:
+                                word = word.lower()
+                            elif word.upper() in vocab:
+                                word = word.upper()
+                            elif word.capitalize() in vocab:
+                                word = word.capitalize()
+                            elif '~' in word or '-' in word and mwe:
+                                # attempt to split multi-word expressions
+                                constituents = re.split('[ -~]+', word)
+                                if all([True if c in vocab else False for c in constituents]):
+                                    next_words += constituents[:-1]
+                                    next_tags += ([tag] * (len(constituents) - 1))
+                                    next_syms += constituents[:-1]
+                                    word = constituents[-1]
+                                    sym = constituents[-1]
+                                else:
+                                    #print('[INFO] Word ' + word + ' not in the embedding vocabulary')
+                                    word = oovs['unknown']
+                                    num_oovs += 1
                             else:
-                                print('[INFO] Word ' + word + ' not in the embedding vocabulary')
+                                #print('[INFO] Word ' + word + ' not in the embedding vocabulary')
                                 word = oovs['unknown']
-                        else:
-                            print('[INFO] Word ' + word + ' not in the embedding vocabulary')
-                            word = oovs['unknown']
+                                num_oovs += 1
 
-                    next_words.append(word)
-                    next_tags.append(tag)
-                    if tag not in tag2idx:
-                        tag2idx[tag] = len(tag2idx)
+                        next_words.append(word)
+                        next_tags.append(tag)
+                        next_syms.append(sym)
+                        if tag not in tag2idx:
+                            tag2idx[tag] = len(tag2idx)
 
-        # stack the current sentence upon seeing an empty line
-        else:
-            if len(next_words) > 1:
-                if 'end' in pads:
-                    next_words.append(pads['end'])
-                    next_tags.append(default_tag)
-                sents.append(list(zip(next_words, next_tags)))
-                lengths.append(len(sents[-1]))
-            if 'begin' in pads:
-                next_words = [pads['begin']]
-                next_tags = [default_tag]
-            else:
-                next_words = []
-                next_tags = []
+            # stack the current sentence upon seeing an empty line or a full stop
+            if not line or (len(next_words) > 3 and next_words[-4] == '.'):
+                if len(next_words) > sent_base_length:
+                    if not line:
+                        if 'end' in pads:
+                            next_words.append(pads['end'])
+                            next_tags.append(default_tag)
+                            next_syms.append('')
+                        sents.append(list(zip(next_words, next_tags, next_syms)))
+                        lengths.append(len(sents[-1]))
+                        next_words = []
+                        next_tags = []
+                        next_syms = []
+                        num_raw_sents += 1
+                        num_sents += 1
+                    else:
+                        split_words = next_words[:-3]
+                        split_tags = next_tags[:-3]
+                        split_syms = next_syms[:-3]
+                        if 'end' in pads:
+                            split_words.append(pads['end'])
+                            split_tags.append(default_tag)
+                            split_syms.append('')
+                        sents.append(list(zip(split_words, split_tags, split_syms)))
+                        lengths.append(len(sents[-1]))
+                        next_words = next_words[-3:]
+                        next_tags = next_tags[-3:]
+                        next_syms = next_syms[-3:]
+                        num_sents += 1
+                    if 'begin' in pads:
+                        next_words = [pads['begin']] + next_words
+                        next_tags = [default_tag] + next_tags
+                        next_syms = [''] + next_syms
 
-    # double check the last sentence
-    if len(next_words) > 1:
-        if 'end' in pads:
-            next_words.append(pads['end'])
-            next_tags.append(default_tag)
-        sents.append(list(zip(next_words, next_tags)))
-        lengths.append(len(sents[-1]))
-        
+        # double check the last sentence
+        if len(next_words) > sent_base_length:
+            if 'end' in pads:
+                next_words.append(pads['end'])
+                next_tags.append(default_tag)
+                next_syms.append('')
+            sents.append(list(zip(next_words, next_tags, next_syms)))
+            lengths.append(len(sents[-1]))
+
     # find the allowed sentence length
     max_len = sorted(lengths)[math.ceil((len(lengths)-1) * len_perc)]
     print('[INFO] Sentence length percentile: ' + str(len_perc))
-    print('[INFO] Max allowed sentence length: ' + str(max_len))
-
+    print('[INFO] Max allowed sentence word length: ' + str(max_len))
+    print('[INFO] Number of out-of-vocabulary words: ' + str(num_oovs))
+    print('[INFO] Original number of sentences: ' + str(num_raw_sents))
+    print('[INFO] Number of extracted sentences ' + str(num_sents))
     return tag2idx, sents, max_len
 
 
@@ -202,7 +244,63 @@ def write_conll(conll_file, sents):
     with codecs.open(conll_file, mode = 'w', errors = 'ignore', encoding = 'utf-8') as ofile:
         for sent in sents:
             if sent:
-                for word, tag in sent:
+                for word, tag, sym in sent:
                     ofile.write(word + '\t' + tag + '\n')
+                ofile.write('\n')
+
+
+def make_char_seqs(word_seqs, vocab={}, oovs={}, pads={}, lower = False):
+    """
+    Turns word sequences into char sequences
+        Inputs:
+            - word_seqs: list of sequences of words
+            - vocab: set containing all words to use as vocabulary
+            - oovs: dictionary with aliases to replace oovs with (valid keys: number, unknown)
+            - pads: dictionary with delimiter words to include in the sentences (valid keys: begin, end)
+            - lower: lowercase (or not) words in the input data
+        Outputs:
+            - char_sents: list of sentences represented as [c1,c2,...,cn]
+            - max_len: maximum number of characters per sentence allowed
+    """
+    char_seqs = []
+    max_len = 0
+    for sent in word_seqs:
+        chars = []
+        if 'begin' in pads:
+            chars.append(pads['begin'])
+        filterlist = filter(lambda x: x, [w[2] if isinstance(w, (list,tuple)) else w for w in sent])
+        for c in ' '.join(filterlist):
+                if c == '~':
+                    c = ' '
+                if lower:
+                    c = c.lower()
+                if vocab and c not in vocab:
+                    if c.isdigit():
+                        c = oovs['number']
+                    else:
+                        c = oovs['unknown']
+                chars.append(c)
+        if 'end' in pads:
+            chars.append(pads['end'])
+        if len(chars) > max_len:
+            max_len = len(chars)
+        char_seqs.append(chars)
+
+    return char_seqs, max_len
+
+
+def write_chars(ofile, char_sents):
+    """
+    Produces a conll file
+        Inputs:
+            - ofile: path to the output file
+            - char_sents: list of sentences, each one as a list of characters
+    """
+    with codecs.open(ofile, mode = 'w', errors = 'ignore', encoding = 'utf-8') as ofile:
+        for sent in char_sents:
+            if sent:
+                ofile.write(sent[0])
+                for char in sent[1:]:
+                    ofile.write(' ' + char)
                 ofile.write('\n')
 

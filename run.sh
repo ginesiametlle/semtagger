@@ -22,7 +22,7 @@ PARAMS_PREDICT=0
 PRED_INPUT=${DIR_DATA}/sample/qa_en.off
 
 # point to a file containing tag predictions for the input file with option --output, -o
-PRED_OUTPUT=${DIR_DATA}/sample/qa_en.gold
+PRED_OUTPUT=${DIR_DATA}/sample/qa_en.sem
 
 # point to a file containing the model to store/load with option --model, -m
 MODEL_GIVEN_PATH=${MODEL_ROOT}/${MODEL_TYPE}-${MODEL_SIZE}-${MODEL_LAYERS}-${MODEL_ACTIVATION_OUTPUT}-${l}.model

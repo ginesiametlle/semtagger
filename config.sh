@@ -79,7 +79,7 @@ EMB_PRETRAINED=("")
 EMB_USE_WORDS=1
 
 # whether or not to use character embeddings (boolean, default: 0)
-EMB_USE_CHARS=1
+EMB_USE_CHARS=0
 
 # root directory where to store word embeddings for English (string)
 # GloVe embeddings are only used if no pretrained embeddings are given
@@ -102,7 +102,7 @@ RUN_TEST_SIZE=0.20
 # the hyperparameters defined are shared among models for all languages otherwise
 RUN_GRID_SEARCH=0
 
-# maximum sequence length allowed, as a percentile of the length distribution (float, default: 0.9)
+# maximum sequence length allowed, as a percentile of the word length distribution (float, default: 0.9)
 RUN_LEN_PERC=0.9
 
 # handle multi-word expressions (boolean, default: 1)
@@ -126,11 +126,11 @@ MODEL_EPOCHS=10
 MODEL_SIZE=50
 
 # number of recurrent layers of the neural model
-# note that the number of hidden units is halved on each layer (int, default: 2)
+# note that the number of hidden units is halved on each layer (int, default: 1)
 MODEL_LAYERS=2
 
-# standard deviation for the noise normal distribution (float, default: 0.05)
-MODEL_SIGMA=0.05
+# standard deviation for the noise normal distribution (float, default: 0)
+MODEL_SIGMA=0
 
 # activation function on hidden layers (string)
 # allowed values: "sigmoid", "tanh", "relu"
@@ -146,13 +146,13 @@ MODEL_LOSS="cce"
 
 # optimizer (string)
 # allowed values: "sgd", "adagrad", "adadelta", "adam", "nadam"
-MODEL_OPTIMIZER="nadam"
+MODEL_OPTIMIZER="adagrad"
 
 # dropout rate on each layer (float, default: 0.1)
 MODEL_DROPOUT=0.1
 
-# batch size (int, default: 64)
-MODEL_BATCH_SIZE=64
+# batch size (int, default: 128)
+MODEL_BATCH_SIZE=1024
 
 # use batch normalization (boolean, default: 1)
 MODEL_BATCH_NORMALIZATION=1

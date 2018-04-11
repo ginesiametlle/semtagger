@@ -26,7 +26,7 @@ def wordsents2sym(sents, max_len, word2idx, tag2idx, def_word, def_tag, pad_word
 
     try:
         print('[INFO] Reshaping word data...')
-        # map each words to indices and tags to categorial vectors
+        # map each word to indices and tags to categorial vectors
         for sent in sents:
             sent_X = np.zeros((len(sent),), dtype = np.int32)
             sent_y = np.zeros((len(sent), nb_classes), dtype = np.int32)
@@ -50,11 +50,46 @@ def wordsents2sym(sents, max_len, word2idx, tag2idx, def_word, def_tag, pad_word
         y = pad_sequences(y, maxlen = max_len, dtype = np.int32,
                           padding="post", value = tag2idx[pad_tag])
     except Exception as e:
-        print('[ERROR] Exception in `sents2sym`:', e)
+        print('[ERROR] Exception in `wordsents2sym`:', e)
 
     print('[INFO] Number of classes (sem-tags):', nb_classes)
     print('[INFO] Input word data shape:', np.asarray(X).shape)
     print('[INFO] Output word data shape:', np.asarray(y).shape)
-
     return X, y, nb_classes
+
+
+def charsents2sym(sents, max_len, char2idx, def_char, pad_char):
+    """
+    Given a list of sentences, return a list of integers
+        Inputs:
+            - sents: list of sentences represented as a list of characters
+			- max_len: maximum length of a character sentence
+            - char2idx: dictionary mapping words to indices in the embedding matrix
+            - def_char: special word to use by default
+            - pad_char: special char to use for padding
+		Outputs:
+			- X: input feature vector
+    """
+    X = []
+
+    try:
+        print('[INFO] Reshaping character data...')
+        # map each character to indices
+        for sent in sents:
+            sent_X = np.zeros((len(sent),), dtype = np.int32)
+            for i, char in enumerate(sent):
+                if char in char2idx:
+                    sent_X[i] = char2idx[char]
+                else:
+                    sent_X[i] = char2idx[def_char]
+            X.append(sent_X)
+
+        # add padding up to the maximum allowed length
+        X = pad_sequences(X, maxlen = max_len, dtype = np.int32,
+                          padding="post", value = word2idx[pad_char])
+    except Exception as e:
+        print('[ERROR] Exception in `charsents2sym`:', e)
+
+    print('[INFO] Input character data shape:', np.asarray(X).shape)
+    return X
 

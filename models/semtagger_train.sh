@@ -24,10 +24,14 @@ for l in ${PMB_LANGS[@]} ; do
             FIT_WEMB=${EMB_ROOT}/${l}/polyglot_${l}.txt
         fi
 
+        rm -f ${PMB_EXTDIR}/${l}/sents_${l}.sem
+        rm -f ${PMB_EXTDIR}/${l}/sents_${l}_chars.txt
+
         python3 ${DIR_MODELS}/semtagger_fit.py ${DIR_ROOT} \
                 --raw_pmb_data ${PMB_EXTDIR}/${l}/pmb_${l}.sem \
                 --raw_extra_data ${PMB_EXTDIR}/${l}/extra_${l}.sem \
-                --data ${PMB_EXTDIR}/${l}/sents_${l}.sem \
+                --data_words ${PMB_EXTDIR}/${l}/sents_${l}.sem \
+                --data_chars ${PMB_EXTDIR}/${l}/sents_${l}_chars.txt \
                 --word_embeddings ${FIT_WEMB} \
                 --char_embeddings ${EMB_ROOT}/${l}/chars_${l}.txt \
                 --use_words ${EMB_USE_WORDS} \

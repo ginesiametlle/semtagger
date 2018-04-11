@@ -15,14 +15,15 @@ def get_optimizer(label):
     """
     if label == "sgd":
         return optimizers.SGD(lr=0.01, momentum=0.3, decay=1e-8, nesterov=True)
-    elif label == "adagrad":
+    if label == "adagrad":
         return optimizers.Adagrad(lr=0.01, epsilon=None, decay=1e-8)
-    elif label == "adadelta":
+    if label == "adadelta":
         return optimizers.Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=1e-8)
-    elif label == "adam":
+    if label == "adam":
         return optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=1e-8, amsgrad=True)
-    else:
+    if label == 'nadam':
         return optimizers.Nadam(lr=0.002, beta_1=0.9, beta_2=0.999, epsilon=None, schedule_decay=0.004)
+    return None
 
 
 def get_loss(label):
@@ -35,10 +36,11 @@ def get_loss(label):
     """
     if label == "mse":
         return losses.mean_squared_error
-    elif label == "mae":
+    if label == "mae":
         return losses.mean_absolute_error
-    elif label == "chinge":
+    if label == "chinge":
         return losses.categorical_hinge
-    else:
+    if label == 'cce':
         return losses.categorical_crossentropy
+    return None
 
