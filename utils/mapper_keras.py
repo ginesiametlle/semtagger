@@ -19,6 +19,8 @@ def get_optimizer(label):
         return optimizers.Adagrad(lr=0.01, epsilon=None, decay=1e-8)
     if label == "adadelta":
         return optimizers.Adadelta(lr=1.0, rho=0.95, epsilon=None, decay=1e-8)
+    if label == "rmsprop":
+        return optimizers.RMSprop(lr=0.00004, rho=0.9, epsilon=None, decay=0.0)
     if label == "adam":
         return optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=1e-8, amsgrad=True)
     if label == 'nadam':

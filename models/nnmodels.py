@@ -121,7 +121,10 @@ def get_model(args, max_wlen, num_words, wemb_dim, wemb_matrix, num_tags): #max_
     model_loss_weights = [1.0]
 
     # define metrics
-    model_metrics = [strict_accuracy]
+    if args.output_activation == 'crf':
+        model_metrics = [crf.accuracy, strict_accuracy]
+    else:
+        model_metrics = ['accuracy', strict_accuracy]
 
     # define optimizer
     model_opt = get_optimizer(args.optimizer)

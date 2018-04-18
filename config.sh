@@ -55,7 +55,7 @@ PMB_EXTDIR=${DIR_DATA}/pmb
 PMB_LANGS=("en")
 
 # use additional semantically tagged data (boolean, default: 0)
-PMB_EXTRA_DATA=1
+PMB_EXTRA_DATA=0
 
 # directories with additional semantically tagged data (array)
 # each directory is assumed to contain a number of conll files
@@ -123,7 +123,7 @@ MODEL_ROOT=${DIR_MODELS}/bin
 MODEL_EPOCHS=10
 
 # units in the first layer of the neural model (int, default: 50)
-MODEL_SIZE=50
+MODEL_SIZE=100
 
 # number of recurrent layers of the neural model
 # note that the number of hidden units is halved on each layer (int, default: 1)
@@ -138,24 +138,24 @@ MODEL_ACTIVATION_HIDDEN="relu"
 
 # activation function on the output layer (string)
 # allowed values: "softmax", "crf"
-MODEL_ACTIVATION_OUTPUT="crf"
+MODEL_ACTIVATION_OUTPUT="softmax"
 
 # loss function (string)
 # allowed values: "mse", "mae", "chinge", "cce"
 MODEL_LOSS="cce"
 
 # optimizer (string)
-# allowed values: "sgd", "adagrad", "adadelta", "adam", "nadam"
-MODEL_OPTIMIZER="adagrad"
+# allowed values: "sgd", "adagrad", "adadelta", "rmsprop", "adam", "nadam"
+MODEL_OPTIMIZER="rmsprop"
 
 # dropout rate on each layer (float, default: 0.1)
 MODEL_DROPOUT=0.1
 
 # batch size (int, default: 128)
-MODEL_BATCH_SIZE=1024
+MODEL_BATCH_SIZE=32
 
-# use batch normalization (boolean, default: 1)
-MODEL_BATCH_NORMALIZATION=1
+# use batch normalization (boolean, default: 0)
+MODEL_BATCH_NORMALIZATION=0
 
 # keras verbosity mode (int, default: 1)
 MODEL_VERBOSE=1

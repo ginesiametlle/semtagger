@@ -6,11 +6,15 @@ sys.path.append(sys.argv[1])
 
 import os
 import random
+import itertools
+import operator
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
 
 from models.argparser import get_args
 from models.loader import load_embeddings, load_conll
@@ -18,6 +22,7 @@ from models.loader import make_char_seqs, write_conll, write_chars
 from models.nnmodels import get_model
 
 from utils.convert_input2feats import wordsents2sym, charsents2sym
+from utils.data_stats import plot_dist_tags, plot_confusion_matrix
 
 
 # set random seeds to ensure comparability of results
@@ -67,6 +72,9 @@ tag2idx, word_sents, max_wlen = load_conll(args.raw_pmb_data,
                                            len_perc = args.max_len_perc,
                                            lower = False,
                                            mwe = args.multi_word)
+
+plot_dist_tags()
+sys.exit()
 
 # load character embedding vectors and sequences
 if args.use_chars:
@@ -140,14 +148,13 @@ model.summary()
 history = model.fit(X_train, np.array(y_train), batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, verbose=args.verbose)
 
 hist = pd.DataFrame(history.history)
-print(hist)
-sys.exit()
 
-"""
 plt.style.use("ggplot")
 plt.figure(figsize=(12,12))
-plt.plot(hist["acc"])
-plt.plot(hist["val_acc"])
+plt.plot(hist["strict_accuracy"])
+plt.plot(hist["val_strict_accuracy"])
+plt.ylabel('Real accuracy')
+plt.xlabel('Number of epochs')
 plt.show()
 
 
@@ -157,7 +164,7 @@ plt.show()
 p = model.predict(np.array(X_test), verbose=min(1, args.verbose))
 p = np.argmax(p, axis=-1)
 true = np.argmax(y_test, -1)
-lengths = [len(s) for s in sents]
+lengths = [len(s) for s in word_sents]
 total = 0
 correct = 0
 
@@ -165,12 +172,33 @@ for triple in zip(p, true, lengths):
     pred_tags = triple[0]
     true_tags = triple[1]
     l = triple[2]
-    for n in range(min(args.max_sent_len,l)):
+    for n in range(min(max_wlen,l)):
         total += 1
         if pred_tags[n] == true_tags[n]:
             correct += 1
 
 print('Accuracy on the test set: ', correct/total)
+
+
+
+# Compute confusion matrix
+cnf_matrix = confusion_matrix(true.flatten(), p.flatten())
+np.set_printoptions(precision=2)
+
+# Plot normalized confusion matrix
+#plt.figure()
+
+
+#tagnames = [x[0] for x in sorted(tag2idx.items(), key=operator.itemgetter(1))]
+#write_confusion_matrix(cnf_matrix, classes=tagnames, normalize=True,
+#                      title='Normalized confusion matrix')
+
+#plt.show()
+
+
+
+
+
 
 #for predtags in p:
 #    for truetags in true:
@@ -183,4 +211,4 @@ print('Accuracy on the test set: ', correct/total)
 #for w, t, pred in zip(X_test[i], true, p[0]):
 #    if w != 0:
 #        print("{:15}: {:5} {}".format(str(w), str(t), str(pred)))
-"""
+
