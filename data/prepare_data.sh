@@ -77,22 +77,23 @@ fi
 echo '[INFO] Extraction of tag data completed'
 
 
-# extract word embeddings / use pretrained ones
+# extract word embeddings or use pretrained ones
 echo '[INFO] Preparing word embeddings...'
 for idx in ${!PMB_LANGS[*]} ; do
     l=${PMB_LANGS[$idx]}
-    lpretrained=${EMB_PRETRAINED[$idx]}
+    lwpretrained=${EMB_WORD_PRETRAINED[$idx]}
+    lcpretrained=${EMB_CHAR_PRETRAINED[$idx]}
 
     # only generate word embeddings when there are no pretrained ones
-    if [ ! -f ${lpretrained} ] || [ -z ${lpretrained} ]; then
+    if [ ! -f ${lwpretrained} ] || [ -z ${lwpretrained} ]; then
         # use glove embeddings for english
         if [ ${l} == "en" ]; then
             echo "[INFO] Obtaining GloVe word embeddings for ${l}..."
-            EMB_GLOVE_EN=${EMB_ROOT}/${l}
-            if [ ! -d ${EMB_GLOVE_EN} ] || [ ! -f ${EMB_GLOVE_EN}/${EMB_GLOVE_MODEL}.txt ] || [ ! ${GET_EMBS} -eq 0 ]; then
-                rm -rf ${EMB_GLOVE_EN}
-                mkdir -p ${EMB_GLOVE_EN}
-                pushd ${EMB_GLOVE_EN} > /dev/null
+            EMB_ROOT_EN=${EMB_ROOT}/${l}
+            if [ ! -d ${EMB_ROOT_EN} ] || [ ! -f ${EMB_ROOT_EN}/wemb_${l}.txt ] || [ ! ${GET_EMBS} -eq 0 ]; then
+                rm -rf ${EMB_ROOT_EN}
+                mkdir -p ${EMB_ROOT_EN}
+                pushd ${EMB_ROOT_EN} > /dev/null
                 if [[ ${EMB_GLOVE_MODEL:0:8} = "glove.6B" ]]; then
                     GLOVE_LINK="glove.6B"
                 else
@@ -102,16 +103,17 @@ for idx in ${!PMB_LANGS[*]} ; do
                 unzip -qq "${GLOVE_LINK}.zip"
                 rm -f "${GLOVE_LINK}.zip"
                 find . ! -name "${EMB_GLOVE_MODEL}.txt" -type f -exec rm -f {} +
+                mv "${EMB_GLOVE_MODEL}.txt" "wemb_${l}.txt"
                 popd > /dev/null
             fi
         # use polyglot embeddings for languages other than english
         else
             echo "[INFO] Obtaining Polyglot embeddings for ${l}..."
-            EMB_POLY_LANG=${EMB_ROOT}/${l}
-            if [ ! -d ${EMB_POLY_LANG} ] || [ ! -f ${EMB_POLY_LANG}/polyglot_${l}.txt ] || [ ! ${GET_EMBS} -eq 0 ]; then
-                rm -rf ${EMB_POLY_LANG}
-                mkdir -p ${EMB_POLY_LANG}
-                pushd ${EMB_POLY_LANG} > /dev/null
+            EMB_ROOT_LANG=${EMB_ROOT}/${l}
+            if [ ! -d ${EMB_ROOT_LANG} ] || [ ! -f ${EMB_ROOT_LANG}/cemb_${l}.txt ] || [ ! ${GET_EMBS} -eq 0 ]; then
+                rm -rf ${EMB_ROOT_LANG}
+                mkdir -p ${EMB_ROOT_LANG}
+                pushd ${EMB_ROOT_LANG} > /dev/null
                 if [ ${l} == "de" ]; then
                     curl -L -s -o polyglot-${l} \
                          "https://docs.google.com/uc?id=0B5lWReQPSvmGaXJoQnlJa2x5RUU&export=download"
@@ -122,10 +124,10 @@ for idx in ${!PMB_LANGS[*]} ; do
                     curl -L -s -o polyglot-${l} \
                          "https://docs.google.com/uc?id=0B5lWReQPSvmGNUprVTVNY3I3eDA&export=download"
                 else
-                    echo "[ERROR] Language ${l} does not appear to be a language in the PMB!"
+                    echo "[ERROR] Language ${l} does not appear to be a language in the PMB"
                     exit
                 fi
-                python3 ${DIR_UTILS}/get_polyglot_wemb.py ${l} ${EMB_POLY_LANG}/polyglot-${l} ${EMB_POLY_LANG}/polyglot_${l}.txt
+                python3 ${DIR_UTILS}/get_polyglot_wemb.py ${l} ${EMB_ROOT_LANG}/polyglot-${l} ${EMB_ROOT_LANG}/cemb_${l}.txt
                 rm -f polyglot-${l}
                 popd > /dev/null
             fi
@@ -133,37 +135,4 @@ for idx in ${!PMB_LANGS[*]} ; do
     fi
 done
 echo '[INFO] Finished preparing word embeddings'
-
-
-# extract character embeddings based on the corresponding Polyglot embeddings
-echo '[INFO] Preparing character embeddings...'
-for idx in ${!PMB_LANGS[*]} ; do
-    l=${PMB_LANGS[$idx]}
-    lpretrained=${EMB_PRETRAINED[$idx]}
-    # find the word embedding file being used
-    if [ ! -f ${lpretrained} ] || [ -z ${lpretrained} ]; then
-        # download Polyglot embeddings for English if missing
-        if [ ${l} == "en" ] && [ ! -f ${EMB_ROOT}/${l}/chars_${l}.txt ]; then
-            curl -L -s -o ${EMB_ROOT}/${l}/polyglot-${l} \
-                 "https://docs.google.com/uc?id=0B5lWReQPSvmGVWFuckc4S0tUTHc&export=download"
-            python3 ${DIR_UTILS}/get_polyglot_wemb.py ${l} ${EMB_ROOT}/${l}/polyglot-${l} ${EMB_ROOT}/${l}/polyglot_${l}.txt
-            rm -f ${EMB_ROOT}/${l}/polyglot-${l}
-        fi
-        lpretrained=${EMB_ROOT}/${l}/polyglot_${l}.txt
-    fi
-    # derive character embeddings
-    if [ ! -f ${EMB_ROOT}/${l}/chars_${l}.txt ] || [ ! ${GET_EMBS} -eq 0 ]; then
-        rm -f ${EMB_ROOT}/${l}chars_${l}.txt
-        mkdir -p ${EMB_ROOT}/${l}
-        echo "[INFO] Extracting character embeddings for ${l}..."
-        pushd ${EMB_ROOT}/${l} > /dev/null
-        python3 ${DIR_UTILS}/convert_wemb2chars.py ${lpretrained} ${EMB_ROOT}/${l}/chars_${l}.txt
-        popd > /dev/null
-    fi
-    # clean files
-    if [ ${l} == "en" ]; then
-        rm -f ${EMB_ROOT}/${l}/polyglot_${l}.txt
-    fi
-done
-echo '[INFO] Finished preparing character embeddings'
 

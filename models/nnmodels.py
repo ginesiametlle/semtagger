@@ -42,7 +42,7 @@ def get_layer(args, num_units):
     return None
 
 
-def get_model(args, max_wlen, num_words, wemb_dim, wemb_matrix, num_tags): #max_clen, num_chars, cemb_dim, cemb_matrix):
+def get_model(args, max_wlen=0, num_words=0, wemb_dim=0, wemb_matrix=None, num_tags=0, max_clen=0, num_chars=0, cemb_dim=0, cemb_matrix=None):
 
     if args.use_words:
         # word input layer

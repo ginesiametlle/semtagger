@@ -25,7 +25,15 @@ PRED_INPUT=${DIR_DATA}/sample/qa_en.off
 PRED_OUTPUT=${DIR_DATA}/sample/qa_en.sem
 
 # point to a file containing the model to store/load with option --model, -m
-MODEL_GIVEN_PATH=${MODEL_ROOT}/${MODEL_TYPE}-${MODEL_SIZE}-${MODEL_LAYERS}-${MODEL_ACTIVATION_OUTPUT}-${l}.model
+MODEL_GIVEN_PATH=${MODEL_ROOT}/${MODEL_TYPE}-${MODEL_SIZE}-${MODEL_LAYERS}-${MODEL_ACTIVATION_OUTPUT}
+if [ ! ${EMB_USE_WORDS} -eq 0 ]; then
+	  MODEL_GIVEN_PATH="${MODEL_GIVEN_PATH}-words"
+fi
+if [ ! ${EMB_USE_CHARS} -eq 0 ]; then
+	  MODEL_GIVEN_PATH="${MODEL_GIVEN_PATH}-chars"
+fi
+MODEL_GIVEN_PATH="${MODEL_GIVEN_PATH}/tagger.mdl"
+
 
 # set bash to 'debug' mode, it will exit on :
 # -e 'error', -u 'undefined variable', -o ... 'error in pipeline', -x 'print commands'
@@ -66,12 +74,12 @@ n_extra_files=${#PMB_EXTRA_SRC[@]}
 n_extra_langs=${#PMB_EXTRA_LANGS[@]}
 
 if [ ${n_pmb_langs} -ne ${n_pretrained} ]; then
-    echo "[ERROR] The specified numbers of PMB languages and their corresponding pretrained embedding files do not match (please fix config.sh)"
+    echo "[ERROR] The specified number of PMB languages and their corresponding pretrained embedding files do not match"
     exit
 fi
 
 if [ ${n_extra_files} -ne ${n_extra_langs} ] && [ ! ${PMB_EXTRA_DATA} -eq 0 ]; then
-    echo "[ERROR] The specified numbers of additional data files and their corresponding languages do not match (please fix config.sh)"
+    echo "[ERROR] The specified number of additional data files and their corresponding languages do not match"
     exit
 fi
 
@@ -81,6 +89,7 @@ if [ ! ${PARAMS_TRAIN} -eq 0 ]; then
 	  echo '[INFO] Preparing data...'
 	  . ${DIR_DATA}/prepare_data.sh
 	  echo '[INFO] Finished preparing data'
+      exit
 
 	  # SETUP REQUIRED TOOLS
 	  echo '[INFO] Setting up required tools...'

@@ -11,7 +11,6 @@ import operator
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
@@ -22,8 +21,13 @@ from models.loader import make_char_seqs, write_conll, write_chars
 from models.nnmodels import get_model
 
 from utils.convert_input2feats import wordsents2sym, charsents2sym
-from utils.data_stats import plot_dist_tags, plot_confusion_matrix
+from utils.data_stats import plot_dist_tags, plot_confusion_matrix, plot_accuracy
+from utils.data_stats import plot_confusion_matrix
 
+
+###################
+### DEFINITIONS ###
+###################
 
 # set random seeds to ensure comparability of results
 rnd_seed = 7937
@@ -48,12 +52,27 @@ DEFAULT_TAG = 'NIL'
 
 # obtain arguments
 args = get_args()
-args.batch_normalization = 0
 
 if not args.use_words and not args.use_chars:
     print('[ERROR] Cannot use words nor character features')
     print('[ERROR] A neural model will not be trained...')
     sys.exit()
+
+#### MODIFICATIONS FOR SMALL EXPERIMENTS
+args.use_chars = 0
+args.test_size = 0.2
+args.dev_size = 0.1
+args.grid_search = 0
+args.epochs = 5
+args.model_size = 40
+args.num_layers = 1
+args.noise_sigma = 0.0
+args.batch_normalization = 0
+
+
+#############################
+### LOAD AND PROCESS DATA ###
+#############################
 
 # load word embedding vectors
 word2idx, wemb_matrix, wemb_dim = load_embeddings(args.word_embeddings,
@@ -73,10 +92,16 @@ tag2idx, word_sents, max_wlen = load_conll(args.raw_pmb_data,
                                            lower = False,
                                            mwe = args.multi_word)
 
-plot_dist_tags()
-sys.exit()
 
-# load character embedding vectors and sequences
+#### INFO
+# plot distribution over tags
+plot_dist_tags(word_sents,
+               set(word2idx.keys()),
+               os.path.dirname(args.output) + '/tagdist.svg',
+               set(pad_sym.values()))
+
+
+# load character embedding vectors and input sequences
 if args.use_chars:
     char2idx, cemb_matrix, cemb_dim = load_embeddings(args.char_embeddings,
                                                       oovs = list(oov_sym.values()),
@@ -90,10 +115,13 @@ if args.use_chars:
                                           pads = pad_sym,
                                           lower = False)
 
+
+#### INFO
 # output processed word sentences for reference
 write_conll(args.data_words, word_sents)
 if args.use_chars:
     write_chars(args.data_chars, char_sents)
+
 
 # map word sentences and their tags to a symbolic representation
 if args.use_words:
@@ -104,6 +132,7 @@ if args.use_words:
 if args.use_chars:
     X_char = charsents2sym(char_sents, max_clen,
                            char2idx, oov_sym['unknown'], pad_sym['pad'])
+
 
 # split word data into training and test
 if args.use_words:
@@ -117,6 +146,11 @@ if args.use_chars:
     X_char_train, X_char_test = train_test_split(X_char, test_size=args.test_size)
     print('[INFO] Training split for characters contains:', X_char_train.shape)
     print('[INFO] Test split for characters contains:', X_char_test.shape)
+
+
+#############################
+### PREPARE TAGGING MODEL ###
+#############################
 
 # build input and output data for the model
 y_train = y_word_train
@@ -132,6 +166,7 @@ elif args.use_chars:
 	X_train = X_char_train
 	X_test = X_word_test
 
+
 # compute size of the word and character vocabulary
 num_words = 0
 num_chars = 0
@@ -140,31 +175,43 @@ if args.use_words:
 if args.use_chars:
     num_chars = len(char2idx.keys())
 
+
 # obtain model object
-model = get_model(args, max_wlen, num_words, wemb_dim, wemb_matrix, nb_classes) #max_clen, num_chars, cemb_dim, cemb_matrix)
+if not args.use_words:
+    max_wlen = 0
+    num_words = 0
+    wemb_dim = 0
+    wemb_matrix = None
+if not args.use_chars:
+    max_clen = 0
+    num_chars = 0
+    cemb_dim = 0
+    cemb_matrix = None
+
+model = get_model(args, max_wlen, num_words, wemb_dim, wemb_matrix, nb_classes, max_clen, num_chars, cemb_dim, cemb_matrix)
 model.summary()
+
 
 # train the model
 history = model.fit(X_train, np.array(y_train), batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, verbose=args.verbose)
 
-hist = pd.DataFrame(history.history)
 
-plt.style.use("ggplot")
-plt.figure(figsize=(12,12))
-plt.plot(hist["strict_accuracy"])
-plt.plot(hist["val_strict_accuracy"])
-plt.ylabel('Real accuracy')
-plt.xlabel('Number of epochs')
-plt.show()
+#### INFO
+# plot how the training went
+plot_accuracy(history,
+              ['strict_accuracy', 'val_strict_accuracy'],
+              ['Training data', 'Dev. data'],
+              0.6,
+              os.path.dirname(args.output) + '/acc.svg')
 
 
-# do some silly predictions
-#i = 50
-
+#### INFO
+# predict on the test set and plot confusion matrix
 p = model.predict(np.array(X_test), verbose=min(1, args.verbose))
 p = np.argmax(p, axis=-1)
 true = np.argmax(y_test, -1)
-lengths = [len(s) for s in word_sents]
+lengths = [len(s) for s in word_sents]y
+
 total = 0
 correct = 0
 
@@ -179,25 +226,17 @@ for triple in zip(p, true, lengths):
 
 print('Accuracy on the test set: ', correct/total)
 
+# CONFUSION MATRIX FOR TEST
+plot_confusion_matrix(p, true, lenghts, word2idx, True)
 
 
-# Compute confusion matrix
-cnf_matrix = confusion_matrix(true.flatten(), p.flatten())
-np.set_printoptions(precision=2)
+p = model.predict(np.array(X_train), verbose=min(1, args.verbose))
+p = np.argmax(p, axis=-1)
+true = np.argmax(y_train, -1)
+lengths = [len(s) for s in word_sents]y
 
-# Plot normalized confusion matrix
-#plt.figure()
-
-
-#tagnames = [x[0] for x in sorted(tag2idx.items(), key=operator.itemgetter(1))]
-#write_confusion_matrix(cnf_matrix, classes=tagnames, normalize=True,
-#                      title='Normalized confusion matrix')
-
-#plt.show()
-
-
-
-
+# CONFUSTION MATRIX FOR TRAIN
+plot_confusion_matrix(p, true, lenghts, word2idx, True)
 
 
 #for predtags in p:

@@ -70,23 +70,28 @@ PMB_EXTRA_LANGS=("en")
 ## EMBEDDINGS ##
 ################
 
-# pretrained word embeddings for each one of the PMB languages (array)
-# the files listed are assumed to be in the same order as PMB_LANGS
-# default embeddings are used when a given string is empty or does not match a file
-EMB_PRETRAINED=("")
-
 # whether or not to use word embeddings (boolean, default: 1)
 EMB_USE_WORDS=1
 
-# whether or not to use character embeddings (boolean, default: 0)
-EMB_USE_CHARS=0
+# whether or not to use character embeddings (boolean, default: 1)
+EMB_USE_CHARS=1
+
+# pretrained word embeddings for each one of the PMB languages (array)
+# the files listed are assumed to be in the same order as PMB_LANGS
+# default embeddings are used when a given string is empty or does not match a file
+EMB_WORD_PRETRAINED=("")
+
+# pretrained character embeddings for each one of the PMB languages (array)
+# the files listed are assumed to be in the same order as PMB_LANGS
+# default embeddings are used when a given string is empty or does not match a file
+EMB_CHAR_PRETRAINED=("")
 
 # root directory where to store word embeddings for English (string)
 # GloVe embeddings are only used if no pretrained embeddings are given
 # languages other than English use Polyglot embeddings instead
 EMB_ROOT=${DIR_DATA}/embeddings
 
-# pretrained version of the GloVe word embeddings to use for English (string)
+# version of the GloVe word embeddings to use for English as default (string)
 # allowed values: "glove.6B.{50/100/200/300}d", "glove.42B.300d", "glove.840B.300d"
 EMB_GLOVE_MODEL="glove.6B.50d"
 
@@ -94,8 +99,11 @@ EMB_GLOVE_MODEL="glove.6B.50d"
 ## TRAINING AND TESTING ##
 ##########################
 
-# proportion of tagged sentences to use for testing (float, default: 0.20)
-RUN_TEST_SIZE=0.20
+# proportion of tagged sentences to use for testing (float, default: 0.0)
+RUN_TEST_SIZE=0.0
+
+# proportion of tagged sentences to use for development (float, default: 0.0)
+RUN_DEV_SIZE=0.0
 
 # run grid-search for hyperparameter optimization (boolean, default: 0)
 # grid-search can change the model hyperparameters defined in the present file
@@ -119,18 +127,18 @@ MODEL_TYPE="bgru"
 # directory where to store the trained model (string)
 MODEL_ROOT=${DIR_MODELS}/bin
 
-# training epochs (int, default: 10)
-MODEL_EPOCHS=10
+# training epochs (int, default: 20)
+MODEL_EPOCHS=20
 
-# units in the first layer of the neural model (int, default: 50)
-MODEL_SIZE=100
+# units in the first layer of the neural model (int, default: 300)
+MODEL_SIZE=300
 
 # number of recurrent layers of the neural model
 # note that the number of hidden units is halved on each layer (int, default: 1)
-MODEL_LAYERS=2
+MODEL_LAYERS=1
 
-# standard deviation for the noise normal distribution (float, default: 0)
-MODEL_SIGMA=0
+# standard deviation for the noise normal distribution (float, default: 0.0)
+MODEL_SIGMA=0.0
 
 # activation function on hidden layers (string)
 # allowed values: "sigmoid", "tanh", "relu"
@@ -138,7 +146,7 @@ MODEL_ACTIVATION_HIDDEN="relu"
 
 # activation function on the output layer (string)
 # allowed values: "softmax", "crf"
-MODEL_ACTIVATION_OUTPUT="softmax"
+MODEL_ACTIVATION_OUTPUT="crf"
 
 # loss function (string)
 # allowed values: "mse", "mae", "chinge", "cce"
@@ -146,13 +154,13 @@ MODEL_LOSS="cce"
 
 # optimizer (string)
 # allowed values: "sgd", "adagrad", "adadelta", "rmsprop", "adam", "nadam"
-MODEL_OPTIMIZER="rmsprop"
+MODEL_OPTIMIZER="adam"
 
 # dropout rate on each layer (float, default: 0.1)
 MODEL_DROPOUT=0.1
 
 # batch size (int, default: 128)
-MODEL_BATCH_SIZE=32
+MODEL_BATCH_SIZE=128
 
 # use batch normalization (boolean, default: 0)
 MODEL_BATCH_NORMALIZATION=0
@@ -164,7 +172,11 @@ MODEL_VERBOSE=1
 ## OTHER TOOLS ##
 #################
 
-# root directory where to find the Elephant tokenizer
+# root directory where to find the Elephant tokenizer (RuG)
 # it will be downloaded automatically when missing
 ELEPHANT_DIR="${DIR_TOOLS}/elephant"
+
+# root directory where to find the lm_1b language model (Google)
+# it will be downloaded automatically when missing
+LM1B_DIR="${DIR_TOOLS}/lm_1b"
 
