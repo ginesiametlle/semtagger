@@ -15,7 +15,7 @@ emb_file = sys.argv[3]
 
 # unpickle embedding file
 words, embeddings = pickle.load(open(emb_pkl, 'rb'), encoding='latin-1')
-print("[INFO] Loaded Polyglot (" + str(lang) + ") embeddings with shape is {}".format(embeddings.shape))
+print("[INFO] Loaded Polyglot (" + str(lang) + ") embeddings with shape {}".format(embeddings.shape))
 
 # write out in text format
 with open(emb_file, 'w') as ofile:

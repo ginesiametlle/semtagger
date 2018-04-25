@@ -69,12 +69,18 @@ done
 
 # check for correctness of the configuration file
 n_pmb_langs=${#PMB_LANGS[@]}
-n_pretrained=${#EMB_PRETRAINED[@]}
+n_wpretrained=${#EMB_WORD_PRETRAINED[@]}
+n_cpretrained=${#EMB_CHAR_PRETRAINED[@]}
 n_extra_files=${#PMB_EXTRA_SRC[@]}
 n_extra_langs=${#PMB_EXTRA_LANGS[@]}
 
-if [ ${n_pmb_langs} -ne ${n_pretrained} ]; then
-    echo "[ERROR] The specified number of PMB languages and their corresponding pretrained embedding files do not match"
+if [ ${n_pmb_langs} -ne ${n_wpretrained} ]; then
+    echo "[ERROR] The specified number of PMB languages and the provided pretrained word embedding files do not match"
+    exit
+fi
+
+if [ ${n_pmb_langs} -ne ${n_cpretrained} ]; then
+    echo "[ERROR] The specified number of PMB languages and the provided pretrained character embedding files do not match"
     exit
 fi
 
@@ -85,28 +91,28 @@ fi
 
 
 if [ ! ${PARAMS_TRAIN} -eq 0 ]; then
-	  # DOWNLOAD AND PREPARE DATA
-	  echo '[INFO] Preparing data...'
-	  . ${DIR_DATA}/prepare_data.sh
-	  echo '[INFO] Finished preparing data'
-      exit
+    # SETUP REQUIRED TOOLS
+    echo '[INFO] Setting up required tools...'
+    . ${DIR_TOOLS}/prepare_tools.sh
+    echo '[INFO] Finished setting up tools'
 
-	  # SETUP REQUIRED TOOLS
-	  echo '[INFO] Setting up required tools...'
-	  . ${DIR_TOOLS}/prepare_tools.sh
-	  echo '[INFO] Finished setting up tools'
+    # DOWNLOAD AND PREPARE DATA
+    echo '[INFO] Preparing data...'
+    . ${DIR_DATA}/prepare_data.sh
+    echo '[INFO] Finished preparing data'
+    exit
 
-	  # TRAIN A MODEL
-	  echo "[INFO] Training ${MODEL_TYPE} models for semantic tagging..."
-	  . ${DIR_MODELS}/semtagger_train.sh
-	  echo "[INFO] A ${MODEL_TYPE} model was succesfully trained"
+    # TRAIN A MODEL
+    echo "[INFO] Training ${MODEL_TYPE} models for semantic tagging..."
+    . ${DIR_MODELS}/semtagger_train.sh
+    echo "[INFO] A ${MODEL_TYPE} model was succesfully trained"
 fi
 
 
 if [ ! ${PARAMS_PREDICT} -eq 0 ]; then
-	  # PREDICT USING A TRAINED MODEL
-	  echo "[INFO] Predicting sem-tags using a ${MODEL_TYPE} model..."
-	  . ${DIR_MODELS}/semtagger_predict.sh
+    # PREDICT USING A TRAINED MODEL
+    echo "[INFO] Predicting sem-tags using a ${MODEL_TYPE} model..."
+    . ${DIR_MODELS}/semtagger_predict.sh
     echo '[INFO] Finished tagging'
 fi
 

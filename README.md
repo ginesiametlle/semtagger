@@ -4,7 +4,7 @@
 
 An easy to use (but powerful) universal semantic tagger.
 
-A reasonably recent version of Python 3 and the packages listed in [requirements.txt](./requirements.txt) are expected.
+A recent version of Python 3 with the packages listed in [requirements.txt](./requirements.txt) and Bazel are expected.
 
 ### Training a neural model
 
