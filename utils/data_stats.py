@@ -19,13 +19,14 @@ from functools import reduce
 from sklearn.metrics import confusion_matrix
 
 
-def plot_dist_tags(sents, vocab, outfile, padwords):
+def plot_dist_tags(sents, vocab, outimg, outfile, padwords):
     """
     Plot the amount of words per tag in a dataset
             Inputs:
                 - sent: list of sentences represented as a list of (word, tag, sym) items
                 - words: set containing words in the vocabulary
-                - outfile: output file
+                - outimg: output image
+                - outfile: numerical data
                 - padwords: set of words to be ignored
     """
     count = {}
@@ -49,11 +50,11 @@ def plot_dist_tags(sents, vocab, outfile, padwords):
     line_chart.add('IVs + OOVs', ydata_rest)
 
     # circumvent potential svg css styling problems
-    line_chart.render_to_file(outfile)
-    cairosvg.svg2svg(url=outfile, write_to=outfile)
+    line_chart.render_to_file(outimg)
+    cairosvg.svg2svg(url=outimg, write_to=outimg)
 
     # output text
-    with open(outfile + '.txt', 'w') as tfile:
+    with open(outfile, 'w') as tfile:
         tfile.write("tag\t#OOVs\t#IVs\t#words\tratio\n")
         for i in range(len(xdata)):
             tfile.write(str(xdata[i]) + '\t')
@@ -92,7 +93,7 @@ def plot_accuracy(history, keys, labels, test_acc, outfile):
     cairosvg.svg2svg(url=outfile, write_to=outfile)
 
 
-def plot_confusion_matrix(predicted, true, lengths, classes, outfile, ymap, vocab=[], include_oovs=True, normalize=True):
+def plot_confusion_matrix(predicted, true, lengths, classes, outfile, ymap, vocab=[], normalize=True):
     """
     Plot a confusion matrix
             Inputs:
@@ -113,12 +114,8 @@ def plot_confusion_matrix(predicted, true, lengths, classes, outfile, ymap, voca
         y_pred = []
         y_true = []
         for i in range(len(true)):
-            if include_oovs:
-                y_pred += [ymap[yi] for yi in predicted[i][:lengths[i]]]
-                y_true += [ymap[yi] for yi in true[i][:lengths[i]]]
-            else:
-                y_pred += list(filter(lambda x: x in vocab, [ymap[yi] for yi in predicted[i][:lengths[i]]]))
-                y_true += list(filter(lambda x: x in vocab, [ymap[yi] for yi in true[i][:lengths[i]]]))
+            y_pred += [ymap[yi] for yi in predicted[i][:lengths[i]]]
+            y_true += [ymap[yi] for yi in true[i][:lengths[i]]]
 
     # compute confusion matrix
     cm = confusion_matrix(y_true, y_pred, labels=classes)
@@ -132,10 +129,10 @@ def plot_confusion_matrix(predicted, true, lengths, classes, outfile, ymap, voca
     # plot
     fig, ax = plt.subplots(figsize=(25,25))
     b = sns.heatmap(cm, fmt='', ax=ax, cmap="BuPu", square=True, xticklabels=True, yticklabels=True)
-    b.set_xlabel("Predicted tags", fontsize=16)
-    b.set_ylabel("True tags", fontsize=16)
-    b.set_xticklabels(b.get_yticklabels(), rotation=45, fontsize=12)
-    b.set_yticklabels(b.get_yticklabels(), rotation=45, fontsize=12)
+    b.set_xlabel("Predicted tags", fontsize=20)
+    b.set_ylabel("True tags", fontsize=20)
+    b.set_xticklabels(b.get_yticklabels(), fontsize=12)
+    b.set_yticklabels(b.get_yticklabels(), fontsize=12)
     plt.draw()
     plt.savefig(outfile)
 

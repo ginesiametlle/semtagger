@@ -52,7 +52,9 @@ oov_sym['number'] = '<num>'
 oov_sym['unknown'] = '<unk>'
 
 # default sem-tag to which special words are mapped
+PADDING_TAG = 'NIL'
 DEFAULT_TAG = 'NIL'
+
 
 # obtain arguments
 args = get_args()
@@ -95,23 +97,24 @@ tag2idx, word_sents, max_wlen = load_conll(args.raw_pmb_data,
                                            vocab = set(word2idx.keys()),
                                            oovs = oov_sym,
                                            pads = pad_sym,
-                                           default_tag = DEFAULT_TAG,
+                                           padding_tag = PADDING_TAG,
                                            len_perc = args.max_len_perc,
                                            lower = False,
                                            mwe = args.multi_word)
 
 # map word sentences and their tags to a symbolic representation
 print('[INFO] Reshaping word data...')
+random.shuffle(word_sents)
 X_word, y_tag = wordsents2sym(word_sents, max_wlen,
                               word2idx, tag2idx,
                               oov_sym['unknown'], DEFAULT_TAG,
-                              pad_sym['pad'], DEFAULT_TAG)
+                              pad_sym['pad'], PADDING_TAG)
 
 # compute word-based inputs
 if args.use_words:
     # split word data into training and test
     print('[INFO] Splitting word data into training and test...')
-    X_word_train, X_word_test, y_tag_train, y_tag_test = train_test_split(X_word, y_tag, test_size=args.test_size)
+    X_word_train, X_word_test, y_tag_train, y_tag_test = train_test_split(X_word, y_tag, test_size=args.test_size, shuffle=False)
     print('[INFO] Training split for words contains:', X_word_train.shape, '-->', y_tag_train.shape)
     print('[INFO] Test split for words contains:', X_word_test.shape, '-->', y_tag_test.shape)
 
@@ -119,7 +122,8 @@ if args.use_words:
     # plot distribution over tags
     plot_dist_tags(word_sents,
                    set(word2idx.keys()),
-                   os.path.dirname(args.output_model) + '/tagdist.svg',
+                   os.path.dirname(args.output_model) + '/semtag_dist.svg',
+                   os.path.dirname(args.output_model) + '/semtag_dist.txt',
                    set(pad_sym.values()))
 
     # output processed word sentences for reference
@@ -151,7 +155,7 @@ if args.use_chars:
 
     # split character data into training and test
     print('[INFO] Splitting character data into training and test...')
-    X_char_train, X_char_test, y_tag_train, y_tag_test = train_test_split(X_char, y_tag, test_size=args.test_size)
+    X_char_train, X_char_test, y_tag_train, y_tag_test = train_test_split(X_char, y_tag, test_size=args.test_size, shuffle=False)
     print('[INFO] Training split for characters contains:', X_char_train.shape, '-->', y_tag_train.shape)
     print('[INFO] Test split for characters contains:', X_char_test.shape, '-->', y_tag_test.shape)
 
@@ -208,38 +212,72 @@ model.summary()
 history = model.fit(X_train, np.array(y_train), batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, verbose=args.verbose)
 
 #### INFO
+# predict on the training and test sets
+classes = [x[0] for x in sorted(tag2idx.items(), key=operator.itemgetter(1))]
+idx2tag = {v: k for k, v in tag2idx.items()}
+lengths = [len(s) for s in word_sents]
+
+
+p_train = model.predict(np.array(X_train), verbose=min(1, args.verbose))
+p_train = np.argmax(p_train, axis=-1)
+true_train = np.argmax(y_train, -1)
+total_train = 0
+correct_train = 0
+sent_index_train = 0
+
+
+for triple in zip(p_train, true_train, lengths):
+    pred_tags = triple[0]
+    true_tags = triple[1]
+    l = lengths[sent_index_train]
+
+    #print(word_sents[sent_index_train])
+    #print(l)
+    sent_index_train += 1
+    for n in range(min(max_wlen,l)):
+        total_train += 1
+        if pred_tags[n] == true_tags[n]:
+            correct_train += 1
+print('Accuracy on the training set: ', correct_train/total_train)
+
+
+p_test = model.predict(np.array(X_test), verbose=min(1, args.verbose))
+p_test = np.argmax(p_test, axis=-1)
+true_test = np.argmax(y_test, -1)
+total_test = 0
+correct_test = 0
+sent_index_test = 0
+
+for triple in zip(p_test, true_test, lengths):
+    pred_tags = triple[0]
+    true_tags = triple[1]
+    l = lengths[sent_index_train + sent_index_test]
+
+    #print(true_tags)
+    #print(word_sents[sent_index_train + sent_index_test])
+    #print(l)
+
+    sent_index_test += 1
+    for n in range(min(max_wlen,l)):
+        total_test += 1
+        if pred_tags[n] == true_tags[n]:
+            correct_test += 1
+print('Accuracy on the test set: ', correct_test/total_test)
+
+
+#### INFO
+# plot confusion matrix (train + test)
+plot_confusion_matrix(p_train, true_train, lengths[:sent_index_train], classes, os.path.dirname(args.output_model) + '/cmat_train_oov.svg', idx2tag, set(word2idx.keys()), True)
+plot_confusion_matrix(p_test, true_test, lengths[sent_index_train:], classes, os.path.dirname(args.output_model) + '/cmat_test_oov.svg', idx2tag, set(word2idx.keys()), True)
+
+
+#### INFO
 # plot how the training went
 plot_accuracy(history,
               ['strict_accuracy', 'val_strict_accuracy'],
               ['Training data', 'Dev. data'],
-              0.6,
-              os.path.dirname(args.output_model) + '/acc.svg')
-
-#### INFO
-# predict on the test set
-p = model.predict(np.array(X_test), verbose=min(1, args.verbose))
-p = np.argmax(p, axis=-1)
-true = np.argmax(y_test, -1)
-lengths = [len(s) for s in word_sents]
-total = 0
-correct = 0
-
-for triple in zip(p, true, lengths):
-    pred_tags = triple[0]
-    true_tags = triple[1]
-    l = triple[2]
-    for n in range(min(max_wlen,l)):
-        total += 1
-        if pred_tags[n] == true_tags[n]:
-            correct += 1
-
-print('Accuracy on the test set: ', correct/total)
-
-#### INFO
-# plot confusion matrix
-classes = [x[0] for x in sorted(tag2idx.items(), key=operator.itemgetter(1))]
-idx2tag = {v: k for k, v in tag2idx.items()}
-plot_confusion_matrix(p, true, lengths, classes, os.path.dirname(args.output_model) + '/cmatrix.svg', idx2tag, set(word2idx.keys()), True, True)
+              correct_test/total_test,
+              os.path.dirname(args.output_model) + '/semtag_acc.svg')
 
 
 #######################

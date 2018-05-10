@@ -81,7 +81,7 @@ def load_embeddings(emb_file, oovs = [], pads = [], sep = ' ', lower = False):
     return word2idx, np.asarray(emb_matrix), emb_dim
 
 
-def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, default_tag = 'NIL', len_perc = 1.0, lower = False, mwe = True):
+def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, padding_tag = 'PAD', len_perc = 1.0, lower = False, mwe = True):
     """
     Reads a file in the conll format and produces processed sentences
         Inputs:
@@ -102,7 +102,7 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, default
 
     # note: all padding words are assigned the default (empty semantics) semantic tag
     tag2idx = {}
-    tag2idx[default_tag] = len(tag2idx)
+    tag2idx[padding_tag] = len(tag2idx)
 
     # special characters used for splitting words
     split_chars = set([',', '.', ':', '-', '~', "'", '"'])
@@ -111,7 +111,7 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, default
     lengths = []
     if 'begin' in pads:
         next_words = [pads['begin']]
-        next_tags = [default_tag]
+        next_tags = [padding_tag]
         next_syms = ['']
         sent_base_length = 1
     else:
@@ -189,7 +189,7 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, default
                     if not line:
                         if 'end' in pads:
                             next_words.append(pads['end'])
-                            next_tags.append(default_tag)
+                            next_tags.append(padding_tag)
                             next_syms.append('')
                         sents.append(list(zip(next_words, next_tags, next_syms)))
                         lengths.append(len(sents[-1]))
@@ -204,7 +204,7 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, default
                         split_syms = next_syms[:-3]
                         if 'end' in pads:
                             split_words.append(pads['end'])
-                            split_tags.append(default_tag)
+                            split_tags.append(padding_tag)
                             split_syms.append('')
                         sents.append(list(zip(split_words, split_tags, split_syms)))
                         lengths.append(len(sents[-1]))
@@ -214,14 +214,14 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, default
                         num_sents += 1
                     if 'begin' in pads:
                         next_words = [pads['begin']] + next_words
-                        next_tags = [default_tag] + next_tags
+                        next_tags = [padding_tag] + next_tags
                         next_syms = [''] + next_syms
 
         # double check the last sentence
         if len(next_words) > sent_base_length:
             if 'end' in pads:
                 next_words.append(pads['end'])
-                next_tags.append(default_tag)
+                next_tags.append(padding_tag)
                 next_syms.append('')
             sents.append(list(zip(next_words, next_tags, next_syms)))
             lengths.append(len(sents[-1]))

@@ -6,7 +6,7 @@
 for l in ${PMB_LANGS[@]} ; do
 
     MODEL_GIVEN_PATH="${MODEL_GIVEN_DIR}/${l}/tagger.hdf5"
-    MODEL_PATH_INFO="${MODEL_GIVEN_DIR}/${l}/minfo.pkl"
+    MODEL_PATH_INFO="${MODEL_GIVEN_DIR}/${l}/tagger_params.pkl"
 
     # use an existing model if it exists
     if [ -f ${MODEL_GIVEN_PATH} ] && [ ${GET_MODEL} -eq 0 ]; then
