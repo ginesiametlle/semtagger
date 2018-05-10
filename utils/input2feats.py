@@ -4,6 +4,7 @@
 import numpy as np
 from keras.preprocessing.sequence import pad_sequences
 
+
 def wordsents2sym(sents, max_len, word2idx, tag2idx, def_word, def_tag, pad_word, pad_tag):
     """
     Given a list of sentences, return a list of integers
@@ -25,22 +26,24 @@ def wordsents2sym(sents, max_len, word2idx, tag2idx, def_word, def_tag, pad_word
     nb_classes = len(tag2idx)
 
     try:
-        print('[INFO] Reshaping word data...')
         # map each word to indices and tags to categorial vectors
         for sent in sents:
             sent_X = np.zeros((len(sent),), dtype = np.int32)
             sent_y = np.zeros((len(sent), nb_classes), dtype = np.int32)
             for i, elem in enumerate(sent):
                 word = elem[0]
-                tag = elem[1]
                 if word in word2idx:
                     sent_X[i] = word2idx[word]
                 else:
                     sent_X[i] = word2idx[def_word]
-                if tag in tag2idx:
-                    sent_y[i, tag2idx[tag]] = 1
-                else:
-                    sent_y[i, tag2idx[def_tag]] = 1
+
+                if len(elem) > 1:
+                    tag = elem[1]
+                    if tag in tag2idx:
+                        sent_y[i, tag2idx[tag]] = 1
+                    else:
+                        sent_y[i, tag2idx[def_tag]] = 1
+
             X.append(sent_X)
             y.append(sent_y)
 
@@ -54,8 +57,8 @@ def wordsents2sym(sents, max_len, word2idx, tag2idx, def_word, def_tag, pad_word
 
     print('[INFO] Number of classes (sem-tags):', nb_classes)
     print('[INFO] Input word data shape:', np.asarray(X).shape)
-    print('[INFO] Output word data shape:', np.asarray(y).shape)
-    return X, y, nb_classes
+    print('[INFO] Output data shape:', np.asarray(y).shape)
+    return X, y
 
 
 def charsents2sym(sents, max_len, char2idx, def_char, pad_char):
@@ -73,7 +76,6 @@ def charsents2sym(sents, max_len, char2idx, def_char, pad_char):
     X = []
 
     try:
-        print('[INFO] Reshaping character data...')
         # map each character to indices
         for sent in sents:
             sent_X = np.zeros((len(sent),), dtype = np.int32)
@@ -86,7 +88,7 @@ def charsents2sym(sents, max_len, char2idx, def_char, pad_char):
 
         # add padding up to the maximum allowed length
         X = pad_sequences(X, maxlen = max_len, dtype = np.int32,
-                          padding="post", value = word2idx[pad_char])
+                          padding="post", value = char2idx[pad_char])
     except Exception as e:
         print('[ERROR] Exception in `charsents2sym`:', e)
 

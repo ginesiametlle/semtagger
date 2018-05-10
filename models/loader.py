@@ -128,6 +128,7 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, default
     # counters
     num_raw_sents = 0
     num_sents = 0
+    num_words = 0
     num_oovs = 0
 
     # iterate over lines in the input files
@@ -144,6 +145,7 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, default
                     word, tag = line.split('\t')
                     sym = word
                     if word != 'ø':
+                        num_words += 1
                         if lower:
                             word = word.lower()
 
@@ -228,7 +230,7 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, default
     max_len = sorted(lengths)[math.ceil((len(lengths)-1) * len_perc)]
     print('[INFO] Sentence length percentile: ' + str(len_perc))
     print('[INFO] Max allowed sentence word length: ' + str(max_len))
-    print('[INFO] Number of out-of-vocabulary words: ' + str(num_oovs))
+    print('[INFO] Number of OOV words: ' + str(num_oovs) + ' / ' + str(num_words))
     print('[INFO] Original number of sentences: ' + str(num_raw_sents))
     print('[INFO] Number of extracted sentences ' + str(num_sents))
     return tag2idx, sents, max_len
@@ -264,28 +266,38 @@ def make_char_seqs(word_seqs, vocab={}, oovs={}, pads={}, lower = False):
     """
     char_seqs = []
     max_len = 0
+    num_chars = 0
+    num_oovs = 0
+    num_spaces = 0
+
     for sent in word_seqs:
         chars = []
         if 'begin' in pads:
             chars.append(pads['begin'])
         filterlist = filter(lambda x: x, [w[2] if isinstance(w, (list,tuple)) else w for w in sent])
         for c in ' '.join(filterlist):
-                if c == '~':
-                    c = ' '
-                if lower:
-                    c = c.lower()
-                if vocab and c not in vocab:
-                    if c.isdigit():
-                        c = oovs['number']
-                    else:
-                        c = oovs['unknown']
-                chars.append(c)
+            num_chars += 1
+            if c == '~':
+                c = ' '
+            if lower:
+                c = c.lower()
+            if vocab and c not in vocab:
+                if c.isspace():
+                    num_spaces += 1
+                if c.isdigit():
+                    c = oovs['number']
+                else:
+                    c = oovs['unknown']
+                num_oovs += 1
+            chars.append(c)
         if 'end' in pads:
             chars.append(pads['end'])
         if len(chars) > max_len:
             max_len = len(chars)
         char_seqs.append(chars)
 
+    print('[INFO] Max allowed sentence character length: ' + str(max_len))
+    print('[INFO] Number of OOV characters: ' + str(num_oovs) + ' / ' + str(num_chars) + ' [' + str(num_spaces) + ' are spaces]')
     return char_seqs, max_len
 
 
@@ -303,4 +315,124 @@ def write_chars(ofile, char_sents):
                 for char in sent[1:]:
                     ofile.write(' ' + char)
                 ofile.write('\n')
+
+
+def load_conll_notags(unfile, vocab = {}, oovs = {}, pads = {}, lower = False, mwe = True):
+    """
+    Reads a file containing unlabelled data and produces processed sentences
+        Inputs:
+            - unfile: path to a file with data
+            - vocab: set containing all words to use as vocabulary
+            - oovs: dictionary with aliases to replace oovs with (valid keys: number, unknown)
+            - pads: dictionary with delimiter words to include in the sentences (valid keys: begin, end)
+            - lower: lowercase (or not) words in the input data
+            - mwe: handle multi-word expressions
+        Outputs:
+            - sents: list of sentences represented as [w1, ..., wN], where wi is a mapped words
+    """
+    # special characters used for splitting words
+    split_chars = set([',', '.', ':', '-', '~', "'", '"'])
+
+    sents = []
+    if 'begin' in pads:
+        next_words = [pads['begin']]
+        next_syms = ['']
+        sent_base_length = 1
+    else:
+        next_words = []
+        next_syms = []
+        sent_base_length = 0
+
+    # select files to use
+    input_files = [unfile]
+
+    # counters
+    num_raw_sents = 0
+    num_sents = 0
+    num_words = 0
+    num_oovs = 0
+
+    # iterate over lines in the input files
+    for ifile in input_files:
+        for line in codecs.open(ifile, mode = 'r', errors = 'ignore', encoding = 'utf-8'):
+            # discard newline character
+            line = line[:-1]
+
+            # keep adding words while in the middle of a sentence
+            if line:
+                word = line.split('\t')[0]
+                sym = word
+                if word != 'ø':
+                    num_words += 1
+                    if lower:
+                        word = word.lower()
+
+                    # use an heuristic and try to map oov words
+                    if vocab and word not in vocab and word not in split_chars:
+                        if re.match('^[0-9\.\,-]+$', word):
+                            word = oovs['number']
+                        elif word.lower() in vocab:
+                            word = word.lower()
+                        elif word.upper() in vocab:
+                            word = word.upper()
+                        elif word.capitalize() in vocab:
+                            word = word.capitalize()
+                        elif '~' in word or '-' in word and mwe:
+                            # attempt to split multi-word expressions
+                            constituents = re.split('[ -~]+', word)
+                            if all([True if c in vocab else False for c in constituents]):
+                                next_words += constituents[:-1]
+                                next_syms += constituents[:-1]
+                                word = constituents[-1]
+                                sym = constituents[-1]
+                            else:
+                                #print('[INFO] Word ' + word + ' not in the embedding vocabulary')
+                                word = oovs['unknown']
+                                num_oovs += 1
+                        else:
+                            #print('[INFO] Word ' + word + ' not in the embedding vocabulary')
+                            word = oovs['unknown']
+                            num_oovs += 1
+
+                    next_words.append(word)
+                    next_syms.append(sym)
+
+            # stack the current sentence upon seeing an empty line or a full stop
+            if not line or (len(next_words) > 3 and next_words[-4] == '.'):
+                if len(next_words) > sent_base_length:
+                    if not line:
+                        if 'end' in pads:
+                            next_words.append(pads['end'])
+                            next_syms.append('')
+                        sents.append(list(zip(next_words, next_syms)))
+                        next_words = []
+                        next_syms = []
+                        num_raw_sents += 1
+                        num_sents += 1
+                    else:
+                        split_words = next_words[:-3]
+                        split_syms = next_syms[:-3]
+                        if 'end' in pads:
+                            split_words.append(pads['end'])
+                            split_syms.append('')
+                        sents.append(list(zip(split_words, split_syms)))
+                        next_words = next_words[-3:]
+                        next_syms = next_syms[-3:]
+                        num_sents += 1
+                    if 'begin' in pads:
+                        next_words = [pads['begin']] + next_words
+                        next_syms = [''] + next_syms
+
+        # double check the last sentence
+        if len(next_words) > sent_base_length:
+            if 'end' in pads:
+                next_words.append(pads['end'])
+                next_syms.append('')
+            sents.append(list(zip(next_words, next_syms)))
+
+    # find the allowed sentence length
+    print('[INFO] Number of unlabelled OOV words: ' + str(num_oovs) + ' / ' + str(num_words))
+    print('[INFO] Original number of unlabelled sentences: ' + str(num_raw_sents))
+    print('[INFO] Number of extracted unlabelled sentences ' + str(num_sents))
+    return sents
 

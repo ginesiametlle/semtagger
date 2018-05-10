@@ -5,6 +5,7 @@ import sys
 import string
 import numpy.random
 
+
 # target language
 lang = sys.argv[1]
 
@@ -15,7 +16,7 @@ emb_chars = [str(x) for x in sys.argv[2]]
 emb_file = sys.argv[3]
 
 # determine the number of dimensions
-ndims = min(16, int(len(emb_chars) / 4))
+ndims = 1024
 print("[INFO] Character vectors for (" + str(lang) + ") have dimensionality " + str(ndims))
 
 # write out in text format

@@ -15,11 +15,11 @@ if [ ! -d ${PMB_ROOT} ] || [ ! ${GET_PMB} -eq 0 ]; then
     rm -rf "pmb-${PMB_VER}"
     popd > /dev/null
 fi
-echo '[INFO] Finished downloading the PMB'
+echo "[INFO] Finished downloading the PMB"
 
 
 # extract semantic tags from sentences in the PMB
-echo '[INFO] Extracting tag data from the PMB...'
+echo "[INFO] Extracting tag data from the PMB..."
 for l in ${PMB_LANGS[@]} ; do
     if [ ! -f ${PMB_EXTDIR}/${l}/pmb_${l}.sem ] || [ ! ${GET_PMB} -eq 0 ]; then
         rm -f ${PMB_EXTDIR}/${l}/pmb_${l}.sem
@@ -46,7 +46,7 @@ done
 
 
 # extract semantic tags from the extra available data
-echo '[INFO] Extracting extra tag data...'
+echo "[INFO] Extracting extra tag data..."
 if [ ! ${PMB_EXTRA_DATA} -eq 0 ]; then
     for idx in ${!PMB_EXTRA_LANGS[*]} ; do
         l=${PMB_EXTRA_LANGS[$idx]}
@@ -74,11 +74,11 @@ else
         rm -f ${PMB_EXTDIR}/${l}/extra_${l}.sem
     done
 fi
-echo '[INFO] Extraction of tag data completed'
+echo "[INFO] Extraction of tag data completed"
 
 
 # extract word embeddings or use pretrained ones
-echo '[INFO] Preparing word embeddings...'
+echo "[INFO] Preparing word embeddings..."
 for idx in ${!PMB_LANGS[*]} ; do
     l=${PMB_LANGS[$idx]}
     lwpretrained=${EMB_WORD_PRETRAINED[$idx]}
@@ -133,11 +133,11 @@ for idx in ${!PMB_LANGS[*]} ; do
         fi
     fi
 done
-echo '[INFO] Finished preparing word embeddings'
+echo "[INFO] Finished preparing word embeddings"
 
 
 # extract character embeddings or use pretrained ones
-echo '[INFO] Preparing character embeddings...'
+echo "[INFO] Preparing character embeddings..."
 for idx in ${!PMB_LANGS[*]} ; do
     l=${PMB_LANGS[$idx]}
     lcpretrained=${EMB_CHAR_PRETRAINED[$idx]}
@@ -152,11 +152,11 @@ for idx in ${!PMB_LANGS[*]} ; do
                 mkdir -p ${EMB_ROOT_EN}
                 pushd ${EMB_ROOT_EN} > /dev/null
                 pushd ${LM1B_DIR} > /dev/null
-                bazel-bin/lm_1b/lm_1b_eval --mode dump_char_emb --pbtxt data/graph-2016-09-10.pbtxt \
+                bazel-bin/lm_1b/lm_1b_eval --mode dump_emb --pbtxt data/graph-2016-09-10.pbtxt \
                                            --vocab_file data/vocab-small.txt \
                                            --ckpt 'data/ckpt-*' --save_dir output
                 popd > /dev/null
-                python3 ${DIR_DATA}/get_lm1b_cemb.py $l ${LM1B_DIR}/output/char_embeddings.npy ${EMB_ROOT_EN}/cemb_${l}.txt
+                python3 ${DIR_DATA}/get_lm1b_cemb.py $l ${LM1B_DIR}/output/embeddings_char_cnn.npy ${EMB_ROOT_EN}/cemb_${l}.txt
                 popd > /dev/null
             fi
         # use Gaussian initialization on other languages
@@ -175,5 +175,5 @@ for idx in ${!PMB_LANGS[*]} ; do
         fi
     fi
 done
-echo '[INFO] Finished preparing character embeddings'
+echo "[INFO] Finished preparing character embeddings"
 

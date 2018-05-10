@@ -116,6 +116,14 @@ RUN_LEN_PERC=0.9
 # handle multi-word expressions (boolean, default: 1)
 RUN_MWE=1
 
+# use a residual network on character embeddings (boolean, default: 1)
+# when residual networks cannot be used, a basic CNN is employed instead
+RUN_RESNET=1
+
+# depth of the residual network applied on character embeddings (int, default: 4)
+# the network helps turn character embeddings into word-like representations
+RUN_RESNET_DEPTH=4
+
 #####################
 # MODEL PARAMETERS ##
 #####################
@@ -127,15 +135,15 @@ MODEL_TYPE="bgru"
 # directory where to store the trained model (string)
 MODEL_ROOT=${DIR_MODELS}/bin
 
-# training epochs (int, default: 20)
-MODEL_EPOCHS=20
+# training epochs (int, default: 50)
+MODEL_EPOCHS=50
 
-# units in the first layer of the neural model (int, default: 300)
-MODEL_SIZE=300
+# units in the first layer of the neural model (int, default: 200)
+MODEL_SIZE=200
 
 # number of recurrent layers of the neural model
-# note that the number of hidden units is halved on each layer (int, default: 1)
-MODEL_LAYERS=1
+# note that the number of hidden units is halved on each layer (int, default: 2)
+MODEL_LAYERS=2
 
 # standard deviation for the noise normal distribution (float, default: 0.0)
 MODEL_SIGMA=0.0
@@ -149,21 +157,21 @@ MODEL_ACTIVATION_HIDDEN="relu"
 MODEL_ACTIVATION_OUTPUT="crf"
 
 # loss function (string)
-# allowed values: "mse", "mae", "chinge", "cce"
-MODEL_LOSS="cce"
+# allowed values: "mse", "mae", "categorical_hinge", "categorical_cross_entropy"
+MODEL_LOSS="categorical_cross_entropy"
 
 # optimizer (string)
 # allowed values: "sgd", "adagrad", "adadelta", "rmsprop", "adam", "nadam"
-MODEL_OPTIMIZER="adam"
+MODEL_OPTIMIZER="nadam"
 
 # dropout rate on each layer (float, default: 0.1)
 MODEL_DROPOUT=0.1
 
-# batch size (int, default: 128)
-MODEL_BATCH_SIZE=128
+# batch size (int, default: 256)
+MODEL_BATCH_SIZE=256
 
-# use batch normalization (boolean, default: 0)
-MODEL_BATCH_NORMALIZATION=0
+# use batch normalization (boolean, default: 1)
+MODEL_BATCH_NORMALIZATION=1
 
 # keras verbosity mode (int, default: 1)
 MODEL_VERBOSE=1

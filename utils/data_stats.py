@@ -2,16 +2,22 @@
 # this script produces graphical visualizations
 
 import sys
-import pygal
+import os
+
 import numpy as np
 import pandas as pd
-import cairosvg
-from matplotlib import pyplot as plt
-import operator
 
-from functools import reduce
-from itertools import chain
+from matplotlib import pyplot as plt
+import pygal
+import cairosvg
+import seaborn as sns
+
 import operator
+import itertools
+from functools import reduce
+
+from sklearn.metrics import confusion_matrix
+
 
 def plot_dist_tags(sents, vocab, outfile, padwords):
     """
@@ -57,8 +63,16 @@ def plot_dist_tags(sents, vocab, outfile, padwords):
             tfile.write(str(ydata_oov[i] / (ydata_oov[i] + ydata_rest[i])) + '\n')
 
 
-
 def plot_accuracy(history, keys, labels, test_acc, outfile):
+    """
+    Plot the accuracy against training epochs
+            Inputs:
+                - history: keras fit() function return object
+                - keys: key values to access the metrics in history
+                - labels: names of the metrics that match keys
+                - test_acc: accuracy on the test set (constant)
+                - outfile: output file
+    """
     hist = pd.DataFrame(history.history)
 
     chart = pygal.Line(width=1600, height=800, x_label_rotation=-45, x_title='Number of training epochs', y_title='Sem-tagging accuracy')
@@ -78,57 +92,50 @@ def plot_accuracy(history, keys, labels, test_acc, outfile):
     cairosvg.svg2svg(url=outfile, write_to=outfile)
 
 
-
-def plot_confusion_matrix(predicted, true, lengths, outdir, vocab=[], include_oovs = True):
-    
-# Compute confusion matrix
-#cnf_matrix = confusion_matrix(true.flatten(), p.flatten())
-#np.set_printoptions(precision=2)
-
-# Plot normalized confusion matrix
-#plt.figure()
-
-
-#tagnames = [x[0] for x in sorted(tag2idx.items(), key=operator.itemgetter(1))]
-#write_confusion_matrix(cnf_matrix, classes=tagnames, normalize=True,
-#                      title='Normalized confusion matrix')
-
-#plt.show()
-
-    return 0
-
-'''
-def plot_confusion_matrix(cm, classes,
-                          normalize=False,
-                          title='Confusion matrix',
-                          cmap=plt.cm.Blues):
-    """ w
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
+def plot_confusion_matrix(predicted, true, lengths, classes, outfile, ymap, vocab=[], include_oovs=True, normalize=True):
     """
+    Plot a confusion matrix
+            Inputs:
+                - predicted: predicted labels
+                - true: true labels
+                - lengths: original length of each sentence (excluding padding characters)
+                - classes: set containing all output classes
+                - outfile: output file
+                - ymap: map to transform predicted and true labels
+                - vocab: set containing all words in the vocabulary
+                - include_oovs: whether to include OOVs or not in the cmatrix
+                - normalize: normalize confusion matrix
+    """
+	# turn the obtained labels to readable string classes (exclude pads)
+    y_pred = predicted
+    y_true = true
+    if ymap:
+        y_pred = []
+        y_true = []
+        for i in range(len(true)):
+            if include_oovs:
+                y_pred += [ymap[yi] for yi in predicted[i][:lengths[i]]]
+                y_true += [ymap[yi] for yi in true[i][:lengths[i]]]
+            else:
+                y_pred += list(filter(lambda x: x in vocab, [ymap[yi] for yi in predicted[i][:lengths[i]]]))
+                y_true += list(filter(lambda x: x in vocab, [ymap[yi] for yi in true[i][:lengths[i]]]))
+
+    # compute confusion matrix
+    cm = confusion_matrix(y_true, y_pred, labels=classes)
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        print("Normalized confusion matrix")
+        print("[INFO] Normalized confusion matrix")
     else:
-        print('Confusion matrix, without normalization')
+        print('[INFO] Confusion matrix, without normalization')
+    cm = pd.DataFrame(cm, index=classes, columns=classes)
 
-    print(cm)
+    # plot
+    fig, ax = plt.subplots(figsize=(25,25))
+    b = sns.heatmap(cm, fmt='', ax=ax, cmap="BuPu", square=True, xticklabels=True, yticklabels=True)
+    b.set_xlabel("Predicted tags", fontsize=16)
+    b.set_ylabel("True tags", fontsize=16)
+    b.set_xticklabels(b.get_yticklabels(), rotation=45, fontsize=12)
+    b.set_yticklabels(b.get_yticklabels(), rotation=45, fontsize=12)
+    plt.draw()
+    plt.savefig(outfile)
 
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
-    plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=90)
-    plt.yticks(tick_marks, classes)
-
-    fmt = '.2f' if normalize else 'd'
-    thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, '',
-                 horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
-
-    #plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-'''

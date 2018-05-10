@@ -6,9 +6,8 @@ from keras import backend as K
 
 def strict_accuracy(act, pred):
     '''
-    Calculate accuracy each batch.
-    Keras' standard calculation factors in our padding classes. We don't.
-    FIXME: Not always working
+    Calculate accuracy for each batch
+    This metric does not factor padding symbols
     '''
 
     act_argm  = K.argmax(act, axis=-1)   # Indices of act. classes
@@ -36,3 +35,4 @@ def strict_accuracy(act, pred):
     accuracy = corr_preds / total
 
     return accuracy
+

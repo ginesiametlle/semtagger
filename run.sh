@@ -2,12 +2,8 @@
 # this is a general setup script for this project
 
 
-# ensure script runs from the root directory
-DIR_ROOT=${PWD}
-if ! [ -x ${DIR_ROOT}/run.sh ]; then
-    echo '[INFO] You must execture run.sh from the root directory'
-    exit 1
-fi
+# root directory where this script is located
+DIR_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # load configuration options
 . ${DIR_ROOT}/config.sh
@@ -24,15 +20,17 @@ PRED_INPUT=${DIR_DATA}/sample/qa_en.off
 # point to a file containing tag predictions for the input file with option --output, -o
 PRED_OUTPUT=${DIR_DATA}/sample/qa_en.sem
 
-# point to a file containing the model to store/load with option --model, -m
-MODEL_GIVEN_PATH=${MODEL_ROOT}/${MODEL_TYPE}-${MODEL_SIZE}-${MODEL_LAYERS}-${MODEL_ACTIVATION_OUTPUT}
+# point to a directory containing the model to store/load with option --model, -m
+MODEL_GIVEN_DIR=${MODEL_ROOT}/${MODEL_TYPE}-${MODEL_SIZE}-${MODEL_LAYERS}-${MODEL_ACTIVATION_OUTPUT}
 if [ ! ${EMB_USE_WORDS} -eq 0 ]; then
-	  MODEL_GIVEN_PATH="${MODEL_GIVEN_PATH}-words"
+	  MODEL_GIVEN_DIR="${MODEL_GIVEN_DIR}-words"
 fi
 if [ ! ${EMB_USE_CHARS} -eq 0 ]; then
-	  MODEL_GIVEN_PATH="${MODEL_GIVEN_PATH}-chars"
+	  MODEL_GIVEN_DIR="${MODEL_GIVEN_DIR}-chars"
 fi
-MODEL_GIVEN_PATH="${MODEL_GIVEN_PATH}/tagger.mdl"
+
+# space used for aligning messages to the user
+HSPACE='   '
 
 
 # set bash to 'debug' mode, it will exit on :
@@ -41,6 +39,7 @@ set -e
 set -u
 set -o pipefail
 #set -x
+
 
 # transform long options to short ones and parse them
 for arg in "$@"; do
@@ -63,9 +62,10 @@ do
         p) PARAMS_PREDICT=1;;
         i) PRED_INPUT=${OPTARG};;
         o) PRED_OUTPUT=${OPTARG};;
-        m) MODEL_GIVEN_PATH=${OPTARG};;
+        m) MODEL_GIVEN_DIR=${OPTARG};;
     esac
 done
+
 
 # check for correctness of the configuration file
 n_pmb_langs=${#PMB_LANGS[@]}
@@ -100,7 +100,6 @@ if [ ! ${PARAMS_TRAIN} -eq 0 ]; then
     echo '[INFO] Preparing data...'
     . ${DIR_DATA}/prepare_data.sh
     echo '[INFO] Finished preparing data'
-    exit
 
     # TRAIN A MODEL
     echo "[INFO] Training ${MODEL_TYPE} models for semantic tagging..."

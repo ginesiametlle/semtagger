@@ -5,6 +5,9 @@
 # employ a model for each target language
 for l in ${PMB_LANGS[@]} ; do
 
+    MODEL_GIVEN_PATH="${MODEL_GIVEN_DIR}/${l}/tagger.hdf5"
+    MODEL_PATH_INFO="${MODEL_GIVEN_DIR}/${l}/minfo.pkl"
+
     # use an existing model if it exists
     if [ -f ${MODEL_GIVEN_PATH} ] && [ ${GET_MODEL} -eq 0 ]; then
         echo "[INFO] A matching trained model was found for '${l}'"
@@ -17,27 +20,20 @@ for l in ${PMB_LANGS[@]} ; do
         rm -f ${MODEL_GIVEN_PATH}
         mkdir -p $(dirname ${MODEL_GIVEN_PATH})
 
-        # determine the location of the embeddings given the language
-
-        if [ ${l} == "en" ]; then
-            FIT_WEMB=${EMB_ROOT}/${l}/${EMB_GLOVE_MODEL}.txt
-        else
-            FIT_WEMB=${EMB_ROOT}/${l}/polyglot_${l}.txt
-        fi
-
-        rm -f ${PMB_EXTDIR}/${l}/sents_${l}.sem
-        rm -f ${PMB_EXTDIR}/${l}/sents_${l}_chars.txt
+        rm -f ${PMB_EXTDIR}/${l}/wsents_${l}.sem
+        rm -f ${PMB_EXTDIR}/${l}/csents_${l}.txt
 
         python3 ${DIR_MODELS}/semtagger_fit.py ${DIR_ROOT} \
                 --raw_pmb_data ${PMB_EXTDIR}/${l}/pmb_${l}.sem \
                 --raw_extra_data ${PMB_EXTDIR}/${l}/extra_${l}.sem \
-                --output_words ${PMB_EXTDIR}/${l}/sents_${l}.sem \
-                --output_chars ${PMB_EXTDIR}/${l}/sents_${l}_chars.txt \
-                --word_embeddings ${FIT_WEMB} \
-                --char_embeddings ${EMB_ROOT}/${l}/chars_${l}.txt \
+                --output_words ${PMB_EXTDIR}/${l}/wsents_${l}.sem \
+                --output_chars ${PMB_EXTDIR}/${l}/csents_${l}.txt \
+                --word_embeddings ${EMB_ROOT}/${l}/wemb_${l}.txt \
+                --char_embeddings ${EMB_ROOT}/${l}/cemb_${l}.txt \
                 --use_words ${EMB_USE_WORDS} \
                 --use_chars ${EMB_USE_CHARS} \
                 --output_model ${MODEL_GIVEN_PATH} \
+                --output_model_info ${MODEL_PATH_INFO} \
                 --lang ${l} \
                 --model ${MODEL_TYPE} \
                 --epochs ${MODEL_EPOCHS} \
@@ -56,7 +52,9 @@ for l in ${PMB_LANGS[@]} ; do
                 --dev_size ${RUN_DEV_SIZE} \
                 --grid_search ${RUN_GRID_SEARCH} \
                 --max_len_perc ${RUN_LEN_PERC} \
-                --multi_word ${RUN_MWE}
+                --multi_word ${RUN_MWE} \
+                --resnet ${RUN_RESNET} \
+                --resnet_depth ${RUN_RESNET_DEPTH}
     fi
 done
 

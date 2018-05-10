@@ -40,9 +40,9 @@ def get_loss(label):
         return losses.mean_squared_error
     if label == "mae":
         return losses.mean_absolute_error
-    if label == "chinge":
+    if label == "categorical_hinge":
         return losses.categorical_hinge
-    if label == 'cce':
+    if label == 'categorical_cross_entropy':
         return losses.categorical_crossentropy
     return None
 

@@ -10,6 +10,9 @@ data/*/
 # files in the tools directory
 tools/*/
 
+# trained models
+models/bin/
+
 # C extensions
 *.so
 

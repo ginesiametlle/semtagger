@@ -5,6 +5,7 @@ import sys
 import string
 import numpy as np
 
+
 # target language
 lang = sys.argv[1]
 
@@ -16,7 +17,7 @@ emb_file = sys.argv[3]
 
 # load embeddings
 embeddings = np.load(ifile)
-char_idxs = [idx for idx in range(embeddings.shape[0]) if not chr(idx).isspace() and chr(idx).isprintable()]
+char_idxs = [idx for idx in range(embeddings.shape[0]) if not chr(idx).isspace() chr(idx).isprintable()]
 print("[INFO] Loaded lm_1b (" + str(lang) + ") embeddings with shape {}".format(embeddings.shape))
 
 # write out in text format

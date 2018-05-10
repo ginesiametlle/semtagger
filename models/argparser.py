@@ -14,7 +14,8 @@ def get_args():
     parser.add_argument('--char_embeddings', help='File containing pretrained character embeddings', type=str, default='')
     parser.add_argument('--use_words', help='Use word features', type=int, default=1)
     parser.add_argument('--use_chars', help='Use character features', type=int, default=0)
-    parser.add_argument('--output_model', help='Output directory for mappings and the model file', type=str, required=True)
+    parser.add_argument('--output_model', help='Output model file', type=str, required=True)
+    parser.add_argument('--output_model_info', help='Output model parameters file', type=str, required=True)
     parser.add_argument('--lang', help='Language code as in ISO 639-1', type=str, default='en')
     parser.add_argument('--model', help='Type of neural model', type=str, default='bgru')
     parser.add_argument('--epochs', help='Number of training epochs', type=int, default=10)
@@ -34,5 +35,9 @@ def get_args():
     parser.add_argument('--grid_search', help='Estimate hyperparameters using cross-validation', type=int, default=0)
     parser.add_argument('--max_len_perc', help='Maximum length of a word sequence as a percentile', type=float, default=0.9)
     parser.add_argument('--multi_word', help='Handle multi-word expressions', type=int, default=1)
+    parser.add_argument('--resnet', help='Employ a residual network on character vectors', type=int, default=1)
+    parser.add_argument('--resnet_depth', help='Depth of the residual network on character vectors', type=int, default=4)
+    parser.add_argument('--input_pred_file', help='Unlabelled data to predict using a model', type=str, default='')
+    parser.add_argument('--output_pred_file', help='Prediction output', type=str, default='')
     return parser.parse_known_args()[0]
 
