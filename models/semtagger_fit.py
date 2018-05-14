@@ -74,9 +74,9 @@ args.test_size = 0.2
 args.dev_size = 0.1
 
 args.resnet = 0
-args.resnet_depth = 2
+args.resnet_depth = 1
 
-args.epochs = 100
+args.epochs = 50
 args.model_size = 300
 args.num_layers = 1
 
@@ -86,11 +86,10 @@ args.batch_normalization = 0
 args.hidden_activation = "relu"
 args.output_activation = "crf"
 
-args.loss = "categorical_cross_entropy"
-args.optimizer = "adam"
+args.batch_size = 1024
 args.dropout = 0.1
 
-args.batch_size = 128
+args.optimizer = "nadam"
 
 
 #############################
