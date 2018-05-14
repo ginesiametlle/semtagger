@@ -104,7 +104,6 @@ def plot_confusion_matrix(predicted, true, lengths, classes, outfile, ymap, voca
                 - outfile: output file
                 - ymap: map to transform predicted and true labels
                 - vocab: set containing all words in the vocabulary
-                - include_oovs: whether to include OOVs or not in the cmatrix
                 - normalize: normalize confusion matrix
     """
 	# turn the obtained labels to readable string classes (exclude pads)

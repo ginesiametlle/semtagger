@@ -89,10 +89,12 @@ def get_model(args, num_tags=0, max_wlen=0, num_words=0, wemb_dim=0, wemb_matrix
                                input_length = max_clen,
                                trainable = False)(char_input)
 
+
     # TODO: derive word features from character embeddings using a resnet
     # we employ temporal (1D) convolutions
 	#https://blog.waya.ai/deep-residual-learning-9610bb62c355
  	# https://gist.github.com/mjdietzx/0cb95922aac14d446a6530f87b3a04ce
+
 
 	# concat word and character features, if needed
     if args.use_words and args.use_chars:

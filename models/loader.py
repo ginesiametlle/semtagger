@@ -328,7 +328,8 @@ def load_conll_notags(unfile, vocab = {}, oovs = {}, pads = {}, lower = False, m
             - lower: lowercase (or not) words in the input data
             - mwe: handle multi-word expressions
         Outputs:
-            - sents: list of sentences represented as [w1, ..., wN], where wi is a mapped words
+            - sents: list of sentences represented as [(w1, x1), ..., (wN, x1)],
+                     where wi: mapped word, xi: original word
     """
     # special characters used for splitting words
     split_chars = set([',', '.', ':', '-', '~', "'", '"'])

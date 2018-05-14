@@ -52,7 +52,7 @@ oov_sym['number'] = '<num>'
 oov_sym['unknown'] = '<unk>'
 
 # default sem-tag to which special words are mapped
-PADDING_TAG = 'NIL'
+PADDING_TAG = 'PAD'
 DEFAULT_TAG = 'NIL'
 
 
@@ -64,18 +64,33 @@ if not args.use_words and not args.use_chars:
     print('[ERROR] A neural model will not be trained...')
     sys.exit()
 
-#### MODIFICATIONS FOR SMALL EXPERIMENTS
-args.use_chars = 0
-args.test_size = 0.2
-args.dev_size = 0.1
+#### MODIFICATIONS FOR TESTING EXPERIMENTS
 args.grid_search = 0
-args.epochs = 10
-args.model_size = 40
-args.num_layers = 1
-args.noise_sigma = 0.0
-args.batch_normalization = 0
+
 args.use_words = 1
 args.use_chars = 0
+
+args.test_size = 0.2
+args.dev_size = 0.1
+
+args.resnet = 0
+args.resnet_depth = 2
+
+args.epochs = 100
+args.model_size = 300
+args.num_layers = 1
+
+args.noise_sigma = 0.0
+args.batch_normalization = 0
+
+args.hidden_activation = "relu"
+args.output_activation = "crf"
+
+args.loss = "categorical_cross_entropy"
+args.optimizer = "adam"
+args.dropout = 0.1
+
+args.batch_size = 128
 
 
 #############################
@@ -212,12 +227,12 @@ model.summary()
 history = model.fit(X_train, np.array(y_train), batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, verbose=args.verbose)
 
 #### INFO
-# predict on the training and test sets
+# predict using the model
 classes = [x[0] for x in sorted(tag2idx.items(), key=operator.itemgetter(1))]
 idx2tag = {v: k for k, v in tag2idx.items()}
 lengths = [len(s) for s in word_sents]
 
-
+# predictions on the training set
 p_train = model.predict(np.array(X_train), verbose=min(1, args.verbose))
 p_train = np.argmax(p_train, axis=-1)
 true_train = np.argmax(y_train, -1)
@@ -225,14 +240,11 @@ total_train = 0
 correct_train = 0
 sent_index_train = 0
 
-
 for triple in zip(p_train, true_train, lengths):
     pred_tags = triple[0]
     true_tags = triple[1]
     l = lengths[sent_index_train]
 
-    #print(word_sents[sent_index_train])
-    #print(l)
     sent_index_train += 1
     for n in range(min(max_wlen,l)):
         total_train += 1
@@ -240,7 +252,7 @@ for triple in zip(p_train, true_train, lengths):
             correct_train += 1
 print('Accuracy on the training set: ', correct_train/total_train)
 
-
+# predictions on the test set
 p_test = model.predict(np.array(X_test), verbose=min(1, args.verbose))
 p_test = np.argmax(p_test, axis=-1)
 true_test = np.argmax(y_test, -1)
@@ -252,10 +264,6 @@ for triple in zip(p_test, true_test, lengths):
     pred_tags = triple[0]
     true_tags = triple[1]
     l = lengths[sent_index_train + sent_index_test]
-
-    #print(true_tags)
-    #print(word_sents[sent_index_train + sent_index_test])
-    #print(l)
 
     sent_index_test += 1
     for n in range(min(max_wlen,l)):
@@ -290,6 +298,7 @@ minfo['args'] = args
 minfo['pad_sym'] = pad_sym
 minfo['oov_sym'] = oov_sym
 minfo['DEFAULT_TAG'] = DEFAULT_TAG
+minfo['PADDING_TAG'] = PADDING_TAG
 minfo['tag2idx'] = tag2idx
 minfo['idx2tag'] = idx2tag
 minfo['num_tags'] = num_tags

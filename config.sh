@@ -73,8 +73,8 @@ PMB_EXTRA_LANGS=("en")
 # whether or not to use word embeddings (boolean, default: 1)
 EMB_USE_WORDS=1
 
-# whether or not to use character embeddings (boolean, default: 1)
-EMB_USE_CHARS=1
+# whether or not to use character embeddings (boolean, default: 0)
+EMB_USE_CHARS=0
 
 # pretrained word embeddings for each one of the PMB languages (array)
 # the files listed are assumed to be in the same order as PMB_LANGS
@@ -116,13 +116,13 @@ RUN_LEN_PERC=0.9
 # handle multi-word expressions (boolean, default: 1)
 RUN_MWE=1
 
-# use a residual network on character embeddings (boolean, default: 1)
+# use a residual network on character embeddings (boolean, default: 0)
 # when residual networks cannot be used, a basic CNN is employed instead
-RUN_RESNET=1
+RUN_RESNET=0
 
-# depth of the residual network applied on character embeddings (int, default: 4)
+# depth of the residual network applied on character embeddings (int, default: 5)
 # the network helps turn character embeddings into word-like representations
-RUN_RESNET_DEPTH=4
+RUN_RESNET_DEPTH=5
 
 #####################
 # MODEL PARAMETERS ##
@@ -135,15 +135,15 @@ MODEL_TYPE="bgru"
 # directory where to store the trained model (string)
 MODEL_ROOT=${DIR_MODELS}/bin
 
-# training epochs (int, default: 50)
-MODEL_EPOCHS=50
+# training epochs (int, default: 20)
+MODEL_EPOCHS=20
 
-# units in the first layer of the neural model (int, default: 200)
-MODEL_SIZE=200
+# units in the first layer of the neural model (int, default: 100)
+MODEL_SIZE=100
 
 # number of recurrent layers of the neural model
-# note that the number of hidden units is halved on each layer (int, default: 2)
-MODEL_LAYERS=2
+# note that the number of hidden units is halved on each layer (int, default: 1)
+MODEL_LAYERS=1
 
 # standard deviation for the noise normal distribution (float, default: 0.0)
 MODEL_SIGMA=0.0
@@ -162,16 +162,16 @@ MODEL_LOSS="categorical_cross_entropy"
 
 # optimizer (string)
 # allowed values: "sgd", "adagrad", "adadelta", "rmsprop", "adam", "nadam"
-MODEL_OPTIMIZER="nadam"
+MODEL_OPTIMIZER="adam"
 
 # dropout rate on each layer (float, default: 0.1)
 MODEL_DROPOUT=0.1
 
-# batch size (int, default: 256)
-MODEL_BATCH_SIZE=256
+# batch size (int, default: 128)
+MODEL_BATCH_SIZE=128
 
-# use batch normalization (boolean, default: 1)
-MODEL_BATCH_NORMALIZATION=1
+# use batch normalization (boolean, default: 0)
+MODEL_BATCH_NORMALIZATION=0
 
 # keras verbosity mode (int, default: 1)
 MODEL_VERBOSE=1
