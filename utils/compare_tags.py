@@ -12,6 +12,7 @@ pred_file = sys.argv[1]
 gold_file = sys.argv[2]
 
 # compare the two files and compute tagging accuracy
+sentences = 0
 total_tags = 0
 correct_tags = 0
 
@@ -21,6 +22,7 @@ with open(pred_file) as p:
         gold_sents = g.readlines()
 
         for i in range(len(pred_sents)):
+            sentences += 1
             if len(pred_sents[i].split()) != len(gold_sents[i].split()):
                 print('[ERROR] The tagged files are not properly formatted')
                 sys.exit()
@@ -35,5 +37,8 @@ with open(pred_file) as p:
                     if ptag == gtag:
                         correct_tags += 1
 
-print('[INFO] The tagging accuracy is', correct_tags / total_tags)
+print('[INFO] THE TAGGING ACCURACY IS', correct_tags / total_tags)
+print('[INFO]', sentences, 'sentences')
+print('[INFO]', total_tags, 'sem-tags')
+print('[INFO]', correct_tags, 'correct sem-tags')
 
