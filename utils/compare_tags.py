@@ -22,19 +22,18 @@ with open(pred_file) as p:
 
         for i in range(len(pred_sents)):
             if len(pred_sents[i].split()) != len(gold_sents[i].split()):
-                 print(pred_sents[i].split())ks
-                 print(gold_sents[i].split())
-                 print('[ERROR] The tagged files are not properly formatted')
-                 sys.exit()
+                print('[ERROR] The tagged files are not properly formatted')
+                sys.exit()
             else:
-                 if len(pred_sents[i].split()) == 2:
-                     pword, ptag = pred_sents[i].split()
-                     gword, gtag = gold_sents[i].split()
-                     if pword != gword:
-                         print('[ERROR] The tagged file and the gold standard file do not match')
-                         sys.exit()
-                     total_tags += 1
-                     if ptag == gtag:
-                         correct_tags += 1
+                if len(pred_sents[i].split()) == 2:
+                    pword, ptag = pred_sents[i].split()
+                    gword, gtag = gold_sents[i].split()
+                    if pword != gword:
+                        print('[ERROR] The tagged file and the gold standard file do not match')
+                        sys.exit()
+                    total_tags += 1
+                    if ptag == gtag:
+                        correct_tags += 1
 
 print('[INFO] The tagging accuracy is', correct_tags / total_tags)
+

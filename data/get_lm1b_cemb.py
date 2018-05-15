@@ -17,7 +17,7 @@ emb_file = sys.argv[3]
 
 # load embeddings
 embeddings = np.load(ifile)
-char_idxs = [idx for idx in range(embeddings.shape[0]) if not chr(idx).isspace() and chr(idx).isprintable()]
+char_idxs = [idx for idx in range(embeddings.shape[0]) if chr(idx).isprintable() and (idx == 32 or not chr(idx).isspace())]
 print("[INFO] Loaded lm_1b (" + str(lang) + ") embeddings with shape {}".format(embeddings.shape))
 
 # write out in text format

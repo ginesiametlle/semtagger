@@ -2,7 +2,7 @@
 
 ### About this repository
 
-An easy to use (but powerful) universal semantic tagger.
+An easy to use universal semantic tagger.
 
 A recent version of Python 3 with the packages listed in [requirements.txt](./requirements.txt) and Bazel are expected.
 

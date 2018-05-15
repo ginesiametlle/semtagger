@@ -117,7 +117,7 @@ RUN_LEN_PERC=0.9
 RUN_MWE=1
 
 # use a residual network on character embeddings (boolean, default: 0)
-# when residual networks cannot be used, a basic CNN is employed instead
+# when residual networks is not used, a basic CNN is employed instead
 RUN_RESNET=0
 
 # depth of the residual network applied on character embeddings (int, default: 5)
@@ -135,8 +135,8 @@ MODEL_TYPE="bgru"
 # directory where to store the trained model (string)
 MODEL_ROOT=${DIR_MODELS}/bin
 
-# training epochs (int, default: 20)
-MODEL_EPOCHS=20
+# training epochs (int, default: 50)
+MODEL_EPOCHS=50
 
 # units in the first layer of the neural model (int, default: 100)
 MODEL_SIZE=100
@@ -167,8 +167,8 @@ MODEL_OPTIMIZER="adam"
 # dropout rate on each layer (float, default: 0.1)
 MODEL_DROPOUT=0.1
 
-# batch size (int, default: 128)
-MODEL_BATCH_SIZE=128
+# batch size (int, default: 256)
+MODEL_BATCH_SIZE=256
 
 # use batch normalization (boolean, default: 0)
 MODEL_BATCH_NORMALIZATION=0

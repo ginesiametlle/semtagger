@@ -22,7 +22,7 @@ print("[INFO] Character vectors for (" + str(lang) + ") have dimensionality " + 
 # write out in text format
 with open(emb_file, 'w') as ofile:
     for c in emb_chars:
-        if not c.isspace() and c.isprintable():
+        if c.isprintable() and (ord(c) == 32 or not c.isspace()):
         	vectorstr = ' '.join([str(x) for x in numpy.random.normal(0, 1, ndims)])
         	ofile.write(c + ' ' + vectorstr + '\n')
 

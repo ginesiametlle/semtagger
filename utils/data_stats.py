@@ -22,7 +22,7 @@ from functools import reduce
 from sklearn.metrics import confusion_matrix
 
 
-def plot_dist_tags(sents, vocab, outimg, outfile, padwords):
+def plot_dist_tags(sents, vocab, outimg, outfile, padwords = []):
     """
     Plot the amount of words per tag in a dataset
             Inputs:
@@ -71,7 +71,7 @@ def plot_accuracy(history, keys, labels, test_acc, outfile):
     """
     Plot the accuracy against training epochs
             Inputs:
-                - history: keras fit() function return object
+                - history: object obtained from calling Keras fit() function
                 - keys: key values to access the metrics in history
                 - labels: names of the metrics that match keys
                 - test_acc: accuracy on the test set (constant)
@@ -83,12 +83,13 @@ def plot_accuracy(history, keys, labels, test_acc, outfile):
     xdata = [x+1 for x in range(len(hist[keys[0]]))]
     chart.x_labels = xdata
 
+    # plot all metrics
     for i in range(len(keys)):
         key = keys[i]
         label = labels[i]
         chart.add(label, hist[key], show_dots=False, stroke_style={'width': 6, 'dasharray': '3, 8', 'linecap': 'round', 'linejoin': 'round'})
 
-    # plot line for test data
+    # plot line for accuracy on test data (constant)
     ytest=[test_acc] * len(xdata)
     chart.add(None, ytest, show_dots=False, stroke_style={'width': 2})
 
