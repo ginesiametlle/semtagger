@@ -78,10 +78,10 @@ args.test_size = 0.2
 args.dev_size = 0.1
 
 args.resnet = 0
-args.resnet_depth = 1
+args.resnet_depth = 5
 
 args.epochs = 10
-args.model_size = 300
+args.model_size = 50
 args.num_layers = 1
 
 args.noise_sigma = 0.0
@@ -90,8 +90,8 @@ args.batch_normalization = 0
 args.hidden_activation = "relu"
 args.output_activation = "softmax"
 
-args.batch_size = 512
-args.dropout = 0.1
+args.batch_size = 128
+args.dropout = 0.0
 
 args.optimizer = "adam"
 
@@ -122,7 +122,7 @@ tag2idx, word_sents, max_wlen = load_conll(args.raw_pmb_data,
                                            lower = False,
                                            mwe = args.multi_word)
 
-# delete repeated sentences and shuffle input data
+# randomize the input data
 random.shuffle(word_sents)
 
 # map word sentences and their tags to a symbolic representation
@@ -235,7 +235,7 @@ history = model.fit(X_train, np.array(y_train), batch_size=args.batch_size, epoc
 
 #### INFO
 # predict using the model
-classes = [x[0] for x in sorted(tag2idx.items(), key=operator.itemgetter(1))]
+classes = [x[0] for x in tag2idx.items() if x[0] != PADDING_TAG]
 idx2tag = {v: k for k, v in tag2idx.items()}
 lengths = [len(s) for s in word_sents]
 
@@ -254,9 +254,10 @@ for triple in zip(p_train, true_train, lengths):
 
     sent_index_train += 1
     for n in range(min(max_wlen,l)):
-        total_train += 1
-        if pred_tags[n] == true_tags[n]:
-            correct_train += 1
+        if true_tags[n] != tag2idx[PADDING_TAG]:
+            total_train += 1
+            if pred_tags[n] == true_tags[n]:
+                correct_train += 1
 print('Accuracy on the training set: ', correct_train/total_train)
 
 # predictions on the test set
@@ -274,9 +275,10 @@ for triple in zip(p_test, true_test, lengths):
 
     sent_index_test += 1
     for n in range(min(max_wlen,l)):
-        total_test += 1
-        if pred_tags[n] == true_tags[n]:
-            correct_test += 1
+        if true_tags[n] != tag2idx[PADDING_TAG]:
+            total_test += 1
+            if pred_tags[n] == true_tags[n]:
+                correct_test += 1
 print('Accuracy on the test set: ', correct_test/total_test)
 
 

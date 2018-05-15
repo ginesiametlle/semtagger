@@ -43,7 +43,7 @@ def plot_dist_tags(sents, vocab, outimg, outfile, padwords = []):
                     if sym not in vocab:
                         count[tag][1] += 1
 
-    xdata = sorted(count.keys(), key=lambda x: count[x][0])
+    xdata = sorted(count.keys(), key=lambda x: count[x][0], reverse=True)
     ydata_oov = list([count[x][1] for x in xdata])
     ydata_rest = list([count[x][0] - count[x][1] for x in xdata])
 

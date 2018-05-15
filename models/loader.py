@@ -6,6 +6,7 @@ import os.path
 import codecs
 import math
 import re
+from collections import OrderedDict
 import numpy as np
 
 
@@ -83,7 +84,7 @@ def load_embeddings(emb_file, oovs = [], pads = [], sep = ' ', lower = False):
 
 def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, padding_tag = 'PAD', default_tag = 'NIL', ignore_tags = [], len_perc = 1.0, lower = False, mwe = True):
     """
-    Reads a file in the conll format and produces processed sentences
+    Reads a file in the conll format and produces processed unique sentences
         Inputs:
             - conll_file: path to a file with data
             - extra: path to a file with extra data
@@ -104,6 +105,10 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, padding
     tag2idx = {}
     tag2idx[padding_tag] = len(tag2idx)
     tag2counts = {}
+
+    # number of duplicated sentences in the input data
+    num_dup = 0
+    dup_sents = set()
 
     # special characters used for splitting words
     split_chars = set([',', '.', ':', '-', '~', "'", '"'])
@@ -195,8 +200,16 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, padding
                             next_words.append(pads['end'])
                             next_tags.append(padding_tag)
                             next_syms.append('')
-                        sents.append(list(zip(next_words, next_tags, next_syms)))
-                        lengths.append(len(sents[-1]))
+                        if ''.join(next_words) not in dup_sents:
+                            sents.append(list(zip(next_words, next_tags, next_syms)))
+                            dup_sents.add(''.join(next_words))
+                            lengths.append(len(sents[-1]))
+                            for stag in next_tags:
+                                if stag not in tag2counts:
+                                    tag2counts[stag] = 0
+                                tag2counts[stag] += 1
+                        else:
+                            num_dup += 1
                         next_words = []
                         next_tags = []
                         next_syms = []
@@ -210,8 +223,16 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, padding
                             split_words.append(pads['end'])
                             split_tags.append(padding_tag)
                             split_syms.append('')
-                        sents.append(list(zip(split_words, split_tags, split_syms)))
-                        lengths.append(len(sents[-1]))
+                        if ''.join(next_words) not in dup_sents:
+                            sents.append(list(zip(split_words, split_tags, split_syms)))
+                            dup_sents.add(''.join(next_words))
+                            lengths.append(len(sents[-1]))
+                            for stag in split_tags:
+                                if stag not in tag2counts:
+                                    tag2counts[stag] = 0
+                                tag2counts[stag] += 1
+                        else:
+                            num_dup += 1
                         next_words = next_words[-3:]
                         next_tags = next_tags[-3:]
                         next_syms = next_syms[-3:]
@@ -227,8 +248,16 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, padding
                 next_words.append(pads['end'])
                 next_tags.append(padding_tag)
                 next_syms.append('')
-            sents.append(list(zip(next_words, next_tags, next_syms)))
-            lengths.append(len(sents[-1]))
+            if ''.join(next_words) not in dup_sents:
+                sents.append(list(zip(next_words, next_tags, next_syms)))
+                dup_sents.add(''.join(next_words))
+                lengths.append(len(sents[-1]))
+                for stag in next_tags:
+                    if stag not in tag2counts:
+                        tag2counts[stag] = 0
+                    tag2counts[stag] += 1
+            else:
+                num_dup += 1
 
     # find the allowed sentence length
     max_len = sorted(lengths)[math.ceil((len(lengths)-1) * len_perc)]
@@ -236,16 +265,11 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, padding
     print('[INFO] Max allowed sentence word length: ' + str(max_len))
     print('[INFO] Number of OOV words: ' + str(num_oovs) + ' / ' + str(num_words))
     print('[INFO] Original number of sentences: ' + str(num_raw_sents))
-    print('[INFO] Number of extracted sentences ' + str(num_sents))
+    print('[INFO] Number of extracted sentences: ' + str(num_sents))
+    print('[INFO] Number of duplicated sentences removed: ' + str(num_dup))
 
     # sort tags in non-decreasing order
-    for sent in sents:
-        sent_tags = [e[1] for e in sents]
-        for tag in sent_tags:
-            if tag not in tag2counts:
-                tag2counts[tag] = 0
-            tag2counts[tag] += 1
-    sorted_tag2idx = OrderedDict(sorted(tag2idx.items(), key=lambda t: tag2counts[t]))
+    sorted_tag2idx = OrderedDict(sorted(tag2idx.items(), key=lambda t: tag2counts[t[0]], reverse=True))
 
     return sorted_tag2idx, sents, max_len
 

@@ -42,6 +42,7 @@ GET_MODEL=0
 ###########################
 
 # version of the PMB to use (string)
+# currently available versions are "1.0.0" and "2.0.0"
 PMB_VER="1.0.0"
 
 # root directory where to store the PMB (string)
@@ -55,7 +56,7 @@ PMB_EXTDIR=${DIR_DATA}/pmb
 PMB_LANGS=("en")
 
 # use additional semantically tagged data (boolean, default: 0)
-PMB_EXTRA_DATA=1
+PMB_EXTRA_DATA=0
 
 # directories with additional semantically tagged data (array)
 # each directory is assumed to contain a number of conll files
@@ -130,7 +131,7 @@ RUN_RESNET_DEPTH=5
 
 # type of neural model to use (string)
 # allowed values: "rnn", "lstm", "blstm", "gru", "bgru"
-MODEL_TYPE="bgru"
+MODEL_TYPE="blstm"
 
 # directory where to store the trained model (string)
 MODEL_ROOT=${DIR_MODELS}/bin
@@ -167,8 +168,8 @@ MODEL_OPTIMIZER="adam"
 # dropout rate on each layer (float, default: 0.1)
 MODEL_DROPOUT=0.1
 
-# batch size (int, default: 256)
-MODEL_BATCH_SIZE=256
+# batch size (int, default: 128)
+MODEL_BATCH_SIZE=128
 
 # use batch normalization (boolean, default: 0)
 MODEL_BATCH_NORMALIZATION=0

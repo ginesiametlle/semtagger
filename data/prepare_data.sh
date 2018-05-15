@@ -24,20 +24,28 @@ for l in ${PMB_LANGS[@]} ; do
     if [ ! -f ${PMB_EXTDIR}/${l}/pmb_${l}.sem ] || [ ! ${GET_PMB} -eq 0 ]; then
         rm -f ${PMB_EXTDIR}/${l}/pmb_${l}.sem
         mkdir -p ${PMB_EXTDIR}/${l}
-        # iterate over p-parts in the PMB
+        # determine data locations according to PMB version
         numsents=0
-        for pdir in ${PMB_ROOT}/data/* ; do
-            # iterate over d-parts in p-parts
-            for ddir in ${pdir}/* ; do
-                if [ -f ${ddir}/${l}.drs.xml ]; then
-                    python3 ${DIR_DATA}/get_pmb_tags.py ${ddir}/${l}.drs.xml \
-                            ${PMB_EXTDIR}/${l}/pmb_${l}.sem
-                    # feedback output
-                    numsents=$((${numsents} + 1))
-                    if ! ((${numsents} % 400)) && [ ${numsents} -ge 400 ] ; then
-                        echo "[INFO] Processed ${numsents} sentences (${l})..."
+        if [ ${PMB_VER} == "1.0.0" ]; then
+            pmb_data_sources=(${PMB_ROOT}/data/*)
+        elif [ ${PMB_VER} == "2.0.0" ]; then
+            pmb_data_sources=(${PMB_ROOT}/data/gold/* ${PMB_ROOT}/data/silver/*)
+        fi
+        # iterate over p-parts in the PMB
+        for pmb_data_source in ${pmb_data_sources[@]} ; do
+            for pdir in ${pmb_data_source} ; do
+                # iterate over d-parts in p-parts
+                for ddir in ${pdir}/* ; do
+                    if [ -f ${ddir}/${l}.drs.xml ]; then
+                        python3 ${DIR_DATA}/get_pmb_tags.py ${ddir}/${l}.drs.xml \
+                                ${PMB_EXTDIR}/${l}/pmb_${l}.sem
+                        # feedback output
+                        numsents=$((${numsents} + 1))
+                        if ! ((${numsents} % 1000)) && [ ${numsents} -ge 1000 ] ; then
+                            echo "[INFO] Processed ${numsents} sentences (${l})..."
+                        fi
                     fi
-                fi
+                done
             done
         done
         echo "[INFO] Extracted PMB data contains ${numsents} sentences (${l})"
@@ -61,7 +69,7 @@ if [ ! ${PMB_EXTRA_DATA} -eq 0 ]; then
                     >> ${PMB_EXTDIR}/${l}/extra_${l}.sem
                 # feedback output
                 numsents=$((${numsents} + 1))
-                if ! ((${numsents} % 4000)) && [ ${numsents} -ge 4000 ] ; then
+                if ! ((${numsents} % 1000)) && [ ${numsents} -ge 1000 ] ; then
                     echo "[INFO] Processed ${numsents} sentences (${l})..."
                 fi
             done
@@ -84,7 +92,7 @@ for idx in ${!PMB_LANGS[*]} ; do
     lwpretrained=${EMB_WORD_PRETRAINED[$idx]}
 
     # only generate word embeddings when there are no pretrained ones
-    if [ ! -f ${lwpretrained} ] || [ -z ${lwpretrained} ]; then
+    if [ ! -f ${lwpretrained} ] || [ -z ${lwpretrained} ] && [ ! ${EMB_USE_WORDS} -eq 0 ]; then
         # use glove embeddings for english
         if [ ${l} == "en" ]; then
             echo "[INFO] Obtaining GloVe word embeddings for ${l}..."
@@ -142,7 +150,7 @@ for idx in ${!PMB_LANGS[*]} ; do
     l=${PMB_LANGS[$idx]}
     lcpretrained=${EMB_CHAR_PRETRAINED[$idx]}
     # only generate character embeddings when there are no pretrained ones
-    if [ ! -f ${lcpretrained} ] || [ -z ${lcpretrained} ]; then
+    if [ ! -f ${lcpretrained} ] || [ -z ${lcpretrained} ] && [ ! ${EMB_USE_CHARS} -eq 0 ]; then
         # use lm_1b model for English
         if [ ${l} == "en" ]; then
             echo "[INFO] Obtaining lm_1b character embeddings for ${l}..."

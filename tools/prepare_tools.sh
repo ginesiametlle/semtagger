@@ -20,7 +20,7 @@ fi
 
 # download and prepare the lm_1b model
 echo "[INFO] Preparing the lm_1b model..."
-if [ ! -d "${LM1B_DIR}" ] || [ ! ${GET_TOOLS} -eq 0 ]; then
+if [ ! -d "${LM1B_DIR}" ] || [ ! ${GET_TOOLS} -eq 0 ] && [ ! ${EMB_USE_CHARS} -eq 0 ]; then
     rm -rf ${LM1B_DIR}
     mkdir -p ${LM1B_DIR}
     pushd ${LM1B_DIR} > /dev/null

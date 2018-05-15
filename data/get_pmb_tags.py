@@ -3,8 +3,7 @@
 
 import sys
 import string
-import xml.etree.cElementTree as ET
-
+from lxml import etree
 
 # source xml file for a d-part in the PMB
 ifile = sys.argv[1]
@@ -15,8 +14,10 @@ sem_file = sys.argv[2]
 # sem-tags for the current sentence
 sem_sent = []
 
+
 # navigate the tags contained in the xml tree
-tree = ET.parse(ifile)
+parser = etree.XMLParser(recover=True)
+tree = etree.parse(ifile, parser)
 root = tree.getroot()
 
 for token in root.iter('tagtoken'):
@@ -31,6 +32,7 @@ for token in root.iter('tagtoken'):
 
     if len(tok) == len(sem):
         sem_sent += [x for x in zip(tok, sem)]
+
 
 with open(sem_file, 'a+') as ofile:
     if sem_sent:
