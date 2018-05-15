@@ -125,7 +125,7 @@ def get_model(args, num_tags=0, max_wlen=0, num_words=0, wemb_dim=0, wemb_matrix
 
     # output layer
     if args.output_activation == 'crf':
-        model = TimeDistributed(Dense(num_units, activation='relu'))(model)
+        model = TimeDistributed(Dense(max_wlen, activation='relu'))(model)
         crf = CRF(num_tags)
         out = crf(model)
     else:

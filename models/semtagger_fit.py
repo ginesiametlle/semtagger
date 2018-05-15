@@ -76,18 +76,18 @@ args.dev_size = 0.1
 args.resnet = 0
 args.resnet_depth = 1
 
-args.epochs = 50
-args.model_size = 300
+args.epochs = 10
+args.model_size = 200
 args.num_layers = 1
 
 args.noise_sigma = 0.0
 args.batch_normalization = 0
 
 args.hidden_activation = "relu"
-args.output_activation = "crf"
+args.output_activation = "softmax"
 
-args.batch_size = 1024
-args.dropout = 0.1
+args.batch_size = 512
+args.dropout = 0.0
 
 args.optimizer = "nadam"
 
