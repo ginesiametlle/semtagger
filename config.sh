@@ -55,7 +55,7 @@ PMB_EXTDIR=${DIR_DATA}/pmb
 PMB_LANGS=("en")
 
 # use additional semantically tagged data (boolean, default: 0)
-PMB_EXTRA_DATA=0
+PMB_EXTRA_DATA=1
 
 # directories with additional semantically tagged data (array)
 # each directory is assumed to contain a number of conll files
@@ -93,7 +93,7 @@ EMB_ROOT=${DIR_DATA}/embeddings
 
 # version of the GloVe word embeddings to use for English as default (string)
 # allowed values: "glove.6B.{50/100/200/300}d", "glove.42B.300d", "glove.840B.300d"
-EMB_GLOVE_MODEL="glove.6B.50d"
+EMB_GLOVE_MODEL="glove.840B.300d"
 
 ##########################
 ## TRAINING AND TESTING ##
