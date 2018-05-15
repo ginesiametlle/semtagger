@@ -51,9 +51,13 @@ oov_sym = {}
 oov_sym['number'] = '<num>'
 oov_sym['unknown'] = '<unk>'
 
-# default sem-tag to which special words are mapped
+# default sem-tag used for padding
 PADDING_TAG = 'PAD'
+# default sem-tag to which special words are mapped
 DEFAULT_TAG = 'NIL'
+# list of sem-tags which we do not want to consider when displaying results
+# these correspond to coarse sem-tags from the Universal Semantic Tagset
+IGNORE_TAGS = set(['ANA', 'ACT', 'ATT', 'COM', 'UNE', 'DXS', 'LOG', 'MOD', 'DSC', 'NAM', 'EVE', 'TNS', 'TIM'])
 
 
 # obtain arguments
@@ -77,7 +81,7 @@ args.resnet = 0
 args.resnet_depth = 1
 
 args.epochs = 10
-args.model_size = 200
+args.model_size = 300
 args.num_layers = 1
 
 args.noise_sigma = 0.0
@@ -87,9 +91,9 @@ args.hidden_activation = "relu"
 args.output_activation = "softmax"
 
 args.batch_size = 512
-args.dropout = 0.0
+args.dropout = 0.1
 
-args.optimizer = "nadam"
+args.optimizer = "adam"
 
 
 #############################
@@ -112,13 +116,17 @@ tag2idx, word_sents, max_wlen = load_conll(args.raw_pmb_data,
                                            oovs = oov_sym,
                                            pads = pad_sym,
                                            padding_tag = PADDING_TAG,
+                                           default_tag = DEFAULT_TAG,
+                                           ignore_tags = IGNORE_TAGS,
                                            len_perc = args.max_len_perc,
                                            lower = False,
                                            mwe = args.multi_word)
 
+# delete repeated sentences and shuffle input data
+random.shuffle(word_sents)
+
 # map word sentences and their tags to a symbolic representation
 print('[INFO] Reshaping word data...')
-random.shuffle(word_sents)
 X_word, y_tag = wordsents2sym(word_sents, max_wlen,
                               word2idx, tag2idx,
                               oov_sym['unknown'], DEFAULT_TAG,

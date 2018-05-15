@@ -81,7 +81,7 @@ def load_embeddings(emb_file, oovs = [], pads = [], sep = ' ', lower = False):
     return word2idx, np.asarray(emb_matrix), emb_dim
 
 
-def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, padding_tag = 'PAD', len_perc = 1.0, lower = False, mwe = True):
+def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, padding_tag = 'PAD', default_tag = 'NIL', ignore_tags = [], len_perc = 1.0, lower = False, mwe = True):
     """
     Reads a file in the conll format and produces processed sentences
         Inputs:
@@ -103,6 +103,7 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, padding
     # note: all padding words are assigned the default (empty semantics) semantic tag
     tag2idx = {}
     tag2idx[padding_tag] = len(tag2idx)
+    tag2counts = {}
 
     # special characters used for splitting words
     split_chars = set([',', '.', ':', '-', '~', "'", '"'])
@@ -144,11 +145,14 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, padding
                 else:
                     word, tag = line.split('\t')
                     sym = word
+                    # map ignored tags to the default tag
+                    if tag in ignore_tags:
+                        tag = default_tag
+
                     if word != 'ø':
                         num_words += 1
                         if lower:
                             word = word.lower()
-
                         # use an heuristic and try to map oov words
                         if vocab and word not in vocab and word not in split_chars:
                             if re.match('^[0-9\.\,-]+$', word):
@@ -233,7 +237,17 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, padding
     print('[INFO] Number of OOV words: ' + str(num_oovs) + ' / ' + str(num_words))
     print('[INFO] Original number of sentences: ' + str(num_raw_sents))
     print('[INFO] Number of extracted sentences ' + str(num_sents))
-    return tag2idx, sents, max_len
+
+    # sort tags in non-decreasing order
+    for sent in sents:
+        sent_tags = [e[1] for e in sents]
+        for tag in sent_tags:
+            if tag not in tag2counts:
+                tag2counts[tag] = 0
+            tag2counts[tag] += 1
+    sorted_tag2idx = OrderedDict(sorted(tag2idx.items(), key=lambda t: tag2counts[t]))
+
+    return sorted_tag2idx, sents, max_len
 
 
 def write_conll(conll_file, sents):
