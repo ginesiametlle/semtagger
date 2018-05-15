@@ -56,7 +56,7 @@ PMB_EXTDIR=${DIR_DATA}/pmb
 PMB_LANGS=("en")
 
 # use additional semantically tagged data (boolean, default: 0)
-PMB_EXTRA_DATA=0
+PMB_EXTRA_DATA=1
 
 # directories with additional semantically tagged data (array)
 # each directory is assumed to contain a number of conll files
