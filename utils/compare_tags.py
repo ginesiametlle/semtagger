@@ -1,14 +1,14 @@
 #!/usr/bin/python3
-# this script compares the accuracy of a conll tagged file against a provided gold standard
+# this script compares the accuracy of a CoNLL tagged file against a gold standard file
 
 import sys
 import string
 
 
-# semantically tagged file
+# tagged file
 pred_file = sys.argv[1]
 
-# gold standard tagged file
+# gold standard file
 gold_file = sys.argv[2]
 
 # compare the two files and compute tagging accuracy
@@ -18,27 +18,32 @@ correct_tags = 0
 
 with open(pred_file) as p:
     with open(gold_file) as g:
-        pred_sents = p.readlines()
-        gold_sents = g.readlines()
+        pred_lines = p.readlines()
+        gold_lines = g.readlines()
 
-        for i in range(len(pred_sents)):
-            sentences += 1
-            if len(pred_sents[i].split()) != len(gold_sents[i].split()):
+        for i in range(len(pred_lines)):
+            if len(pred_lines[i].split()) != len(gold_lines[i].split()):
                 print('[ERROR] The tagged files are not properly formatted')
-                sys.exit()
+                sys.exit(1)
+            elif len(pred_lines[i].split()) > 1:
+                pword, ptag = pred_lines[i].split()[:2]
+                gword, gtag = gold_lines[i].split()[:2]
+                if pword != gword:
+                    print('[ERROR] The tagged file and the gold standard file do not match')
+                    sys.exit(1)
+                if ptag == gtag:
+                    correct_tags += 1
+                total_tags += 1
             else:
-                if len(pred_sents[i].split()) == 2:
-                    pword, ptag = pred_sents[i].split()
-                    gword, gtag = gold_sents[i].split()
-                    if pword != gword:
-                        print('[ERROR] The tagged file and the gold standard file do not match')
-                        sys.exit()
-                    total_tags += 1
-                    if ptag == gtag:
-                        correct_tags += 1
+                sentences += 1
+
+        if len(pred_lines[-1].split()) > 1:
+            sentences += 1
 
 print('[INFO] THE TAGGING ACCURACY IS', correct_tags / total_tags)
 print('[INFO]', sentences, 'sentences')
-print('[INFO]', total_tags, 'sem-tags')
-print('[INFO]', correct_tags, 'correct sem-tags')
+print('[INFO]', total_tags, 'tags')
+print('[INFO]', correct_tags, 'correct tags')
+print('[INFO]', total_tags-correct_tags, 'incorrect tags')
+sys.exit(0)
 

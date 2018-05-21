@@ -22,14 +22,14 @@ from functools import reduce
 from sklearn.metrics import confusion_matrix
 
 
-def plot_dist_tags(sents, vocab, outimg, outfile, padwords = []):
+def plot_dist_tags(sents, vocab, outimg, outfile, padwords=[]):
     """
     Plot the amount of words per tag in a dataset
             Inputs:
-                - sent: list of sentences represented as a list of (word, tag, sym) items
+                - sents: list of sentences represented as a list of (word, tag, sym) items
                 - words: set containing words in the vocabulary
                 - outimg: output image
-                - outfile: numerical data
+                - outfile: output text file
                 - padwords: set of words to be ignored
     """
     count = {}
@@ -52,7 +52,7 @@ def plot_dist_tags(sents, vocab, outimg, outfile, padwords = []):
     line_chart.add('OOVs', ydata_oov)
     line_chart.add('IVs + OOVs', ydata_rest)
 
-    # circumvent potential svg css styling problems
+    # circumvent potential svg styling problems
     line_chart.render_to_file(outimg)
     cairosvg.svg2svg(url=outimg, write_to=outimg)
 
@@ -69,17 +69,17 @@ def plot_dist_tags(sents, vocab, outimg, outfile, padwords = []):
 
 def plot_accuracy(history, keys, labels, test_acc, outfile):
     """
-    Plot the accuracy against training epochs
+    Plot the obtained accuracy scores against training epochs
             Inputs:
                 - history: object obtained from calling Keras fit() function
                 - keys: key values to access the metrics in history
                 - labels: names of the metrics that match keys
-                - test_acc: accuracy on the test set (constant)
+                - test_acc: accuracy obtained on the test set (constant)
                 - outfile: output file
     """
     hist = pd.DataFrame(history.history)
 
-    chart = pygal.Line(width=1600, height=800, x_label_rotation=-45, x_title='Number of training epochs', y_title='Sem-tagging accuracy')
+    chart = pygal.Line(width=1600, height=800, x_label_rotation=0, x_title='Number of training epochs', y_title='Sem-tagging accuracy')
     xdata = [x+1 for x in range(len(hist[keys[0]]))]
     chart.x_labels = xdata
 
@@ -89,7 +89,7 @@ def plot_accuracy(history, keys, labels, test_acc, outfile):
         label = labels[i]
         chart.add(label, hist[key], show_dots=False, stroke_style={'width': 6, 'dasharray': '3, 8', 'linecap': 'round', 'linejoin': 'round'})
 
-    # plot line for accuracy on test data (constant)
+    # plot a horizontal line representing accuracy on the test set
     ytest=[test_acc] * len(xdata)
     chart.add(None, ytest, show_dots=False, stroke_style={'width': 2})
 
@@ -126,10 +126,10 @@ def plot_confusion_matrix(predicted, true, lengths, classes, outfile, ymap, voca
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
         print("[INFO] Normalized confusion matrix")
     else:
-        print('[INFO] Confusion matrix, without normalization')
+        print('[INFO] Confusion matrix without normalization')
     cm = pd.DataFrame(cm, index=classes, columns=classes)
 
-    # plot
+    # transform confusion matrix to a heatmap and output
     fig, ax = plt.subplots(figsize=(25,25))
     b = sns.heatmap(cm, fmt='', ax=ax, cmap="BuPu", square=True, xticklabels=True, yticklabels=True)
     b.set_xlabel("Predicted tags", fontsize=20)

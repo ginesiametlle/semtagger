@@ -4,7 +4,7 @@
 
 An easy to use universal semantic tagger.
 
-A recent version of Python 3 with the packages listed in [requirements.txt](./requirements.txt) and Bazel are expected.
+A recent version of Python 3 with the packages listed in [requirements.txt](./requirements.txt) are expected.
 
 ### Training a neural model
 
@@ -22,7 +22,7 @@ A recent version of Python 3 with the packages listed in [requirements.txt](./re
 
 One can edit [config.sh](./config.sh) for fine control over the employed features and model architecture.
 
-Note that trained models are stored/loaded using the defined default directory when the ```--model``` option is not provided.
+Note that trained models are stored/loaded using the directory defined in [config.sh](./config.sh) when the ```--model``` option is not provided.
 
 ### References
 

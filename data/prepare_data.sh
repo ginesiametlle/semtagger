@@ -151,35 +151,17 @@ for idx in ${!PMB_LANGS[*]} ; do
     lcpretrained=${EMB_CHAR_PRETRAINED[$idx]}
     # only generate character embeddings when there are no pretrained ones
     if [ ! -f ${lcpretrained} ] || [ -z ${lcpretrained} ] && [ ! ${EMB_USE_CHARS} -eq 0 ]; then
-        # use lm_1b model for English
-        if [ ${l} == "en" ]; then
-            echo "[INFO] Obtaining lm_1b character embeddings for ${l}..."
-            EMB_ROOT_EN=${EMB_ROOT}/${l}
-            if [ ! -d ${EMB_ROOT_EN} ] || [ ! -f ${EMB_ROOT_EN}/cemb_${l}.txt ] || [ ! ${GET_EMBS} -eq 0 ]; then
-                rm -f ${EMB_ROOT_EN}/cemb_${l}.txt
-                mkdir -p ${EMB_ROOT_EN}
-                pushd ${EMB_ROOT_EN} > /dev/null
-                pushd ${LM1B_DIR} > /dev/null
-                bazel-bin/lm_1b/lm_1b_eval --mode dump_emb --pbtxt data/graph-2016-09-10.pbtxt \
-                                           --vocab_file data/vocab-small.txt \
-                                           --ckpt 'data/ckpt-*' --save_dir output
-                popd > /dev/null
-                python3 ${DIR_DATA}/get_lm1b_cemb.py $l ${LM1B_DIR}/output/embeddings_char_cnn.npy ${EMB_ROOT_EN}/cemb_${l}.txt
-                popd > /dev/null
-            fi
-        # use Gaussian initialization on other languages
-        else
-            echo "[INFO] Generating character embedding for ${l}..."
-            EMB_ROOT_LANG=${EMB_ROOT}/${l}
-            if [ ! -d ${EMB_ROOT_LANG} ] || [ ! -f ${EMB_ROOT_LANG}/cemb_${l}.txt ] || [ ! ${GET_EMBS} -eq 0 ]; then
-                rm -f ${EMB_ROOT_LANG}/cemb_${l}.txt
-                mkdir -p ${EMB_ROOT_LANG}
-                pushd ${EMB_ROOT_LANG} > /dev/null
-                wchars=$(cat ${PMB_EXTDIR}/${l}/pmb_${l}.sem | \
+        # use Gaussian initialization
+        echo "[INFO] Initializing character embedding weights for ${l}..."
+        EMB_ROOT_LANG=${EMB_ROOT}/${l}
+        if [ ! -d ${EMB_ROOT_LANG} ] || [ ! -f ${EMB_ROOT_LANG}/cemb_${l}.txt ] || [ ! ${GET_EMBS} -eq 0 ]; then
+            rm -f ${EMB_ROOT_LANG}/cemb_${l}.txt
+            mkdir -p ${EMB_ROOT_LANG}
+            pushd ${EMB_ROOT_LANG} > /dev/null
+            wchars=$(cat ${PMB_EXTDIR}/${l}/pmb_${l}.sem | \
                                 sed 's/./&\n/g' | LC_COLLATE=C sort -u | tr -d '\n')
-                python3 ${DIR_DATA}/get_random_cemb.py $l ${wchars} ${EMB_ROOT_LANG}/cemb_${l}.txt
-                popd > /dev/null
-            fi
+            python3 ${DIR_DATA}/get_random_cemb.py $l ${wchars} ${EMB_ROOT_LANG}/cemb_${l}.txt
+            popd > /dev/null
         fi
     fi
 done

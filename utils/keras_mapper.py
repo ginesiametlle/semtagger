@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# this script provides mapping from strings to various Keras objects
+# this script provides mappings from strings to various Keras objects
 
 from keras import optimizers
 from keras import losses
@@ -7,7 +7,7 @@ from keras import losses
 
 def get_optimizer(label):
     """
-    Obtains a Keras optimizer based on a string label
+    Obtains a Keras optimizer from a string with its default parameters
         Inputs:
             - label: string representation of the optimizer
         Output:
@@ -30,15 +30,15 @@ def get_optimizer(label):
 
 def get_loss(label):
     """
-    Obtains a Keras loss based on a string label
+    Obtains a Keras loss from a string
         Inputs:
             - label: string representation of the loss
         Output:
             - loss as a Keras object
     """
-    if label == "mse":
+    if label == "mean_squared_error":
         return losses.mean_squared_error
-    if label == "mae":
+    if label == "mean_absolute_error":
         return losses.mean_absolute_error
     if label == "categorical_hinge":
         return losses.categorical_hinge

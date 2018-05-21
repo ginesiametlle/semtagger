@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 # this script defines the structure of possible neural models
 
+from copy import deepcopy
+
 from keras.models import Model, Input
 from keras.layers import Dense, Conv1D, LSTM, GRU
 from keras.layers import add, concatenate
@@ -51,11 +53,11 @@ def get_layer(args, num_units):
     return None
 
 
-def get_model(args, num_tags=0, max_wlen=0, num_words=0, wemb_dim=0, wemb_matrix=None, max_clen=0, num_chars=0, cemb_dim=0, cemb_matrix=None):
+def get_model(base_args, num_tags=0, max_wlen=0, num_words=0, wemb_dim=0, wemb_matrix=None, max_clen=0, num_chars=0, cemb_dim=0, cemb_matrix=None, optimizer=None, dropout=None, model_size=None, num_layers=None):
     """
     Obtains a neural model as a combination of layers
         Inputs:
-            - args: command line arguments
+            - base_args: command line arguments
             - num_tags: number of output tags
             - max_wlen: maximum number of words in a sentence
             - num_words: size of the word embedding vocabulary
@@ -68,6 +70,17 @@ def get_model(args, num_tags=0, max_wlen=0, num_words=0, wemb_dim=0, wemb_matrix
         Returns:
             the compiled Keras neural model defined by the command line arguments
     """
+    ## REDEFINE BASE PARAMETERS
+    args = deepcopy(base_args)
+    if optimizer:
+        args.optimizer = optimizer
+    if dropout:
+        args.dropout = dropout
+    if model_size:
+        args.model_size = model_size
+    if num_layers:
+        args.num_layers = num_layers
+
     ## DEFINE NETWORK
     if args.use_words:
         # word input layer
@@ -77,7 +90,7 @@ def get_model(args, num_tags=0, max_wlen=0, num_words=0, wemb_dim=0, wemb_matrix
                                output_dim=wemb_dim,
                                weights = [wemb_matrix],
                                input_length = max_wlen,
-                               trainable = False)(word_input)
+                               trainable = bool(args.word_embeddings_trainable))(word_input)
 
     if args.use_chars:
         # character input layer
@@ -87,7 +100,7 @@ def get_model(args, num_tags=0, max_wlen=0, num_words=0, wemb_dim=0, wemb_matrix
                                output_dim=cemb_dim,
                                weights = [cemb_matrix],
                                input_length = max_clen,
-                               trainable = False)(char_input)
+                               trainable = bool(args.char_embeddings_trainable))(char_input)
 
 
     # TODO: derive word features from character embeddings using a resnet
@@ -125,8 +138,8 @@ def get_model(args, num_tags=0, max_wlen=0, num_words=0, wemb_dim=0, wemb_matrix
 
     # output layer
     if args.output_activation == 'crf':
-        model = TimeDistributed(Dense(max_wlen, activation='relu'))(model)
-        crf = CRF(num_tags)
+        model = TimeDistributed(Dense(num_units, activation='relu'))(model)
+        crf = CRF(num_tags, learn_mode='marginal')
         out = crf(model)
     else:
         out = TimeDistributed(Dense(num_tags, activation='softmax'))(model)
@@ -171,4 +184,5 @@ def get_model(args, num_tags=0, max_wlen=0, num_words=0, wemb_dim=0, wemb_matrix
 
     # return the built model ready to be used
     return model
+
 

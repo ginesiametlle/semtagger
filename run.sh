@@ -1,5 +1,5 @@
 #!/bin/bash
-# this is a general setup script for this project
+# this is the main script for running the semtagger tool
 
 
 # root directory where this script is located
@@ -15,9 +15,11 @@ PARAMS_TRAIN=0
 PARAMS_PREDICT=0
 
 # point to a file containing untagged sentence data with option --input, -i
+# an example file is given in data/sample/qa_en.off
 PRED_INPUT=${DIR_DATA}/sample/qa_en.off
 
-# point to a file containing tag predictions for the input file with option --output, -o
+# point to a file containing sem-tag predictions for the input file with option --output, -o
+# the resulting file will have the same format as data/sample/qa_en.gold
 PRED_OUTPUT=${DIR_DATA}/sample/qa_en.sem
 
 # point to a directory containing the model to store/load with option --model, -m
@@ -28,9 +30,6 @@ fi
 if [ ! ${EMB_USE_CHARS} -eq 0 ]; then
 	  MODEL_GIVEN_DIR="${MODEL_GIVEN_DIR}-chars"
 fi
-
-# space used for aligning messages to the user
-HSPACE='   '
 
 
 # set bash to 'debug' mode, it will exit on :

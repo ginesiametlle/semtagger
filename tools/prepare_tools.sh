@@ -2,7 +2,7 @@
 # this script downloads and installs external tools
 
 
-# download and prepare the Elephant tokenizer
+# download and prepare the Elephant tokenizer (gmb.let.rug.nl/elephant)
 echo "[INFO] Preparing the Elephant tokenizer..."
 if [ ! -d "${ELEPHANT_DIR}" ] || [ ! ${GET_TOOLS} -eq 0 ]; then
     rm -rf ${ELEPHANT_DIR}
@@ -14,49 +14,6 @@ if [ ! -d "${ELEPHANT_DIR}" ] || [ ! ${GET_TOOLS} -eq 0 ]; then
     mv elephant-master/* .
     rm -rf elephant-master
     make > /dev/null
-    popd > /dev/null
-fi
-
-
-# download and prepare the lm_1b model
-echo "[INFO] Preparing the lm_1b model..."
-if [ ! -d "${LM1B_DIR}" ] || [ ! ${GET_TOOLS} -eq 0 ] && [ ! ${EMB_USE_CHARS} -eq 0 ]; then
-    rm -rf ${LM1B_DIR}
-    mkdir -p ${LM1B_DIR}
-    pushd ${LM1B_DIR} > /dev/null
-    # lm_1b directory
-    mkdir -p ${LM1B_DIR}/lm_1b
-    wget -q --show-progress "https://github.com/tensorflow/models/archive/master.zip"
-    unzip -qq "master.zip"
-    rm -f "master.zip"
-    mv models-master/research/lm_1b/* ${LM1B_DIR}/lm_1b
-    rm -rf models-master
-    # data directory
-    mkdir -p ${LM1B_DIR}/data
-    pushd ${LM1B_DIR}/data > /dev/null
-    wget -q --show-progress "download.tensorflow.org/models/LM_LSTM_CNN/graph-2016-09-10.pbtxt"
-    wget -q --show-progress "download.tensorflow.org/models/LM_LSTM_CNN/all_shards-2016-09-10/ckpt-base"
-    wget -q --show-progress "download.tensorflow.org/models/LM_LSTM_CNN/all_shards-2016-09-10/ckpt-char-embedding"
-    wget -q --show-progress "download.tensorflow.org/models/LM_LSTM_CNN/all_shards-2016-09-10/ckpt-lstm"
-    wget -q --show-progress "download.tensorflow.org/models/LM_LSTM_CNN/all_shards-2016-09-10/ckpt-softmax0"
-    wget -q --show-progress "download.tensorflow.org/models/LM_LSTM_CNN/all_shards-2016-09-10/ckpt-softmax1"
-    wget -q --show-progress "download.tensorflow.org/models/LM_LSTM_CNN/all_shards-2016-09-10/ckpt-softmax2"
-    wget -q --show-progress "download.tensorflow.org/models/LM_LSTM_CNN/all_shards-2016-09-10/ckpt-softmax3"
-    wget -q --show-progress "download.tensorflow.org/models/LM_LSTM_CNN/all_shards-2016-09-10/ckpt-softmax4"
-    wget -q --show-progress "download.tensorflow.org/models/LM_LSTM_CNN/all_shards-2016-09-10/ckpt-softmax5"
-    wget -q --show-progress "download.tensorflow.org/models/LM_LSTM_CNN/all_shards-2016-09-10/ckpt-softmax6"
-    wget -q --show-progress "download.tensorflow.org/models/LM_LSTM_CNN/all_shards-2016-09-10/ckpt-softmax7"
-    wget -q --show-progress "download.tensorflow.org/models/LM_LSTM_CNN/all_shards-2016-09-10/ckpt-softmax8"
-    wget -q --show-progress "download.tensorflow.org/models/LM_LSTM_CNN/vocab-2016-09-10.txt"
-    wget -q --show-progress "download.tensorflow.org/models/LM_LSTM_CNN/test/news.en.heldout-00000-of-00050"
-    shuf -n 80000 ${LM1B_DIR}/data/vocab-2016-09-10.txt > ${LM1B_DIR}/data/vocab-small.txt
-    popd > /dev/null
-    # output directory
-    mkdir -p ${LM1B_DIR}/output/filters
-    # WORKSPACE file
-    touch WORKSPACE
-    # build the codes
-    bazel build -c opt lm_1b/...
     popd > /dev/null
 fi
 

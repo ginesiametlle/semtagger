@@ -13,6 +13,10 @@ tools/*/
 # trained models
 models/bin/
 
+# local files
+_run.sh
+_config.sh
+
 # C extensions
 *.so
 

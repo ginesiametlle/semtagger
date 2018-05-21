@@ -10,13 +10,13 @@ from collections import OrderedDict
 import numpy as np
 
 
-def load_embeddings(emb_file, oovs = [], pads = [], sep = ' ', lower = False):
+def load_embeddings(emb_file, oovs=[], pads=[], sep=' ', lower=False):
     """
     Loads pre-trained word (or other units) embeddings
         Inputs:
             - emb_file: path to a file with pre-trained embeddings
-            - pads: list with delimiter words to include in the embeddings
             - oovs: list with oovs aliases to include in the embeddings
+            - pads: list with delimiter words to include in the embeddings
 			- sep: separator between embedding dimensions
             - lower: lowercase (or not) words in the embedding vocabulary
         Outputs:
@@ -54,7 +54,7 @@ def load_embeddings(emb_file, oovs = [], pads = [], sep = ' ', lower = False):
             word2emb[word] = vec
             word2idx[word] = len(word2idx)
         else:
-            print('[WARNING] Padding word ' + word + ' has an embedding vector!')
+            print('[WARNING] Padding item ' + word + ' has an embedding vector')
 
     for word in oovs:
         if word not in word2idx:
@@ -62,7 +62,7 @@ def load_embeddings(emb_file, oovs = [], pads = [], sep = ' ', lower = False):
             word2emb[word] = vec
             word2idx[word] = len(word2idx)
         else:
-            print('[WARNING] OOV alias ' + word + ' has an embedding vector!')
+            print('[WARNING] OOV alias ' + word + ' has an embedding vector')
 
     # create an embedding matrix
     vocab_size = len(word2emb)
@@ -74,24 +74,26 @@ def load_embeddings(emb_file, oovs = [], pads = [], sep = ' ', lower = False):
                 emb_matrix[idx] = np.asarray(vec)
 
     # print embedding data and return results
-    print('[INFO] Loaded pre-trained embeddings')
     print('[INFO] Embedding vocabulary:', emb_matrix.shape[0], '(lowercase: ' + str(lower) + ')')
     print('[INFO] OOV aliases:', oovs)
-    print('[INFO] Padding words:', pads)
+    print('[INFO] Padding items:', pads)
     print('[INFO] Embedding dimensions:', emb_dim)
     return word2idx, np.asarray(emb_matrix), emb_dim
 
 
-def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, padding_tag = 'PAD', default_tag = 'NIL', ignore_tags = [], len_perc = 1.0, lower = False, mwe = True):
+def load_conll(conll_file, extra='', vocab={}, oovs={}, pads={}, padding_tag='PAD', default_tag='NIL', ignore_tags=[], len_perc=1.0, lower=False, mwe=True):
     """
     Reads a file in the conll format and produces processed unique sentences
         Inputs:
             - conll_file: path to a file with data
             - extra: path to a file with extra data
             - vocab: set containing all words to use as vocabulary
-            - len_perc: percentile of allowed sentence lengths
             - oovs: dictionary with aliases to replace oovs with (valid keys: number, unknown)
             - pads: dictionary with delimiter words to include in the sentences (valid keys: begin, end)
+            - padding_tag: tag to use for padding
+            - default_tag: tag to use by default
+            - ignore_tags: list of input tags to be ignored (these are mapped to the default tag)
+            - len_perc: percentile of allowed sentence lengths
             - lower: lowercase (or not) words in the input data
             - mwe: handle multi-word expressions
         Outputs:
@@ -100,10 +102,9 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, padding
                      where wi: mapped word, tagi: sem-tag, xi: original word
             - max_len: maximum number of words per sentence allowed
     """
-
     # note: all padding words are assigned the default (empty semantics) semantic tag
     tag2idx = {}
-    tag2idx[padding_tag] = len(tag2idx)
+    tag2idx[padding_tag] = len(tag2idx) + 1
     tag2counts = {}
 
     # number of duplicated sentences in the input data
@@ -190,7 +191,7 @@ def load_conll(conll_file, extra = '', vocab = {}, oovs = {}, pads = {}, padding
                         next_tags.append(tag)
                         next_syms.append(sym)
                         if tag not in tag2idx:
-                            tag2idx[tag] = len(tag2idx)
+                            tag2idx[tag] = len(tag2idx) + 1
 
             # stack the current sentence upon seeing an empty line or a full stop
             if not line or (len(next_words) > 3 and next_words[-4] == '.'):
@@ -284,78 +285,87 @@ def write_conll(conll_file, sents):
     with codecs.open(conll_file, mode = 'w', errors = 'ignore', encoding = 'utf-8') as ofile:
         for sent in sents:
             if sent:
-                for word, tag, sym in sent:
-                    ofile.write(word + '\t' + tag + '\n')
+                for element in sent:
+                    word = element[0]
+                    tag = element[1]
+                    ofile.write(str(word) + '\t' + str(tag) + '\n')
                 ofile.write('\n')
 
 
-def make_char_seqs(word_seqs, vocab={}, oovs={}, pads={}, lower = False):
+def make_char_seqs(word_seqs, vocab={}, oovs={}, pads={}, len_perc=1.0, lower=False, mwe=True):
     """
     Turns word sequences into char sequences
         Inputs:
-            - word_seqs: list of sequences of words
-            - vocab: set containing all words to use as vocabulary
+            - word_seqs: list of sequences of words, represented as [(w1, tag1, x1), ..., (wN, tagN, xN)]
+            - vocab: set containing all characters to use as vocabulary
             - oovs: dictionary with aliases to replace oovs with (valid keys: number, unknown)
-            - pads: dictionary with delimiter words to include in the sentences (valid keys: begin, end)
+            - pads: dictionary with delimiter characters to include in words (valid keys: begin, end)
+            - len_perc: 
             - lower: lowercase (or not) words in the input data
+            - mwe: 
         Outputs:
-            - char_sents: list of sentences represented as [c1,c2,...,cn]
-            - max_len: maximum number of characters per sentence allowed
+            - char_sents: list of sentences represented as [[c1_1, c2_1, ...], ..., [c1_N, c2_N, ...]]
+            - max_len: maximum number of characters per word allowed
     """
     char_seqs = []
-    max_len = 0
+    lengths = []
     num_chars = 0
     num_oovs = 0
     num_spaces = 0
 
     for sent in word_seqs:
+        # decompose each one of the original words
         chars = []
-        if 'begin' in pads:
-            chars.append(pads['begin'])
-        filterlist = filter(lambda x: x, [w[2] if isinstance(w, (list,tuple)) else w for w in sent])
-        for c in ' '.join(filterlist):
-            num_chars += 1
-            if c == '~':
-                c = ' '
-            if lower:
-                c = c.lower()
-            if vocab and c not in vocab:
-                if c.isspace():
-                    num_spaces += 1
-                if c.isdigit():
-                    c = oovs['number']
-                else:
-                    c = oovs['unknown']
-                num_oovs += 1
-            chars.append(c)
-        if 'end' in pads:
-            chars.append(pads['end'])
-        if len(chars) > max_len:
-            max_len = len(chars)
-        char_seqs.append(chars)
+        wordlist = [w[2] if isinstance(w, (list,tuple)) else w for w in sent]
 
-    print('[INFO] Max allowed sentence character length: ' + str(max_len))
-    print('[INFO] Number of OOV characters: ' + str(num_oovs) + ' / ' + str(num_chars) + ' [' + str(num_spaces) + ' are spaces]')
+        # include each word in the sentences as a list of characters
+        for word in wordlist:
+            chars.append([])
+            if lower:
+                word = word.lower()
+            if 'begin' in pads:
+                chars[-1].append(pads['begin'])
+            for c in word:
+                num_chars += 1
+                if vocab and c not in vocab:
+                    if c.isspace():
+                        num_spaces += 1
+                    if c.isdigit():
+                        c = oovs['number']
+                    else:
+                        c = oovs['unknown']
+                    num_oovs += 1
+                chars[-1].append(c)
+            if 'end' in pads:
+                chars[-1].append(pads['end'])
+
+        char_seqs.append(chars)
+        lengths += [len(x) for x in chars]
+
+    # find the allowed word length
+    max_len = sorted(lengths)[math.ceil((len(lengths)-1) * len_perc)]
+    print('[INFO] Max allowed word character length: ' + str(max_len))
+    print('[INFO] Number of OOV characters: ' + str(num_oovs) + ' / ' + str(num_chars))
+    print('[INFO] Number of OOV spacing characters: ' + str(num_spaces) + ' / ' + str(num_oovs))
     return char_seqs, max_len
 
 
 def write_chars(ofile, char_sents):
     """
-    Produces a conll file
+    Produces a file where each line represents a character-decomposed word within a sentence
         Inputs:
             - ofile: path to the output file
-            - char_sents: list of sentences, each one as a list of characters
+            - char_sents: list of sentences, each one as a list of lists of characters
     """
     with codecs.open(ofile, mode = 'w', errors = 'ignore', encoding = 'utf-8') as ofile:
         for sent in char_sents:
-            if sent:
-                ofile.write(sent[0])
-                for char in sent[1:]:
-                    ofile.write(' ' + char)
+            if len(sent):
+                for word in sent:
+                    ofile.write(' '.join([str(x) for x in word]) + '\n')
                 ofile.write('\n')
 
 
-def load_conll_notags(unfile, vocab = {}, oovs = {}, pads = {}, lower = False, mwe = True):
+def load_conll_notags(unfile, vocab={}, oovs={}, pads={}, lower=False, mwe=True):
     """
     Reads a file containing unlabelled data and produces processed sentences
         Inputs:
