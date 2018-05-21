@@ -4,7 +4,7 @@
 from copy import deepcopy
 
 from keras.models import Model, Input
-from keras.layers import Dense, Conv1D, LSTM, GRU
+from keras.layers import Dense, Reshape, Conv2D, LeakyReLU, LSTM, GRU
 from keras.layers import add, concatenate
 from keras.layers import Embedding, BatchNormalization, Dropout, GaussianNoise
 from keras.layers import TimeDistributed, Bidirectional
@@ -53,13 +53,14 @@ def get_layer(args, num_units):
     return None
 
 
-def get_model(base_args, num_tags=0, max_wlen=0, num_words=0, wemb_dim=0, wemb_matrix=None, max_clen=0, num_chars=0, cemb_dim=0, cemb_matrix=None, optimizer=None, dropout=None, model_size=None, num_layers=None):
+def get_model(base_args, num_tags=0, max_slen=0, max_wlen=0, num_words=0, wemb_dim=0, wemb_matrix=None, max_clen=0, num_chars=0, cemb_dim=0, cemb_matrix=None, optimizer=None, dropout=None, model_size=None, num_layers=None):
     """
     Obtains a neural model as a combination of layers
         Inputs:
             - base_args: command line arguments
             - num_tags: number of output tags
-            - max_wlen: maximum number of words in a sentence
+            - max_slen: maximum number of words in a sentence
+            - max_wlen: maximum number of characters in a word
             - num_words: size of the word embedding vocabulary
             - wemb_dim: dimensionality of the word embedding vectors
             - wemb_matrix: word embedding matrix
@@ -84,32 +85,51 @@ def get_model(base_args, num_tags=0, max_wlen=0, num_words=0, wemb_dim=0, wemb_m
     ## DEFINE NETWORK
     if args.use_words:
         # word input layer
-        word_input = Input(shape=(max_wlen,))
+        word_input = Input(shape=(max_slen,))
         # word embedding layer
         word_model = Embedding(input_dim=num_words,
                                output_dim=wemb_dim,
                                weights = [wemb_matrix],
-                               input_length = max_wlen,
+                               input_length = max_slen,
                                trainable = bool(args.word_embeddings_trainable))(word_input)
 
     if args.use_chars:
         # character input layer
-        char_input = Input(shape=(max_clen,))
+        char_input = Input(shape=(max_slen, max_wlen))
         # character embedding layer
-        char_model = Embedding(input_dim=num_chars,
+        x = Reshape((max_slen * max_wlen, ))(char_input)
+        x = Embedding(input_dim=num_chars,
                                output_dim=cemb_dim,
                                weights = [cemb_matrix],
-                               input_length = max_clen,
-                               trainable = bool(args.char_embeddings_trainable))(char_input)
+                               input_length = max_slen * max_wlen,
+                               trainable = bool(args.char_embeddings_trainable))(x)
+        x = Reshape((max_slen, max_wlen, cemb_dim))(x)
 
+        # build word-like features from character features using a residual network
+        # the residual network is constructed by stacking residual blocks
+        shortcut = x
+        for _ in range(min(1, args.resnet_depth)):
+            # build a residual block
+            x = Conv2D(max_slen, kernel_size=(3, 3), padding='same', data_format='channels_first')(x)
+            if args.batch_normalization:
+                x = BatchNormalization()(x)
+            x = LeakyReLU()(x)
+            if args.dropout > 0:
+                x = Dropout(args.dropout)(x)
 
-    # TODO: derive word features from character embeddings using a resnet
-    # we employ temporal (1D) convolutions, different from the semtagnet paper
-	# https://blog.waya.ai/deep-residual-learning-9610bb62c355
- 	# https://gist.github.com/mjdietzx/0cb95922aac14d446a6530f87b3a04ce
+            x = Conv2D(max_slen, kernel_size=(3, 3), padding='same', data_format='channels_first')(x)
+            if args.batch_normalization:
+                x = BatchNormalization()(x)
 
+            # merge input and shortcut
+            x = add([shortcut, x])
+            x = LeakyReLU()(x)
+            shortcut = x
 
-	# concat word and character features, if needed
+        # finish building the character model
+        char_model = Reshape((max_slen, max_wlen * cemb_dim))(x)
+
+	# concat word and character features if needed
     if args.use_words and args.use_chars:
         model = concatenate([word_model, char_model])
     elif args.use_words:

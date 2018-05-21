@@ -359,9 +359,11 @@ def write_chars(ofile, char_sents):
     """
     with codecs.open(ofile, mode = 'w', errors = 'ignore', encoding = 'utf-8') as ofile:
         for sent in char_sents:
-            if len(sent):
-                for word in sent:
-                    ofile.write(' '.join([str(x) for x in word]) + '\n')
+            if sent:
+                for element in sent:
+                    chars = element[0]
+                    tag = element[1]
+                    ofile.write(' '.join([str(x) for x in chars]) + '\t' + str(tag) + '\n')
                 ofile.write('\n')
 
 

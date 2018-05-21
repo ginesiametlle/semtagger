@@ -115,11 +115,11 @@ RUN_GRID_SEARCH=0
 
 # maximum sentence length allowed, as a percentile on the sentence length distribution (float, default: 0.9)
 # the number of words in a sentence for creating word-based features is computed based on this number
-RUN_SENT_LEN=0.9
+RUN_SENT_LEN=0.90
 
 # maximum word length allowed, as a percentile on the word length distribution (float, default: 0.9)
 # the number of characters in a word for creating character-based features is computed based on this number
-RUN_WORD_LEN=0.9
+RUN_WORD_LEN=0.98
 
 # handle multi-word expressions (boolean, default: 1)
 RUN_MWE=1

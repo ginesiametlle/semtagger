@@ -113,6 +113,7 @@ def plot_confusion_matrix(predicted, true, lengths, classes, outfile, ymap, voca
 	# turn the obtained labels to readable string classes (exclude pads)
     y_pred = predicted
     y_true = true
+
     if ymap:
         y_pred = []
         y_true = []

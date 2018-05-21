@@ -40,9 +40,9 @@ def wordsents2sym(sents, max_len, word2idx, tag2idx, def_word, def_tag, pad_word
                 if len(elem) > 1:
                     tag = elem[1]
                     if tag in tag2idx:
-                        sent_y[i, tag2idx[tag]-1] = 1
+                        sent_y[i][tag2idx[tag]-1] = 1
                     else:
-                        sent_y[i, tag2idx[def_tag]-1] = 1
+                        sent_y[i][tag2idx[def_tag]-1] = 1
 
             X.append(sent_X)
             y.append(sent_y)
@@ -50,8 +50,12 @@ def wordsents2sym(sents, max_len, word2idx, tag2idx, def_word, def_tag, pad_word
         # add padding up to the maximum allowed length
         X = pad_sequences(X, maxlen = max_len, dtype = np.int32,
                           padding="post", value = word2idx[pad_word])
+
+        pad_class = np.zeros((nb_classes,), dtype = np.int32)
+        pad_class[tag2idx[pad_tag]-1] = 1
         y = pad_sequences(y, maxlen = max_len, dtype = np.int32,
-                          padding="post", value = tag2idx[pad_tag])
+                          padding="post", value = pad_class)
+
     except Exception as e:
         print('[ERROR] Exception in `wordsents2sym`:', e)
 

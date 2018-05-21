@@ -58,6 +58,7 @@ pad_char['pad'] = '<c>'
 oov_sym = {}
 oov_sym['number'] = '<num>'
 oov_sym['unknown'] = '<unk>'
+oov_sym['UNKNOWN'] = '<UNK>'
 
 # default sem-tag used for padding
 PADDING_TAG = 'PAD'
@@ -171,27 +172,28 @@ if args.use_chars:
 
     #### INFO
     # output proce wssed character sequences for reference
-    write_chars(args.output_chars, char_sents)
-    write_chars(args.output_chars + str('.map'), X_char)
+    write_chars(args.output_chars, (zip(x[0], x[1]) for x in zip(char_sents, [[z[1] for z in s] for s in word_sents])))
+    write_chars(args.output_chars + str('.map'), (zip(x[0], x[1]) for x in zip(X_char.tolist(), y_tag.tolist())))
 
 
 #############################
 ### PREPARE TAGGING MODEL ###
 #############################
-print(X_word_train[0])
-print(X_char_train[0])
-print(y_tag_train[0])
-sys.exit()
+#print(X_word_train[0])
+#print(X_char_train[0])
+#print(y_tag_train[0])
+#sys.exit()
+
 # build input and output data for the model
 y_train = y_tag_train
 y_test = y_tag_test
 if args.use_words and args.use_chars:
     X_train = [X_word_train, X_char_train]
     X_test = [X_word_train, X_char_train]
-if args.use_words:
+elif args.use_words:
     X_train = X_word_train
     X_test = X_word_test
-if args.use_chars:
+elif args.use_chars:
     X_train = X_char_train
     X_test = X_char_test
 
@@ -254,7 +256,7 @@ if args.grid_search:
 
 if not args.grid_search:
     # create a new model
-    model = get_model(args, num_tags, max_slen, num_words, wemb_dim, wemb_matrix, max_wlen, num_chars, cemb_dim, cemb_matrix)
+    model = get_model(args, num_tags, max_slen, max_wlen, num_words, wemb_dim, wemb_matrix, max_wlen, num_chars, cemb_dim, cemb_matrix)
     model.summary()
 
     # train the model
@@ -267,9 +269,9 @@ if not args.grid_search:
     lengths = [len(s) for s in word_sents]
 
     # predictions on the training set
-    p_train = model.predict(np.array(X_train), verbose=min(1, args.verbose))
-    p_train = np.argmax(p_train, axis=-1)
-    true_train = np.argmax(y_train, -1)
+    p_train = model.predict(X_train, verbose=min(1, args.verbose))
+    p_train = np.argmax(p_train, axis=-1) + 1
+    true_train = np.argmax(y_train, axis=-1) + 1
     total_train = 0
     correct_train = 0
     sent_index_train = 0
@@ -288,9 +290,9 @@ if not args.grid_search:
     print('Accuracy on the training set: ', correct_train/total_train)
 
     # predictions on the test set
-    p_test = model.predict(np.array(X_test), verbose=min(1, args.verbose))
-    p_test = np.argmax(p_test, axis=-1)
-    true_test = np.argmax(y_test, -1)
+    p_test = model.predict(X_test, verbose=min(1, args.verbose))
+    p_test = np.argmax(p_test, axis=-1) + 1
+    true_test = np.argmax(y_test, axis=-1) + 1
     total_test = 0
     correct_test = 0
     sent_index_test = 0
