@@ -181,7 +181,7 @@ def load_conll(conll_file, extra='', vocab={}, oovs={}, pads={}, padding_tag='PA
                                 word = word.capitalize()
                             elif '~' in word or '-' in word and mwe:
                                 # attempt to split multi-word expressions
-                                constituents = re.split('[ -~]+', word)
+                                constituents = re.split('[\s~ | \s-]+', word)
                                 if all([True if c in vocab else False for c in constituents]):
                                     next_words += constituents[:-1]
                                     next_tags += ([tag] * (len(constituents) - 1))
@@ -395,20 +395,29 @@ def load_conll_notags(unfile, vocab={}, oovs={}, pads={}, lower=False, mwe=True,
             - mwe: handle multi-word expressions
             - unk_case: take into account case in OOV words
         Outputs:
-            - sents: list of sentences represented as [(w1, x1), ..., (wN, x1)],
-                     where wi: mapped word, xi: original word
+            - sents: list of unchanged input sentences represented as [(w1, i1), ..., (wN, iN)],
+                     where wi: word, ii: word order index
+            - sents: list of sentences represented as [(w1, i1, x1), ..., (wN, iN, xN)],
+                     where wi: mapped word, xi: original word, ii: word order index
     """
     # special characters used for splitting words
     split_chars = set([',', '.', ':', '-', '~', "'", '"'])
 
+    input_sents = []
+    input_words = []
+    windex = -1
+
     sents = []
+
     if 'begin' in pads:
         next_words = [pads['begin']]
         next_syms = ['']
+        next_indexs = [windex]
         sent_base_length = 1
     else:
         next_words = []
         next_syms = []
+        next_indexs = []
         sent_base_length = 0
 
     # select files to use
@@ -430,6 +439,10 @@ def load_conll_notags(unfile, vocab={}, oovs={}, pads={}, lower=False, mwe=True,
             if line:
                 word = line.split('\t')[0]
                 sym = word
+                # add new original word
+                windex += 1
+                input_words.append(word)
+
                 if word != 'ø':
                     num_words += 1
                     if lower:
@@ -447,10 +460,11 @@ def load_conll_notags(unfile, vocab={}, oovs={}, pads={}, lower=False, mwe=True,
                             word = word.capitalize()
                         elif '~' in word or '-' in word and mwe:
                             # attempt to split multi-word expressions
-                            constituents = re.split('[ -~]+', word)
+                            constituents = re.split('[\s~ | \s-]+', word)
                             if all([True if c in vocab else False for c in constituents]):
                                 next_words += constituents[:-1]
                                 next_syms += constituents[:-1]
+                                next_indexs += [windex] * len(constituents[:-1])
                                 word = constituents[-1]
                                 sym = constituents[-1]
                             else:
@@ -470,6 +484,8 @@ def load_conll_notags(unfile, vocab={}, oovs={}, pads={}, lower=False, mwe=True,
 
                     next_words.append(word)
                     next_syms.append(sym)
+                    next_indexs.append(windex)
+
 
             # stack the current sentence upon seeing an empty line or a full stop
             if not line or (len(next_words) > 3 and next_words[-4] == '.'):
@@ -478,35 +494,48 @@ def load_conll_notags(unfile, vocab={}, oovs={}, pads={}, lower=False, mwe=True,
                         if 'end' in pads:
                             next_words.append(pads['end'])
                             next_syms.append('')
-                        sents.append(list(zip(next_words, next_syms)))
+                            next_indexs.append(-1)
+                        sents.append(list(zip(next_words, next_indexs, next_syms)))
+                        input_sents.append(input_words)
+                        input_words = []
+                        windex = -1
                         next_words = []
                         next_syms = []
+                        next_indexs = []
                         num_raw_sents += 1
                         num_sents += 1
                     else:
                         split_words = next_words[:-3]
                         split_syms = next_syms[:-3]
+                        split_indexs = next_indexs[:-3]
                         if 'end' in pads:
                             split_words.append(pads['end'])
                             split_syms.append('')
-                        sents.append(list(zip(split_words, split_syms)))
+                            split_indexs.append(-1)
+                        sents.append(list(zip(split_words, split_indexs, split_syms)))
                         next_words = next_words[-3:]
                         next_syms = next_syms[-3:]
+                        next_indexs = next_indexs[-3:]
                         num_sents += 1
                     if 'begin' in pads:
                         next_words = [pads['begin']] + next_words
                         next_syms = [''] + next_syms
+                        next_indexs = [-1] + next_indexs
 
         # double check the last sentence
         if len(next_words) > sent_base_length:
             if 'end' in pads:
                 next_words.append(pads['end'])
                 next_syms.append('')
-            sents.append(list(zip(next_words, next_syms)))
+                next_indexs.append(-1)
+            sents.append(list(zip(next_words, next_indexs, next_syms)))
+            input_sents.append(input_words)
+            input_words = []
+            windex = -1
 
     # find the allowed sentence length
     print('[INFO] Number of unlabelled OOV words: ' + str(num_oovs) + ' / ' + str(num_words))
     print('[INFO] Original number of unlabelled sentences: ' + str(num_raw_sents))
     print('[INFO] Number of extracted unlabelled sentences ' + str(num_sents))
-    return sents
+    return input_sents, sents
 

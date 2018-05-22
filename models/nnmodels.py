@@ -53,18 +53,17 @@ def get_layer(args, num_units):
     return None
 
 
-def get_model(base_args, num_tags=0, max_slen=0, max_wlen=0, num_words=0, wemb_dim=0, wemb_matrix=None, max_clen=0, num_chars=0, cemb_dim=0, cemb_matrix=None, optimizer=None, dropout=None, model_size=None, num_layers=None):
+def get_model(base_args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix=None, max_wlen=0, num_chars=0, cemb_dim=0, cemb_matrix=None, optimizer=None, dropout=None, model_size=None, num_layers=None):
     """
     Obtains a neural model as a combination of layers
         Inputs:
             - base_args: command line arguments
             - num_tags: number of output tags
             - max_slen: maximum number of words in a sentence
-            - max_wlen: maximum number of characters in a word
             - num_words: size of the word embedding vocabulary
             - wemb_dim: dimensionality of the word embedding vectors
             - wemb_matrix: word embedding matrix
-            - max_clen: maximum number of characters in a sentence
+            - max_wlen: maximum number of characters in a word
             - num_chars: size of the character embedding vocabulary
             - cemb_dim: dimensionality of the character embedding vectors
             - cemb_matrix: character embedding matrix

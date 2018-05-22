@@ -11,7 +11,7 @@ import pickle
 import numpy as np
 
 from models.argparser import get_args
-from models.loader import load_conll_notags
+from models.loader import load_conll_notags, make_char_seqs
 from models.nnmodels import get_model
 
 from utils.input2feats import wordsents2sym, charsents2sym
@@ -19,48 +19,117 @@ from utils.input2feats import wordsents2sym, charsents2sym
 #sys.stderr = sys.__stderr__
 
 
-# obtain arguments and trained model information
+# parse input arguments
 args = get_args()
-OFF_FILE = args.input_pred_file
-ON_FILE = args.output_pred_file
-MODEL_FILE = args.output_model
 
+# load trained model parameters
 minfo = pickle.load(open(args.output_model_info, 'rb'))
-USE_WORDS = minfo['args'].use_words
-USE_CHARS = minfo['args'].use_chars
+params = minfo['params']
 
 # read and featurize unlabelled data
-word_sents = load_conll_notags(OFF_FILE, minfo['word2idx'].keys(), minfo['oov_sym'], minfo['pad_sym'], False, True, True)
-word_sents_maps = [[y[0] for y in x] for x in word_sents]
-word_sents_originals = [[y[1] for y in x] for x in word_sents]
+word_inputs, word_sents = load_conll_notags(args.input_pred_file,
+                                            vocab = minfo['word2idx'].keys(),
+                                            oovs = minfo['oov_sym'],
+                                            pads = minfo['pad_word'],
+                                            lower = False,
+                                            mwe = True,
+                                            unk_case = True)
 
 # transform inputs to a symbolic representation
-word_sym, _ = wordsents2sym(word_sents_maps, minfo['max_wlen'], minfo['word2idx'], minfo['tag2idx'], minfo['oov_sym']['unknown'], minfo['DEFAULT_TAG'], minfo['pad_sym']['pad'], minfo['DEFAULT_TAG'])
+if params.use_words:
+    X_word, _ = wordsents2sym(word_sents,
+                              minfo['max_slen'],
+                              minfo['word2idx'],
+                              minfo['tag2idx'],
+                              minfo['oov_sym']['unknown'],
+                              minfo['DEFAULT_TAG'],
+                              minfo['pad_word']['pad'],
+                              minfo['DEFAULT_TAG'])
+
+# compute character-based inputs
+if params.use_chars:
+    char_sents, _ = make_char_seqs(word_sents,
+                                   vocab = set(minfo['char2idx'].keys()),
+                                   oovs = minfo['oov_sym'],
+                                   pads = minfo['pad_char'],
+                                   len_perc = params.word_len_perc,
+                                   lower = False,
+                                   mwe = params.multi_word)
+
+    # map character sentences and their tags to a symbolic representation
+    X_char = charsents2sym(char_sents,
+                           minfo['max_slen'],
+                           minfo['max_wlen'],
+                           minfo['char2idx'],
+                           minfo['oov_sym']['unknown'],
+                           minfo['pad_char'])
+
+# build input for the model
+if params.use_words and params.use_chars:
+    X = [X_word, X_char]
+elif params.use_words:
+    X = X_word
+elif params.use_chars:
+    X = X_char
 
 # use a trained model to predict the corresponding tags
-if USE_WORDS and USE_CHARS:
-    model = get_model(minfo['args'], minfo['num_tags'], minfo['max_wlen'], minfo['num_words'], minfo['wemb_dim'], minfo['wemb_matrix'], minfo['max_clen'], minfo['num_chars'], minfo['cemb_dim'], minfo['cemb_matrix'])
-if USE_WORDS:
-    model = get_model(minfo['args'], minfo['num_tags'], minfo['max_wlen'], minfo['num_words'], minfo['wemb_dim'], minfo['wemb_matrix'])
-if USE_CHARS:
-    model = get_model(minfo['args'], minfo['num_tags'], minfo['max_clen'], minfo['num_chars'], minfo['cemb_dim'], minfo['cemb_matrix'])
-model.load_weights(MODEL_FILE)
+if params.use_words and params.use_chars:
+    model = get_model(minfo['params'],
+                      minfo['num_tags'],
+                      minfo['max_slen'],
+                      minfo['num_words'],
+                      minfo['wemb_dim'],
+                      minfo['wemb_matrix'],
+                      minfo['max_wlen'],
+                      minfo['num_chars'],
+                      minfo['cemb_dim'],
+                      minfo['cemb_matrix'])
+elif params.use_words:
+    model = get_model(minfo['params'],
+                      minfo['num_tags'],
+                      minfo['max_slen'],
+                      minfo['num_words'],
+                      minfo['wemb_dim'],
+                      minfo['wemb_matrix'])
+
+elif params.use_chars:
+    model = get_model(minfo['params'],
+                      minfo['num_tags'],
+                      minfo['max_wlen'],
+                      minfo['num_chars'],
+                      minfo['cemb_dim'],
+                      minfo['cemb_matrix'])
+
+model.load_weights(args.output_model)
 model.summary()
 
-# write results to a file
-p = model.predict(np.array(word_sym), verbose=min(1, minfo['args'].verbose))
-p = np.argmax(p, axis=-1)
+# predict tags using the model
+p = model.predict(X, verbose=min(1, minfo['params'].verbose))
+p = np.argmax(p, axis=-1) + 1
 
-with open(ON_FILE, 'w') as ofile:
-    for i in range(len(word_sents_originals)):
-        words = word_sents_originals[i]
-        tags = p[i]
-        for j in range(len(words)):
-            if words[j] not in minfo['pad_sym']['begin'] and words[j] not in minfo['pad_sym']['end']:
-                wordtag = minfo['DEFAULT_TAG']
-                if j < len(tags):
-                    wordtag = minfo['idx2tag'][tags[j]]
-                ofile.write(words[j] + '\t' + str(wordtag) + '\n')
-        if i < len(word_sents) - 1:
-            ofile.write('\n')
+
+# reconstruct the original file with tags
+#print(word_inputs[0])
+#print(word_sents[0])
+#print(p[0])
+#print(list(filter(lambda y: y[0] > 0, zip([x[1] for x in word_sents[0]], p[0]))))
+
+### Attention! A sentence from word_input can be splitted in multiple word_sents sentences
+with open(args.output_pred_file, 'w') as ofile:
+    for sidx in range(len(word_inputs)):
+        wpos2tag = {}
+        # fix the index SIDX to point to the correct sentence always
+        for wpos, tag in zip([x[1] for x in word_sents[sidx]], p[sidx]):
+            if wpos not in wpos2tag:
+                wpos2tag[wpos] = []
+            wpos2tag[wpos].append(tag)
+
+        for widx in range(len(word_inputs[sidx])):
+            tgt_word = word_inputs[sidx][widx]
+            tgt_tag = minfo['tag2idx'][minfo['DEFAULT_TAG']]
+            if widx in wpos2tag:
+                tgt_tag = max(set(wpos2tag[widx]), key=wpos2tag[widx].count)
+            # write out
+            ofile.write(tgt_word + '\t' + str(minfo['idx2tag'][tgt_tag]) + '\n')
+        ofile.write('\n')
 

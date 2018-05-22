@@ -69,7 +69,7 @@ DEFAULT_TAG = 'NIL'
 IGNORE_TAGS = set(['ANA', 'ACT', 'ATT', 'COM', 'UNE', 'DXS', 'LOG', 'MOD', 'DSC', 'NAM', 'EVE', 'TNS', 'TIM', 'UNK'])
 
 
-# obtain arguments
+# parse input arguments
 args = get_args()
 
 if not args.use_words and not args.use_chars:
@@ -192,7 +192,7 @@ y_train = y_tag_train
 y_test = y_tag_test
 if args.use_words and args.use_chars:
     X_train = [X_word_train, X_char_train]
-    X_test = [X_word_train, X_char_train]
+    X_test = [X_word_test, X_char_test]
 elif args.use_words:
     X_train = X_word_train
     X_test = X_word_test
@@ -257,104 +257,103 @@ if args.grid_search:
 ### FIT TAGGING MODEL ###
 #########################
 
-if not args.grid_search:
-    # create a new model
-    model = get_model(args, num_tags, max_slen, max_wlen, num_words, wemb_dim, wemb_matrix, max_wlen, num_chars, cemb_dim, cemb_matrix)
-    model.summary()
+# create a new model
+model = get_model(args, num_tags, max_slen, num_words, wemb_dim, wemb_matrix, max_wlen, num_chars, cemb_dim, cemb_matrix)
+model.summary()
 
-    # train the model
-    history = model.fit(X_train, np.array(y_train), batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, verbose=args.verbose)
+# train the model
+history = model.fit(X_train, np.array(y_train), batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, verbose=args.verbose)
 
-    #### INFO
-    # predict using the model
-    classes = [x[0] for x in tag2idx.items() if x[0] != PADDING_TAG]
-    idx2tag = {v: k for k, v in tag2idx.items()}
-    lengths = [len(s) for s in word_sents]
+#### INFO
+# predict using the model
+classes = [x[0] for x in tag2idx.items() if x[0] != PADDING_TAG]
+idx2tag = {v: k for k, v in tag2idx.items()}
+lengths = [len(s) for s in word_sents]
 
-    # predictions on the training set
-    p_train = model.predict(X_train, verbose=min(1, args.verbose))
-    p_train = np.argmax(p_train, axis=-1) + 1
-    true_train = np.argmax(y_train, axis=-1) + 1
-    total_train = 0
-    correct_train = 0
-    sent_index_train = 0
+# predictions on the training set
+p_train = model.predict(X_train, verbose=min(1, args.verbose))
+p_train = np.argmax(p_train, axis=-1) + 1
+true_train = np.argmax(y_train, axis=-1) + 1
+total_train = 0
+correct_train = 0
+sent_index_train = 0
 
-    for triple in zip(p_train, true_train, lengths):
-        pred_tags = triple[0]
-        true_tags = triple[1]
-        l = lengths[sent_index_train]
+for triple in zip(p_train, true_train, lengths):
+    pred_tags = triple[0]
+    true_tags = triple[1]
+    l = lengths[sent_index_train]
 
-        sent_index_train += 1
-        for n in range(min(max_slen,l)):
-            if true_tags[n] != tag2idx[PADDING_TAG]:
-                total_train += 1
-                if pred_tags[n] == true_tags[n]:
-                    correct_train += 1
-    print('Accuracy on the training set: ', correct_train/total_train)
+    sent_index_train += 1
+    for n in range(min(max_slen,l)):
+        if true_tags[n] != tag2idx[PADDING_TAG]:
+            total_train += 1
+            if pred_tags[n] == true_tags[n]:
+                correct_train += 1
+print('Accuracy on the training set: ', correct_train/total_train)
 
-    # predictions on the test set
-    p_test = model.predict(X_test, verbose=min(1, args.verbose))
-    p_test = np.argmax(p_test, axis=-1) + 1
-    true_test = np.argmax(y_test, axis=-1) + 1
-    total_test = 0
-    correct_test = 0
-    sent_index_test = 0
+# predictions on the test set
+p_test = model.predict(X_test, verbose=min(1, args.verbose))
+p_test = np.argmax(p_test, axis=-1) + 1
+true_test = np.argmax(y_test, axis=-1) + 1
+total_test = 0
+correct_test = 0
+sent_index_test = 0
 
-    for triple in zip(p_test, true_test, lengths):
-        pred_tags = triple[0]
-        true_tags = triple[1]
-        l = lengths[sent_index_train + sent_index_test]
+for triple in zip(p_test, true_test, lengths):
+    pred_tags = triple[0]
+    true_tags = triple[1]
+    l = lengths[sent_index_train + sent_index_test]
 
-        sent_index_test += 1
-        for n in range(min(max_slen,l)):
-            if true_tags[n] != tag2idx[PADDING_TAG]:
-                total_test += 1
-                if pred_tags[n] == true_tags[n]:
-                    correct_test += 1
-    print('Accuracy on the test set: ', correct_test/total_test)
+    sent_index_test += 1
+    for n in range(min(max_slen,l)):
+        if true_tags[n] != tag2idx[PADDING_TAG]:
+            total_test += 1
+            if pred_tags[n] == true_tags[n]:
+                correct_test += 1
+print('Accuracy on the test set: ', correct_test/total_test)
 
-    #### INFO
-    # plot confusion matrix (train + test)
-    plot_confusion_matrix(p_train, true_train, lengths[:sent_index_train], classes, os.path.dirname(args.output_model) + '/cmat_train_oov.svg', idx2tag, set(word2idx.keys()), True)
-    plot_confusion_matrix(p_test, true_test, lengths[sent_index_train:], classes, os.path.dirname(args.output_model) + '/cmat_test_oov.svg', idx2tag, set(word2idx.keys()), True)
+#### INFO
+# plot confusion matrix (train + test)
+plot_confusion_matrix(p_train, true_train, lengths[:sent_index_train], classes, os.path.dirname(args.output_model) + '/cmat_train_oov.svg', idx2tag, set(word2idx.keys()), True)
+plot_confusion_matrix(p_test, true_test, lengths[sent_index_train:], classes, os.path.dirname(args.output_model) + '/cmat_test_oov.svg', idx2tag, set(word2idx.keys()), True)
 
-    #### INFO
-    # plot how the training went
-    plot_accuracy(history,
-                  ['strict_accuracy', 'val_strict_accuracy'],
-                  ['Training data', 'Dev. data'],
-                  correct_test/total_test,
-                  os.path.dirname(args.output_model) + '/semtag_acc.svg')
+#### INFO
+# plot how the training went
+plot_accuracy(history,
+              ['strict_accuracy', 'val_strict_accuracy'],
+              ['Training data', 'Dev. data'],
+              correct_test/total_test,
+              os.path.dirname(args.output_model) + '/semtag_acc.svg')
 
 
 #######################
 ### SAVE MODEL INFO ###
 #######################
-if not args.grid_search:
-    model.save_weights(args.output_model)
+model.save_weights(args.output_model)
 
-    minfo = {}
-    minfo['args'] = args
-    minfo['pad_word'] = pad_word
-    minfo['oov_sym'] = oov_sym
-    minfo['DEFAULT_TAG'] = DEFAULT_TAG
-    minfo['PADDING_TAG'] = PADDING_TAG
-    minfo['tag2idx'] = tag2idx
-    minfo['idx2tag'] = idx2tag
-    minfo['num_tags'] = num_tags
-    if args.use_words:
-        minfo['word2idx'] = word2idx
-        minfo['max_slen'] = max_slen
-        minfo['num_words'] = num_words
-        minfo['wemb_dim'] = wemb_dim
-        minfo['wemb_matrix'] = wemb_matrix
-    if args.use_chars:
-        minfo['char2idx'] = char2idx
-        minfo['max_wlen'] = max_wlen
-        minfo['num_chars'] = num_chars
-        minfo['cemb_dim'] = cemb_dim
-        minfo['cemb_matrix'] = cemb_matrix
+minfo = {}
+minfo['params'] = args
+minfo['pad_word'] = pad_word
+minfo['pad_char'] = pad_char
+minfo['oov_sym'] = oov_sym
+minfo['DEFAULT_TAG'] = DEFAULT_TAG
+minfo['PADDING_TAG'] = PADDING_TAG
+minfo['tag2idx'] = tag2idx
+minfo['idx2tag'] = idx2tag
+minfo['num_tags'] = num_tags
+if args.use_words:
+    minfo['word2idx'] = word2idx
+    minfo['max_slen'] = max_slen
+    minfo['num_words'] = num_words
+    minfo['wemb_dim'] = wemb_dim
+    minfo['wemb_matrix'] = wemb_matrix
+if args.use_chars:
+    minfo['char2idx'] = char2idx
+    minfo['max_wlen'] = max_wlen
+    minfo['num_chars'] = num_chars
+    minfo['cemb_dim'] = cemb_dim
+    minfo['cemb_matrix'] = cemb_matrix
 
-    with open(args.output_model_info, 'wb') as f:
-        pickle.dump(minfo, f, pickle.HIGHEST_PROTOCOL)
+with open(args.output_model_info, 'wb') as f:
+    pickle.dump(minfo, f, pickle.HIGHEST_PROTOCOL)
 
