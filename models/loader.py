@@ -10,7 +10,7 @@ from collections import OrderedDict
 import numpy as np
 
 
-def load_embeddings(emb_file, oovs=[], pads=[], sep=' ', lower=False):
+def load_embeddings(emb_file, oovs=[], pads=[], sep=' ', lower=False, case_dim=True):
     """
     Loads pre-trained word (or other units) embeddings
         Inputs:
@@ -19,6 +19,7 @@ def load_embeddings(emb_file, oovs=[], pads=[], sep=' ', lower=False):
             - pads: list with delimiter words to include in the embeddings
 			- sep: separator between embedding dimensions
             - lower: lowercase (or not) words in the embedding vocabulary
+            - case_dim: Append an extra case dimension to the embedding vectors
         Outputs:
             - word2idx: maps words to an index in the embedding matrix
             - emb_matrix: Embedding matrix
@@ -31,8 +32,11 @@ def load_embeddings(emb_file, oovs=[], pads=[], sep=' ', lower=False):
     for line in open(emb_file, errors = 'ignore', encoding = 'utf-8'):
         try:
             fields = line.strip().split(sep)
-            vec = np.asarray(fields[1:], dtype='float32')
             word = fields[0]
+            vec = np.asarray(fields[1:], dtype='float32')
+            if case_dim:
+                is_upper = float(word[0].isupper())
+                vec = np.insert(vec, 0, is_upper, axis=0)
             if lower:
                 word = word.lower()
             word2emb[word] = vec
@@ -51,6 +55,8 @@ def load_embeddings(emb_file, oovs=[], pads=[], sep=' ', lower=False):
     for word in pads:
         if word not in word2idx:
             vec = np.random.normal(mu, sigma, emb_dim)
+            if case_dim:
+                vec = np.insert(vec, 0, 0., axis=0)
             word2emb[word] = vec
             word2idx[word] = len(word2idx)
         else:
@@ -59,6 +65,9 @@ def load_embeddings(emb_file, oovs=[], pads=[], sep=' ', lower=False):
     for word in oovs:
         if word not in word2idx:
             vec = np.random.normal(mu, sigma, emb_dim)
+            if case_dim:
+                is_upper = float(word == 'UNKNOWN')
+                vec = np.insert(vec, 0, is_upper, axis=0)
             word2emb[word] = vec
             word2idx[word] = len(word2idx)
         else:
@@ -77,11 +86,11 @@ def load_embeddings(emb_file, oovs=[], pads=[], sep=' ', lower=False):
     print('[INFO] Embedding vocabulary:', emb_matrix.shape[0], '(lowercase: ' + str(lower) + ')')
     print('[INFO] OOV aliases:', oovs)
     print('[INFO] Padding items:', pads)
-    print('[INFO] Embedding dimensions:', emb_dim)
+    print('[INFO] Embedding dimensions:', emb_dim, '(extra case dimension: ' + str(case_dim) + ')')
     return word2idx, np.asarray(emb_matrix), emb_dim
 
 
-def load_conll(conll_file, extra='', vocab={}, oovs={}, pads={}, padding_tag='PAD', default_tag='NIL', ignore_tags=[], len_perc=1.0, lower=False, mwe=True):
+def load_conll(conll_file, extra='', vocab={}, oovs={}, pads={}, padding_tag='PAD', default_tag='NIL', ignore_tags=[], len_perc=1.0, lower=False, mwe=True, unk_case=True):
     """
     Reads a file in the conll format and produces processed unique sentences
         Inputs:
@@ -96,6 +105,7 @@ def load_conll(conll_file, extra='', vocab={}, oovs={}, pads={}, padding_tag='PA
             - len_perc: percentile of allowed sentence lengths
             - lower: lowercase (or not) words in the input data
             - mwe: handle multi-word expressions
+            - unk_case: take into account case in OOV words
         Outputs:
             - tag2idx: maps each tag to a numerical index
             - sents: list of sentences represented as [(w1, tag1, x1), ..., (wN, tagN, x1)],
@@ -180,11 +190,17 @@ def load_conll(conll_file, extra='', vocab={}, oovs={}, pads={}, padding_tag='PA
                                     sym = constituents[-1]
                                 else:
                                     #print('[INFO] Word ' + word + ' not in the embedding vocabulary')
-                                    word = oovs['unknown']
+                                    if unk_case and word[0].isupper():
+                                        word = oovs['UNKNOWN']
+                                    else:
+                                        word = oovs['unknown']
                                     num_oovs += 1
                             else:
                                 #print('[INFO] Word ' + word + ' not in the embedding vocabulary')
-                                word = oovs['unknown']
+                                if unk_case and word[0].isupper():
+                                    word = oovs['UNKNOWN']
+                                else:
+                                    word = oovs['unknown']
                                 num_oovs += 1
 
                         next_words.append(word)
@@ -367,7 +383,7 @@ def write_chars(ofile, char_sents):
                 ofile.write('\n')
 
 
-def load_conll_notags(unfile, vocab={}, oovs={}, pads={}, lower=False, mwe=True):
+def load_conll_notags(unfile, vocab={}, oovs={}, pads={}, lower=False, mwe=True, unk_case=True):
     """
     Reads a file containing unlabelled data and produces processed sentences
         Inputs:
@@ -377,6 +393,7 @@ def load_conll_notags(unfile, vocab={}, oovs={}, pads={}, lower=False, mwe=True)
             - pads: dictionary with delimiter words to include in the sentences (valid keys: begin, end)
             - lower: lowercase (or not) words in the input data
             - mwe: handle multi-word expressions
+            - unk_case: take into account case in OOV words
         Outputs:
             - sents: list of sentences represented as [(w1, x1), ..., (wN, x1)],
                      where wi: mapped word, xi: original word
@@ -438,11 +455,17 @@ def load_conll_notags(unfile, vocab={}, oovs={}, pads={}, lower=False, mwe=True)
                                 sym = constituents[-1]
                             else:
                                 #print('[INFO] Word ' + word + ' not in the embedding vocabulary')
-                                word = oovs['unknown']
+                                if unk_case and word[0].isupper():
+                                    word = oovs['UNKNOWN']
+                                else:
+                                    word = oovs['unknown']
                                 num_oovs += 1
                         else:
                             #print('[INFO] Word ' + word + ' not in the embedding vocabulary')
-                            word = oovs['unknown']
+                            if unk_case and word[0].isupper():
+                                word = oovs['UNKNOWN']
+                            else:
+                                word = oovs['unknown']
                             num_oovs += 1
 
                     next_words.append(word)

@@ -16,13 +16,13 @@ emb_chars = [str(x) for x in sys.argv[2]]
 emb_file = sys.argv[3]
 
 # determine the number of dimensions
-ndims = 64
+ndims = 32
 print("[INFO] Character vectors for (" + str(lang) + ") have dimensionality " + str(ndims))
 
 # write out in text format
 with open(emb_file, 'w') as ofile:
     for c in emb_chars:
         if c.isprintable() and (ord(c) == 32 or not c.isspace()):
-        	vectorstr = ' '.join([str(x) for x in numpy.random.normal(0, 0.5, ndims)])
+        	vectorstr = ' '.join([str(x) for x in numpy.random.normal(0, 1, ndims)])
         	ofile.write(c + ' ' + vectorstr + '\n')
 

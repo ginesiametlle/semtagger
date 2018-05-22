@@ -88,7 +88,8 @@ word2idx, wemb_matrix, wemb_dim = load_embeddings(args.word_embeddings,
                                                   oovs = list(oov_sym.values()),
                                                   pads = list(pad_word.values()),
                                                   sep = ' ',
-                                                  lower = False)
+                                                  lower = False,
+                                                  case_dim = True)
 
 # read and pad input sentences and their tags
 print('[INFO] Loading word sentences...')
@@ -102,7 +103,8 @@ tag2idx, word_sents, max_slen = load_conll(args.raw_pmb_data,
                                            ignore_tags = IGNORE_TAGS,
                                            len_perc = args.sent_len_perc,
                                            lower = False,
-                                           mwe = args.multi_word)
+                                           mwe = args.multi_word,
+                                           unk_case = True)
 
 
 # randomize the input data
@@ -143,7 +145,8 @@ if args.use_chars:
                                                       oovs = list(oov_sym.values()),
                                                       pads = list(pad_char.values()),
                                                       sep = ' ',
-                                                      lower = False)
+                                                      lower = False,
+                                                      case_dim =False)
 
     # read and pad input sentences
     print('[INFO] Loading character sentences...')

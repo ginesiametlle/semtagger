@@ -25,6 +25,14 @@ for idx in ${!PMB_LANGS[*]} ; do
         LCEMB_TRAINABLE=1
     fi
 
+    if [ ${EMB_USE_WORDS} -eq 0 ]; then
+        LWEMB="''"
+    fi
+    if [ ${EMB_USE_CHARS} -eq 0 ]; then
+        LCEMB="''"
+    fi
+
+
     # use an existing model if it exists
     if [ -f ${MODEL_GIVEN_PATH} ] && [ ${GET_MODEL} -eq 0 ]; then
         echo "[INFO] A matching trained model was found for '${l}'"

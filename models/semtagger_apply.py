@@ -30,7 +30,7 @@ USE_WORDS = minfo['args'].use_words
 USE_CHARS = minfo['args'].use_chars
 
 # read and featurize unlabelled data
-word_sents = load_conll_notags(OFF_FILE, minfo['word2idx'].keys(), minfo['oov_sym'], minfo['pad_sym'], False, True)
+word_sents = load_conll_notags(OFF_FILE, minfo['word2idx'].keys(), minfo['oov_sym'], minfo['pad_sym'], False, True, True)
 word_sents_maps = [[y[0] for y in x] for x in word_sents]
 word_sents_originals = [[y[1] for y in x] for x in word_sents]
 
