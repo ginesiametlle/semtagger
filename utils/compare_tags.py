@@ -21,8 +21,8 @@ with open(pred_file) as p:
         pred_lines = p.readlines()
         gold_lines = g.readlines()
 
-        for i in range(len(pred_lines)):
-            if len(pred_lines[i].split()) != len(gold_lines[i].split()):
+        for i in range(len(gold_lines)):
+            if len(pred_lines) < i or len(pred_lines[i].split()) != len(gold_lines[i].split()):
                 print('[ERROR] The tagged files are not properly formatted')
                 sys.exit(1)
             elif len(pred_lines[i].split()) > 1:

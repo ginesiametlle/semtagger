@@ -90,11 +90,6 @@ fi
 
 
 if [ ! ${PARAMS_TRAIN} -eq 0 ]; then
-    # SETUP REQUIRED TOOLS
-    echo '[INFO] Setting up required tools...'
-    . ${DIR_TOOLS}/prepare_tools.sh
-    echo '[INFO] Finished setting up tools'
-
     # DOWNLOAD AND PREPARE DATA
     echo '[INFO] Preparing data...'
     . ${DIR_DATA}/prepare_data.sh

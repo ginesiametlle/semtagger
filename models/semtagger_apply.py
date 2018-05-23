@@ -115,14 +115,20 @@ p = np.argmax(p, axis=-1) + 1
 #print(list(filter(lambda y: y[0] > 0, zip([x[1] for x in word_sents[0]], p[0]))))
 
 ### Attention! A sentence from word_input can be splitted in multiple word_sents sentences
+idx_offset = 0
 with open(args.output_pred_file, 'w') as ofile:
     for sidx in range(len(word_inputs)):
-        wpos2tag = {}
         # fix the index SIDX to point to the correct sentence always
-        for wpos, tag in zip([x[1] for x in word_sents[sidx]], p[sidx]):
-            if wpos not in wpos2tag:
-                wpos2tag[wpos] = []
-            wpos2tag[wpos].append(tag)
+        old_offset = idx_offset
+        while list(filter(lambda y: y[1] != -1, word_sents[sidx+idx_offset]))[-1][1] < len(word_inputs[sidx])-1:
+            idx_offset += 1
+
+        wpos2tag = {}
+        for off in range(old_offset, idx_offset+1):
+            for wpos, tag in zip([x[1] for x in word_sents[sidx+off]], p[sidx+off]):
+                if wpos not in wpos2tag:
+                    wpos2tag[wpos] = []
+                wpos2tag[wpos].append(tag)
 
         for widx in range(len(word_inputs[sidx])):
             tgt_word = word_inputs[sidx][widx]
