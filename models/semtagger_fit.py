@@ -15,17 +15,19 @@ import itertools
 import numpy as np
 import pandas as pd
 
-from sklearn.model_selection import train_test_split, GridSearchCV
-
-from keras.wrappers.scikit_learn import KerasClassifier
+from sklearn.model_selection import train_test_split, StratifiedKFold
 
 from models.argparser import get_args
 from models.loader import load_embeddings, load_conll
 from models.loader import make_char_seqs, write_conll, write_chars
-from models.nnmodels import get_model
+from models.nn import get_model
+from models.optimizer import grid_search_params
+from models.metrics import strict_accuracy_N
 
 from utils.input2feats import wordsents2sym, charsents2sym
 from utils.data_stats import plot_dist_tags, plot_accuracy, plot_confusion_matrix
+
+
 
 #sys.stderr = sys.__stderr__
 
@@ -224,34 +226,11 @@ if not args.use_chars:
 ###############################################
 ### FIND MODEL PARAMETERS USING GRID SEARCH ###
 ###############################################
+args.grid_search = 1
 if args.grid_search:
-    # create model
-    model = KerasClassifier(build_fn=get_model)
+    print('[INFO] Performing grid-search...')
+    args = grid_search_params(args, 3, X_train, y_train, tag2idx[PADDING_TAG], num_tags, max_slen, num_words, wemb_dim, wemb_matrix, max_wlen, num_chars, cemb_dim, cemb_matrix)
 
-    # define the grid search parameters
-    base_args_gs = [args]
-    epochs_gs = [20, 30, 40]
-    batch_size_gs = [1024, 2048]
-    optimizer_gs = ['rmsprop', 'adam']
-    dropout_gs = [0.1, 0.3]
-    model_size_gs = [200, 300]
-    num_layers_gs = [1, 2]
-
-    param_grid = dict(base_args=base_args_gs, epochs=epochs_gs, batch_size=batch_size_gs, optimizer=optimizer_gs, dropout=dropout_gs, model_size=model_size_gs, num_layers=num_layers_gs)
-
-    #print(X_train.shape)
-    #print(np.argmax(np.array(y_train), axis=-1).shape)
-    # search in the grid space
-    grid = GridSearchCV(estimator=model, param_grid=param_grid)
-    grid_result = grid.fit(X_train, y_train)
-
-    # summarize results
-    print("Best: %f using %s" % (grid_result.best_score_, grid_result.best_params_))
-    means = grid_result.cv_results_['mean_test_score']
-    stds = grid_result.cv_results_['std_test_score']
-    params = grid_result.cv_results_['params']
-    for mean, stdev, param in zip(means, stds, params):
-        print("%f (%f) with: %r" % (mean, stdev, param))
 
 #########################
 ### FIT TAGGING MODEL ###
@@ -268,61 +247,32 @@ history = model.fit(X_train, np.array(y_train), batch_size=args.batch_size, epoc
 # predict using the model
 classes = [x[0] for x in tag2idx.items() if x[0] != PADDING_TAG]
 idx2tag = {v: k for k, v in tag2idx.items()}
-lengths = [len(s) for s in word_sents]
 
 # predictions on the training set
 p_train = model.predict(X_train, verbose=min(1, args.verbose))
 p_train = np.argmax(p_train, axis=-1) + 1
 true_train = np.argmax(y_train, axis=-1) + 1
-total_train = 0
-correct_train = 0
-sent_index_train = 0
-
-for triple in zip(p_train, true_train, lengths):
-    pred_tags = triple[0]
-    true_tags = triple[1]
-    l = lengths[sent_index_train]
-
-    sent_index_train += 1
-    for n in range(min(max_slen,l)):
-        if true_tags[n] != tag2idx[PADDING_TAG]:
-            total_train += 1
-            if pred_tags[n] == true_tags[n]:
-                correct_train += 1
-print('Accuracy on the training set: ', correct_train/total_train)
+train_acc = strict_accuracy_N(true_train, p_train, 1)
+print('Accuracy on the training set: ', train_acc)
 
 # predictions on the test set
 p_test = model.predict(X_test, verbose=min(1, args.verbose))
 p_test = np.argmax(p_test, axis=-1) + 1
 true_test = np.argmax(y_test, axis=-1) + 1
-total_test = 0
-correct_test = 0
-sent_index_test = 0
-
-for triple in zip(p_test, true_test, lengths):
-    pred_tags = triple[0]
-    true_tags = triple[1]
-    l = lengths[sent_index_train + sent_index_test]
-
-    sent_index_test += 1
-    for n in range(min(max_slen,l)):
-        if true_tags[n] != tag2idx[PADDING_TAG]:
-            total_test += 1
-            if pred_tags[n] == true_tags[n]:
-                correct_test += 1
-print('Accuracy on the test set: ', correct_test/total_test)
+test_acc = strict_accuracy_N(true_test, p_test, 1)
+print('Accuracy on the test set: ', test_acc)
 
 #### INFO
 # plot confusion matrix (train + test)
-plot_confusion_matrix(p_train, true_train, lengths[:sent_index_train], classes, os.path.dirname(args.output_model) + '/cmat_train_oov.svg', idx2tag, set(word2idx.keys()), True)
-plot_confusion_matrix(p_test, true_test, lengths[sent_index_train:], classes, os.path.dirname(args.output_model) + '/cmat_test_oov.svg', idx2tag, set(word2idx.keys()), True)
+plot_confusion_matrix(p_train, true_train, 1, classes, os.path.dirname(args.output_model) + '/cmat_train_oov.svg', idx2tag, set(word2idx.keys()), True)
+plot_confusion_matrix(p_test, true_test, 1, classes, os.path.dirname(args.output_model) + '/cmat_test_oov.svg', idx2tag, set(word2idx.keys()), True)
 
 #### INFO
 # plot how the training went
 plot_accuracy(history,
-              ['strict_accuracy', 'val_strict_accuracy'],
+              ['strict_accuracy_K', 'val_strict_accuracy_K'],
               ['Training data', 'Dev. data'],
-              correct_test/total_test,
+              test_acc,
               os.path.dirname(args.output_model) + '/semtag_acc.svg')
 
 

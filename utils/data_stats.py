@@ -97,13 +97,13 @@ def plot_accuracy(history, keys, labels, test_acc, outfile):
     cairosvg.svg2svg(url=outfile, write_to=outfile)
 
 
-def plot_confusion_matrix(predicted, true, lengths, classes, outfile, ymap, vocab=[], normalize=True):
+def plot_confusion_matrix(predicted, true, ignore_tag, classes, outfile, ymap, vocab=[], normalize=True):
     """
     Plot a confusion matrix
             Inputs:
                 - predicted: predicted labels
                 - true: true labels
-                - lengths: original length of each sentence (excluding padding characters)
+                - ignore_tag: tag to be ignored
                 - classes: set containing all output classes
                 - outfile: output file
                 - ymap: map to transform predicted and true labels
@@ -118,8 +118,10 @@ def plot_confusion_matrix(predicted, true, lengths, classes, outfile, ymap, voca
         y_pred = []
         y_true = []
         for i in range(len(true)):
-            y_pred += [ymap[yi] for yi in predicted[i][:lengths[i]]]
-            y_true += [ymap[yi] for yi in true[i][:lengths[i]]]
+            for j in range(len(true[i])):
+                if true[i][j] != ignore_tag:
+                    y_pred += [ymap[predicted[i][j]]]
+                    y_true += [ymap[true[i][j]]]
 
     # compute confusion matrix
     cm = confusion_matrix(y_true, y_pred, labels=classes)
@@ -133,8 +135,8 @@ def plot_confusion_matrix(predicted, true, lengths, classes, outfile, ymap, voca
     # transform confusion matrix to a heatmap and output
     fig, ax = plt.subplots(figsize=(25,25))
     b = sns.heatmap(cm, fmt='', ax=ax, cmap="BuPu", square=True, xticklabels=True, yticklabels=True)
-    b.set_xlabel("Predicted tags", fontsize=20)
-    b.set_ylabel("True tags", fontsize=20)
+    b.set_xlabel("Predicted sem-tags", fontsize=20)
+    b.set_ylabel("Actual sem-tags", fontsize=20)
     b.set_xticklabels(b.get_yticklabels(), fontsize=12)
     b.set_yticklabels(b.get_yticklabels(), fontsize=12)
     plt.draw()

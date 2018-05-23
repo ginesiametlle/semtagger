@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 # this script defines the structure of possible neural models
 
-from copy import deepcopy
-
 from keras.models import Model, Input
 from keras.layers import Dense, Reshape, Conv2D, LeakyReLU, LSTM, GRU
 from keras.layers import add, concatenate
@@ -10,7 +8,7 @@ from keras.layers import Embedding, BatchNormalization, Dropout, GaussianNoise
 from keras.layers import TimeDistributed, Bidirectional
 from keras_contrib.layers import CRF
 
-from models.metrics import strict_accuracy
+from models.metrics import strict_accuracy_K
 from utils.keras_mapper import get_optimizer, get_loss
 
 
@@ -53,7 +51,7 @@ def get_layer(args, num_units):
     return None
 
 
-def get_model(base_args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix=None, max_wlen=0, num_chars=0, cemb_dim=0, cemb_matrix=None, optimizer=None, dropout=None, model_size=None, num_layers=None):
+def get_model(args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix=None, max_wlen=0, num_chars=0, cemb_dim=0, cemb_matrix=None):
     """
     Obtains a neural model as a combination of layers
         Inputs:
@@ -70,17 +68,6 @@ def get_model(base_args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_m
         Returns:
             the compiled Keras neural model defined by the command line arguments
     """
-    ## REDEFINE BASE PARAMETERS
-    args = deepcopy(base_args)
-    if optimizer:
-        args.optimizer = optimizer
-    if dropout:
-        args.dropout = dropout
-    if model_size:
-        args.model_size = model_size
-    if num_layers:
-        args.num_layers = num_layers
-
     ## DEFINE NETWORK
     if args.use_words:
         # word input layer
@@ -113,7 +100,8 @@ def get_model(base_args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_m
             if args.batch_normalization:
                 x = BatchNormalization()(x)
             x = LeakyReLU()(x)
-            if args.dropout > 0:
+
+            if args.dropout:
                 x = Dropout(args.dropout)(x)
 
             x = Conv2D(max_slen, kernel_size=(3, 3), padding='same', data_format='channels_first')(x)
@@ -188,9 +176,9 @@ def get_model(base_args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_m
     # define metrics
     # we employ Keras default accuracy and our strict accuracy metric
     if args.output_activation == 'crf':
-        model_metrics = [crf.accuracy, strict_accuracy]
+        model_metrics = [crf.accuracy, strict_accuracy_K]
     else:
-        model_metrics = ['accuracy', strict_accuracy]
+        model_metrics = ['accuracy', strict_accuracy_K]
 
     # define optimizer
     model_opt = get_optimizer(args.optimizer)

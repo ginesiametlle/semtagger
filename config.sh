@@ -180,11 +180,3 @@ MODEL_BATCH_NORMALIZATION=0
 # keras verbosity mode (int, default: 1)
 MODEL_VERBOSE=1
 
-#################
-## OTHER TOOLS ##
-#################
-
-# root directory where to find the Elephant tokenizer (RuG)
-# it will be downloaded automatically when missing
-ELEPHANT_DIR="${DIR_TOOLS}/elephant"
-

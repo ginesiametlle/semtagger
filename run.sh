@@ -23,10 +23,16 @@ PRED_INPUT=${DIR_DATA}/sample/qa_en.off
 PRED_OUTPUT=${DIR_DATA}/sample/qa_en.sem
 
 # point to a directory containing the model to store/load with option --model, -m
-MODEL_GIVEN_DIR=${MODEL_ROOT}/${MODEL_TYPE}-${MODEL_SIZE}-${MODEL_LAYERS}-${MODEL_ACTIVATION_OUTPUT}
+if [ ! ${RUN_GRID_SEARCH} -eq 0 ]; then
+	  MODEL_GIVEN_DIR=${MODEL_ROOT}/"${MODEL_TYPE}-${MODEL_ACTIVATION_OUTPUT}-gs"
+else
+	  MODEL_GIVEN_DIR=${MODEL_ROOT}/${MODEL_TYPE}-${MODEL_ACTIVATION_OUTPUT}-${MODEL_SIZE}-${MODEL_LAYERS}-${MODEL_BATCH_SIZE}
+fi
+
 if [ ! ${EMB_USE_WORDS} -eq 0 ]; then
 	  MODEL_GIVEN_DIR="${MODEL_GIVEN_DIR}-words"
 fi
+
 if [ ! ${EMB_USE_CHARS} -eq 0 ]; then
 	  MODEL_GIVEN_DIR="${MODEL_GIVEN_DIR}-chars"
 fi

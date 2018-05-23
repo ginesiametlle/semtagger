@@ -12,7 +12,7 @@ import numpy as np
 
 from models.argparser import get_args
 from models.loader import load_conll_notags, make_char_seqs
-from models.nnmodels import get_model
+from models.nn import get_model
 
 from utils.input2feats import wordsents2sym, charsents2sym
 
