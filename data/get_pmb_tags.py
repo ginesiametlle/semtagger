@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# this script extracts tokens and their tags from the PMB xml files
+# this script extracts tokens and their tags from the PMB files
 
 import sys
 import string

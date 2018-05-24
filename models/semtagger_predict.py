@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# this script trains a neural model for semantic tagging
+# this script predicts semantic tags using a trained neural model
 
 import sys
 import os
@@ -53,8 +53,7 @@ if params.use_chars:
                                    oovs = minfo['oov_sym'],
                                    pads = minfo['pad_char'],
                                    len_perc = params.word_len_perc,
-                                   lower = False,
-                                   mwe = params.multi_word)
+                                   lower = False)
 
     # map character sentences and their tags to a symbolic representation
     X_char = charsents2sym(char_sents,
@@ -62,7 +61,9 @@ if params.use_chars:
                            minfo['max_wlen'],
                            minfo['char2idx'],
                            minfo['oov_sym']['unknown'],
-                           minfo['pad_char'])
+                           minfo['pad_char']['begin'],
+                           minfo['pad_char']['end'],
+                           minfo['pad_char']['pad'])
 
 # build input for the model
 if params.use_words and params.use_chars:
@@ -75,57 +76,44 @@ elif params.use_chars:
 # use a trained model to predict the corresponding tags
 if params.use_words and params.use_chars:
     model = get_model(minfo['params'],
-                      minfo['num_tags'],
-                      minfo['max_slen'],
-                      minfo['num_words'],
-                      minfo['wemb_dim'],
-                      minfo['wemb_matrix'],
-                      minfo['max_wlen'],
-                      minfo['num_chars'],
-                      minfo['cemb_dim'],
-                      minfo['cemb_matrix'])
+                      num_tags = minfo['num_tags'],
+                      max_slen = minfo['max_slen'], num_words = minfo['num_words'],
+                      wemb_dim = minfo['wemb_dim'], wemb_matrix = minfo['wemb_matrix'],
+                      max_wlen = minfo['max_wlen'], num_chars = minfo['num_chars'],
+                      cemb_dim = minfo['cemb_dim'], cemb_matrix = minfo['cemb_matrix'])
 elif params.use_words:
     model = get_model(minfo['params'],
-                      minfo['num_tags'],
-                      minfo['max_slen'],
-                      minfo['num_words'],
-                      minfo['wemb_dim'],
-                      minfo['wemb_matrix'])
+                      num_tags = minfo['num_tags'],
+                      max_slen = minfo['max_slen'], num_words = minfo['num_words'],
+                      wemb_dim = minfo['wemb_dim'], wemb_matrix = minfo['wemb_matrix'])
 
 elif params.use_chars:
     model = get_model(minfo['params'],
-                      minfo['num_tags'],
-                      minfo['max_wlen'],
-                      minfo['num_chars'],
-                      minfo['cemb_dim'],
-                      minfo['cemb_matrix'])
+                      num_tags = minfo['num_tags'],
+                      max_wlen = minfo['max_wlen'], num_chars = minfo['num_chars'],
+                      cemb_dim = minfo['cemb_dim'], cemb_matrix = minfo['cemb_matrix'])
 
 model.load_weights(args.output_model)
 model.summary()
 
 # predict tags using the model
-p = model.predict(X, verbose=min(1, minfo['params'].verbose))
+p = model.predict(X, verbose = min(1, minfo['params'].verbose))
 p = np.argmax(p, axis=-1) + 1
 
-
 # reconstruct the original file with tags
-#print(word_inputs[0])
-#print(word_sents[0])
-#print(p[0])
-#print(list(filter(lambda y: y[0] > 0, zip([x[1] for x in word_sents[0]], p[0]))))
-
-### Attention! A sentence from word_input can be splitted in multiple word_sents sentences
+# an input sentence can be split over multiple processed sentences
 idx_offset = 0
 with open(args.output_pred_file, 'w') as ofile:
     for sidx in range(len(word_inputs)):
-        # fix the index SIDX to point to the correct sentence always
+        # find the range of processed sentences that match the current input sentence
         old_offset = idx_offset
-        while list(filter(lambda y: y[1] != -1, word_sents[sidx+idx_offset]))[-1][1] < len(word_inputs[sidx])-1:
+        while list(filter(lambda y: y[1] != -1, word_sents[sidx + idx_offset]))[-1][1] < len(word_inputs[sidx]) - 1:
             idx_offset += 1
 
+        # generate the predicted mapping for each word in the input sentence
         wpos2tag = {}
-        for off in range(old_offset, idx_offset+1):
-            for wpos, tag in zip([x[1] for x in word_sents[sidx+off]], p[sidx+off]):
+        for off in range(old_offset, idx_offset + 1):
+            for wpos, tag in zip([x[1] for x in word_sents[sidx + off]], p[sidx + off]):
                 if wpos not in wpos2tag:
                     wpos2tag[wpos] = []
                 wpos2tag[wpos].append(tag)
@@ -133,6 +121,7 @@ with open(args.output_pred_file, 'w') as ofile:
         for widx in range(len(word_inputs[sidx])):
             tgt_word = word_inputs[sidx][widx]
             tgt_tag = minfo['tag2idx'][minfo['DEFAULT_TAG']]
+            # multi-word expressions take the most common prediction for their individual components
             if widx in wpos2tag:
                 tgt_tag = max(set(wpos2tag[widx]), key=wpos2tag[widx].count)
             # write out

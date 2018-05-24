@@ -2,7 +2,7 @@
 
 ### About this repository
 
-This repository provides an easy to use universal semantic tagger.
+This repository provides a universal semantic tagger which can be easily trained on the [Parallel Meaning Bank](http://pmb.let.rug.nl).
 
 A recent version of Python 3 with the packages listed in [requirements.txt](./requirements.txt) is expected.
 
@@ -26,9 +26,9 @@ Note that trained models are stored/loaded using the directory defined in [confi
 
 ### Comments
 
-It is advisable to run a [_tokenizer_](http://gmb.let.rug.nl/elephant/about.php) on your data.
+It is advisable to run a tokenizer such as [Elephant](http://gmb.let.rug.nl/elephant/about.php) on your additional data (if any).
 
-If you have the means to identify multiword expressions, you can represent them as a single token using tildes/hyphens, as in ```ice~cream``` or ```ice-cream```.
+Furthermore, if you have the means to identify multiword expressions, you can represent them as a single token using tildes/hyphens, as in ```ice~cream``` or ```ice-cream```.
 
 ### References
 

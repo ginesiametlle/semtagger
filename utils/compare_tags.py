@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# this script compares the accuracy of a CoNLL tagged file against a gold standard file
+# this script computes the accuracy of a CoNLL tagged file against a gold standard file
 
 import sys
 import string

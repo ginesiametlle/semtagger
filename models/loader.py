@@ -6,8 +6,11 @@ import os.path
 import codecs
 import math
 import re
-from collections import OrderedDict
+
 import numpy as np
+import numpy.random as npr
+
+from collections import OrderedDict
 
 
 def load_embeddings(emb_file, oovs=[], pads=[], sep=' ', lower=False, case_dim=True):
@@ -18,12 +21,12 @@ def load_embeddings(emb_file, oovs=[], pads=[], sep=' ', lower=False, case_dim=T
             - oovs: list with oovs aliases to include in the embeddings
             - pads: list with delimiter words to include in the embeddings
 			- sep: separator between embedding dimensions
-            - lower: lowercase (or not) words in the embedding vocabulary
-            - case_dim: Append an extra case dimension to the embedding vectors
+            - lower: lowercase words in the embedding vocabulary
+            - case_dim: append an extra case dimension to the embedding vectors
         Outputs:
             - word2idx: maps words to an index in the embedding matrix
-            - emb_matrix: Embedding matrix
-            - emb_dim: Dimension of the embedding vectors
+            - emb_matrix: embedding matrix
+            - emb_dim: dimension of the embedding vectors
     """
     word2emb = {}
     word2idx = {}
@@ -54,9 +57,11 @@ def load_embeddings(emb_file, oovs=[], pads=[], sep=' ', lower=False, case_dim=T
 
     for word in pads:
         if word not in word2idx:
-            vec = np.random.normal(mu, sigma, emb_dim)
             if case_dim:
+                vec = npr.normal(mu, sigma, emb_dim-1)
                 vec = np.insert(vec, 0, 0., axis=0)
+            else:
+                vec = npr.normal(mu, sigma, emb_dim)
             word2emb[word] = vec
             word2idx[word] = len(word2idx)
         else:
@@ -64,10 +69,12 @@ def load_embeddings(emb_file, oovs=[], pads=[], sep=' ', lower=False, case_dim=T
 
     for word in oovs:
         if word not in word2idx:
-            vec = np.random.normal(mu, sigma, emb_dim)
             if case_dim:
-                is_upper = float(word == 'UNKNOWN')
+                vec = npr.normal(mu, sigma, emb_dim-1)
+                is_upper = float(word[0].isupper())
                 vec = np.insert(vec, 0, is_upper, axis=0)
+            else:
+                vec = npr.normal(mu, sigma, emb_dim)
             word2emb[word] = vec
             word2idx[word] = len(word2idx)
         else:
@@ -82,7 +89,7 @@ def load_embeddings(emb_file, oovs=[], pads=[], sep=' ', lower=False, case_dim=T
             if vec is not None and vec.shape[0] == emb_dim:
                 emb_matrix[idx] = np.asarray(vec)
 
-    # print embedding data and return results
+    # print feedback data and return mappings
     print('[INFO] Embedding vocabulary:', emb_matrix.shape[0], '(lowercase: ' + str(lower) + ')')
     print('[INFO] OOV aliases:', oovs)
     print('[INFO] Padding items:', pads)
@@ -90,20 +97,20 @@ def load_embeddings(emb_file, oovs=[], pads=[], sep=' ', lower=False, case_dim=T
     return word2idx, np.asarray(emb_matrix), emb_dim
 
 
-def load_conll(conll_file, extra='', vocab={}, oovs={}, pads={}, padding_tag='PAD', default_tag='NIL', ignore_tags=[], len_perc=1.0, lower=False, mwe=True, unk_case=True):
+def load_conll(conll_file, extra='', vocab=[], oovs={}, pads={}, padding_tag='PAD', default_tag='NIL', ignore_tags=[], len_perc=1.0, lower=False, mwe=True, unk_case=True):
     """
     Reads a file in the conll format and produces processed unique sentences
         Inputs:
             - conll_file: path to a file with data
             - extra: path to a file with extra data
             - vocab: set containing all words to use as vocabulary
-            - oovs: dictionary with aliases to replace oovs with (valid keys: number, unknown)
+            - oovs: dictionary with aliases to replace oovs with (valid keys: number, unknown, UNKNOWN)
             - pads: dictionary with delimiter words to include in the sentences (valid keys: begin, end)
             - padding_tag: tag to use for padding
             - default_tag: tag to use by default
-            - ignore_tags: list of input tags to be ignored (these are mapped to the default tag)
+            - ignore_tags: list of input tags to be ignored and mapped to the default tag
             - len_perc: percentile of allowed sentence lengths
-            - lower: lowercase (or not) words in the input data
+            - lower: lowercase words in the input data
             - mwe: handle multi-word expressions
             - unk_case: take into account case in OOV words
         Outputs:
@@ -279,7 +286,7 @@ def load_conll(conll_file, extra='', vocab={}, oovs={}, pads={}, padding_tag='PA
     # find the allowed sentence length
     max_len = sorted(lengths)[math.ceil((len(lengths)-1) * len_perc)]
     print('[INFO] Sentence length percentile: ' + str(len_perc))
-    print('[INFO] Max allowed sentence word length: ' + str(max_len))
+    print('[INFO] Max allowed sentence length: ' + str(max_len))
     print('[INFO] Number of OOV words: ' + str(num_oovs) + ' / ' + str(num_words))
     print('[INFO] Original number of sentences: ' + str(num_raw_sents))
     print('[INFO] Number of extracted sentences: ' + str(num_sents))
@@ -287,7 +294,6 @@ def load_conll(conll_file, extra='', vocab={}, oovs={}, pads={}, padding_tag='PA
 
     # sort tags in non-decreasing order
     sorted_tag2idx = OrderedDict(sorted(tag2idx.items(), key=lambda t: tag2counts[t[0]], reverse=True))
-
     return sorted_tag2idx, sents, max_len
 
 
@@ -308,7 +314,7 @@ def write_conll(conll_file, sents):
                 ofile.write('\n')
 
 
-def make_char_seqs(word_seqs, vocab={}, oovs={}, pads={}, len_perc=1.0, lower=False, mwe=True):
+def make_char_seqs(word_seqs, vocab=[], oovs={}, pads={}, len_perc=1.0, lower=False):
     """
     Turns word sequences into char sequences
         Inputs:
@@ -316,9 +322,8 @@ def make_char_seqs(word_seqs, vocab={}, oovs={}, pads={}, len_perc=1.0, lower=Fa
             - vocab: set containing all characters to use as vocabulary
             - oovs: dictionary with aliases to replace oovs with (valid keys: number, unknown)
             - pads: dictionary with delimiter characters to include in words (valid keys: begin, end)
-            - len_perc: 
-            - lower: lowercase (or not) words in the input data
-            - mwe: 
+            - len_perc: percentile of allowed word lengths
+            - lower: lowercase words in the input data
         Outputs:
             - char_sents: list of sentences represented as [[c1_1, c2_1, ...], ..., [c1_N, c2_N, ...]]
             - max_len: maximum number of characters per word allowed
@@ -360,7 +365,8 @@ def make_char_seqs(word_seqs, vocab={}, oovs={}, pads={}, len_perc=1.0, lower=Fa
 
     # find the allowed word length
     max_len = sorted(lengths)[math.ceil((len(lengths)-1) * len_perc)]
-    print('[INFO] Max allowed word character length: ' + str(max_len))
+    print('[INFO] Word length percentile: ' + str(len_perc))
+    print('[INFO] Max allowed word length: ' + str(max_len))
     print('[INFO] Number of OOV characters: ' + str(num_oovs) + ' / ' + str(num_chars))
     print('[INFO] Number of OOV spacing characters: ' + str(num_spaces) + ' / ' + str(num_oovs))
     return char_seqs, max_len
@@ -383,19 +389,19 @@ def write_chars(ofile, char_sents):
                 ofile.write('\n')
 
 
-def load_conll_notags(unfile, vocab={}, oovs={}, pads={}, lower=False, mwe=True, unk_case=True):
+def load_conll_notags(unfile, vocab=[], oovs={}, pads={}, lower=False, mwe=True, unk_case=True):
     """
     Reads a file containing unlabelled data and produces processed sentences
         Inputs:
             - unfile: path to a file with data
             - vocab: set containing all words to use as vocabulary
-            - oovs: dictionary with aliases to replace oovs with (valid keys: number, unknown)
+            - oovs: dictionary with aliases to replace oovs with (valid keys: number, unknown, UNKNOWN)
             - pads: dictionary with delimiter words to include in the sentences (valid keys: begin, end)
-            - lower: lowercase (or not) words in the input data
+            - lower: lowercase words in the input data
             - mwe: handle multi-word expressions
             - unk_case: take into account case in OOV words
         Outputs:
-            - sents: list of unchanged input sentences represented as [(w1, i1), ..., (wN, iN)],
+            - input_sents: list of unchanged input sentences represented as [(w1, i1), ..., (wN, iN)],
                      where wi: word, ii: word order index
             - sents: list of sentences represented as [(w1, i1, x1), ..., (wN, iN, xN)],
                      where wi: mapped word, xi: original word, ii: word order index

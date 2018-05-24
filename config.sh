@@ -43,7 +43,7 @@ GET_MODEL=0
 
 # version of the PMB to use (string)
 # currently available versions are "1.0.0" and "2.0.0"
-PMB_VER="2.0.0"
+PMB_VER="1.0.0"
 
 # root directory where to store the PMB (string)
 PMB_ROOT=${DIR_DATA}/pmb/pmb-${PMB_VER}
@@ -113,11 +113,11 @@ RUN_DEV_SIZE=0.0
 # the hyperparameters here defined are shared among models for all languages otherwise
 RUN_GRID_SEARCH=0
 
-# maximum sentence length allowed, as a percentile on the sentence length distribution (float, default: 0.9)
+# maximum sentence length allowed, as a percentile on the sentence length distribution (float, default: 0.90)
 # the number of words in a sentence for creating word-based features is computed based on this number
 RUN_SENT_LEN=0.90
 
-# maximum word length allowed, as a percentile on the word length distribution (float, default: 0.9)
+# maximum word length allowed, as a percentile on the word length distribution (float, default: 0.98)
 # the number of characters in a word for creating character-based features is computed based on this number
 RUN_WORD_LEN=0.98
 
@@ -174,8 +174,8 @@ MODEL_DROPOUT=0.1
 # batch size (int, default: 1024)
 MODEL_BATCH_SIZE=1024
 
-# use batch normalization (boolean, default: 0)
-MODEL_BATCH_NORMALIZATION=0
+# use batch normalization (boolean, default: 1)
+MODEL_BATCH_NORMALIZATION=1
 
 # keras verbosity mode (int, default: 1)
 MODEL_VERBOSE=1

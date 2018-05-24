@@ -8,26 +8,21 @@ sys.path.append(sys.argv[1])
 #os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 import random
-import operator
 import pickle
-import itertools
 
 import numpy as np
-import pandas as pd
 
 from sklearn.model_selection import train_test_split, StratifiedKFold
 
 from models.argparser import get_args
-from models.loader import load_embeddings, load_conll
-from models.loader import make_char_seqs, write_conll, write_chars
+from models.loader import load_embeddings, load_conll, write_conll
+from models.loader import make_char_seqs, write_chars
 from models.nn import get_model
 from models.optimizer import grid_search_params
 from models.metrics import strict_accuracy_N
 
 from utils.input2feats import wordsents2sym, charsents2sym
 from utils.data_stats import plot_dist_tags, plot_accuracy, plot_confusion_matrix
-
-
 
 #sys.stderr = sys.__stderr__
 
@@ -70,10 +65,8 @@ DEFAULT_TAG = 'NIL'
 # these correspond to coarse sem-tags from the Universal Semantic Tagset
 IGNORE_TAGS = set(['ANA', 'ACT', 'ATT', 'COM', 'UNE', 'DXS', 'LOG', 'MOD', 'DSC', 'NAM', 'EVE', 'TNS', 'TIM', 'UNK'])
 
-
 # parse input arguments
 args = get_args()
-
 if not args.use_words and not args.use_chars:
     print('[ERROR] Cannot use words nor character features')
     print('[ERROR] A neural model will not be trained...')
@@ -108,16 +101,19 @@ tag2idx, word_sents, max_slen = load_conll(args.raw_pmb_data,
                                            mwe = args.multi_word,
                                            unk_case = True)
 
-
 # randomize the input data
 random.shuffle(word_sents)
 
 # map word sentences and their tags to a symbolic representation
 print('[INFO] Reshaping word data...')
-X_word, y_tag = wordsents2sym(word_sents, max_slen,
-                              word2idx, tag2idx,
-                              oov_sym['unknown'], DEFAULT_TAG,
-                              pad_word['pad'], PADDING_TAG)
+X_word, y_tag = wordsents2sym(word_sents,
+                              max_slen,
+                              word2idx,
+                              tag2idx,
+                              oov_sym['unknown'],
+                              DEFAULT_TAG,
+                              pad_word['pad'],
+                              PADDING_TAG)
 
 # compute word-based inputs
 if args.use_words:
@@ -157,8 +153,7 @@ if args.use_chars:
                                           oovs = oov_sym,
                                           pads = pad_char,
                                           len_perc = args.word_len_perc,
-                                          lower = False,
-                                          mwe = args.multi_word)
+                                          lower = False)
 
 	# map character sentences and their tags to a symbolic representation
     print('[INFO] Reshaping character data...')
@@ -167,7 +162,9 @@ if args.use_chars:
                            max_wlen,
                            char2idx,
                            oov_sym['unknown'],
-                           pad_char)
+                           pad_char['begin'],
+                           pad_char['end'],
+                           pad_char['pad'])
 
     # split character data into training and test
     print('[INFO] Splitting character data into training and test...')
@@ -184,10 +181,6 @@ if args.use_chars:
 #############################
 ### PREPARE TAGGING MODEL ###
 #############################
-#print(X_word_train[0])
-#print(X_char_train[0])
-#print(y_tag_train[0])
-#sys.exit()
 
 # build input and output data for the model
 y_train = y_tag_train
@@ -202,7 +195,7 @@ elif args.use_chars:
     X_train = X_char_train
     X_test = X_char_test
 
-# compute size target classes and word / character vocabulary
+# compute size target classes and word/character vocabulary
 num_words = 0
 num_chars = 0
 num_tags = len(tag2idx.keys())
@@ -211,9 +204,8 @@ if args.use_words:
 if args.use_chars:
     num_chars = len(char2idx.keys())
 
-# obtain model object
+# set not used model parameters to dummy values
 if not args.use_words:
-    max_slen = 0
     wemb_dim = 0
     wemb_matrix = None
 if not args.use_chars:
@@ -222,14 +214,21 @@ if not args.use_chars:
     cemb_matrix = None
 
 
-
-###############################################
-### FIND MODEL PARAMETERS USING GRID SEARCH ###
-###############################################
-args.grid_search = 1
+###########################
+### PERFORM GRID SEARCH ###
+###########################
 if args.grid_search:
     print('[INFO] Performing grid-search...')
-    args = grid_search_params(args, 3, X_train, y_train, tag2idx[PADDING_TAG], num_tags, max_slen, num_words, wemb_dim, wemb_matrix, max_wlen, num_chars, cemb_dim, cemb_matrix)
+    # number of samples for cross-validation
+    n_samples = 3
+    args = grid_search_params(args,
+                              n_samples,
+                              X_train,
+                              y_train,
+                              tag2idx[PADDING_TAG],
+                              num_tags,
+                              max_slen, num_words, wemb_dim, wemb_matrix,
+                              max_wlen, num_chars, cemb_dim, cemb_matrix)
 
 
 #########################
@@ -237,11 +236,16 @@ if args.grid_search:
 #########################
 
 # create a new model
-model = get_model(args, num_tags, max_slen, num_words, wemb_dim, wemb_matrix, max_wlen, num_chars, cemb_dim, cemb_matrix)
+model = get_model(args,
+                  num_tags,
+                  max_slen, num_words, wemb_dim, wemb_matrix,
+                  max_wlen, num_chars, cemb_dim, cemb_matrix)
 model.summary()
 
 # train the model
-history = model.fit(X_train, np.array(y_train), batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, verbose=args.verbose)
+history = model.fit(X_train, np.array(y_train),
+                    batch_size = args.batch_size, epochs = args.epochs,
+                    validation_split = args.dev_size, verbose = args.verbose)
 
 #### INFO
 # predict using the model
@@ -249,31 +253,45 @@ classes = [x[0] for x in tag2idx.items() if x[0] != PADDING_TAG]
 idx2tag = {v: k for k, v in tag2idx.items()}
 
 # predictions on the training set
-p_train = model.predict(X_train, verbose=min(1, args.verbose))
+p_train = model.predict(X_train, verbose = min(1, args.verbose))
 p_train = np.argmax(p_train, axis=-1) + 1
 true_train = np.argmax(y_train, axis=-1) + 1
-train_acc = strict_accuracy_N(true_train, p_train, 1)
+train_acc = strict_accuracy_N(true_train, p_train, tag2idx[PADDING_TAG])
 print('Accuracy on the training set: ', train_acc)
 
 # predictions on the test set
-p_test = model.predict(X_test, verbose=min(1, args.verbose))
-p_test = np.argmax(p_test, axis=-1) + 1
-true_test = np.argmax(y_test, axis=-1) + 1
-test_acc = strict_accuracy_N(true_test, p_test, 1)
-print('Accuracy on the test set: ', test_acc)
+if args.test_size > 0:
+    p_test = model.predict(X_test, verbose = min(1, args.verbose))
+    p_test = np.argmax(p_test, axis=-1) + 1
+    true_test = np.argmax(y_test, axis=-1) + 1
+    test_acc = strict_accuracy_N(true_test, p_test, tag2idx[PADDING_TAG])
+    print('Accuracy on the test set: ', test_acc)
+else:
+    test_acc = 0
 
 #### INFO
 # plot confusion matrix (train + test)
-plot_confusion_matrix(p_train, true_train, 1, classes, os.path.dirname(args.output_model) + '/cmat_train_oov.svg', idx2tag, set(word2idx.keys()), True)
-plot_confusion_matrix(p_test, true_test, 1, classes, os.path.dirname(args.output_model) + '/cmat_test_oov.svg', idx2tag, set(word2idx.keys()), True)
+plot_confusion_matrix(true_train, p_train, classes, tag2idx[PADDING_TAG], idx2tag,
+                      os.path.dirname(args.output_model) + '/cmat_train_oov.svg',
+                      vocab = set(word2idx.keys()),
+                      normalize = True)
+if args.test_size > 0:
+    plot_confusion_matrix(true_test, p_test, classes, tag2idx[PADDING_TAG], idx2tag,
+                          os.path.dirname(args.output_model) + '/cmat_test_oov.svg',
+                          vocab = set(word2idx.keys()),
+                          normalize = True)
 
 #### INFO
 # plot how the training went
+plot_keys = ['strict_accuracy_K']
+plot_labels = ['Training data']
+if args.dev_size > 0:
+    plot_keys += ['val_strict_accuracy_K']
+    plot_keys += ['Dev. data']
 plot_accuracy(history,
-              ['strict_accuracy_K', 'val_strict_accuracy_K'],
-              ['Training data', 'Dev. data'],
-              test_acc,
-              os.path.dirname(args.output_model) + '/semtag_acc.svg')
+              plot_keys,
+              plot_labels,
+              test_acc, os.path.dirname(args.output_model) + '/semtag_acc.svg')
 
 
 #######################

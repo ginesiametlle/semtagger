@@ -5,14 +5,14 @@ import numpy as np
 from keras.preprocessing.sequence import pad_sequences
 
 
-def wordsents2sym(sents, max_len, word2idx, tag2idx, def_word, def_tag, pad_word, pad_tag):
+def wordsents2sym(sents, max_slen, word2idx, tag2idx, def_word, def_tag, pad_word, pad_tag):
     """
     Given a list of sentences, return a list of integers
         Inputs:
             - sents: list of sentences represented as a list of (word, tag) pairs
-			- max_len: maximum allowed sentence length
+			- max_slen: maximum allowed sentence length
             - word2idx: dictionary mapping words to indices in the embedding matrix
-            - tag2idx: dictionary mapping tags to integers
+            - tag2idx: dictionary mapping tags to positive integers
             - def_word: special word to use by default
             - def_tag: special tag to use by default
             - pad_word: special word to use for padding
@@ -47,13 +47,13 @@ def wordsents2sym(sents, max_len, word2idx, tag2idx, def_word, def_tag, pad_word
             X.append(sent_X)
             y.append(sent_y)
 
-        # add padding up to the maximum allowed length
-        X = pad_sequences(X, maxlen = max_len, dtype = np.int32,
+        # add padding up to the maximum allowed sentence length
+        X = pad_sequences(X, maxlen = max_slen, dtype = np.int32,
                           padding="post", value = word2idx[pad_word])
 
         pad_class = np.zeros((nb_classes,), dtype = np.int32)
         pad_class[tag2idx[pad_tag]-1] = 1
-        y = pad_sequences(y, maxlen = max_len, dtype = np.int32,
+        y = pad_sequences(y, maxlen = max_slen, dtype = np.int32,
                           padding="post", value = pad_class)
 
     except Exception as e:
@@ -65,18 +65,20 @@ def wordsents2sym(sents, max_len, word2idx, tag2idx, def_word, def_tag, pad_word
     return X, y
 
 
-def charsents2sym(sents, max_slen, max_wlen, char2idx, def_char, pad_char):
+def charsents2sym(sents, max_slen, max_wlen, char2idx, def_char, pad_begin_word, pad_end_word, pad_char):
     """
     Given a list of sentences, return a list of integers
         Inputs:
-            - sents: list of sentences represented as a list of characters
-			- max_slen: maximum length of a sentence
-            - max_wlen: maximum length of a word
-            - char2idx: dictionary mapping words to indices in the embedding matrix
-            - def_char: special word to use by default
-            - pad_chars: special characters to use for padding
+            - sents: list of sentences represented as a list of words
+			- max_slen: maximum allowed sentence length
+            - max_wlen: maximum allowed word length
+            - char2idx: dictionary mapping characters to indices in the embedding matrix
+            - def_char: special character to use by default
+            - pad_begin_word: special character to use at the beginning of a word
+            - pad_end_word: special character to use at the end of a word
+            - pad_char: special character to use for padding
 		Outputs:
-			- X: input feature vector
+			- X: input feature vector (X * W = y)
     """
     X = []
 
@@ -93,12 +95,12 @@ def charsents2sym(sents, max_slen, max_wlen, char2idx, def_char, pad_char):
                         sent_X[-1].append(char2idx[def_char])
             # add padding up to the maximum allowed word length
             sent_pad = pad_sequences(sent_X, maxlen = max_wlen, dtype = np.int32,
-                          padding="post", value = char2idx[pad_char['pad']])
+                          padding="post", value = char2idx[pad_char])
             X.append(sent_pad)
 
-        pad_word = pad_sequences([[char2idx[pad_char['begin']], char2idx[pad_char['end']]]], maxlen = max_wlen,
-                                  padding="post", value=char2idx[pad_char['pad']])[0]
-
+        # add padding up to the maximum allowed sentence length
+        pad_word = pad_sequences([[char2idx[pad_begin_word], char2idx[pad_end_word]]], maxlen = max_wlen,
+                                  padding="post", value=char2idx[pad_char])[0]
         X = pad_sequences(X, maxlen = max_slen, dtype = np.int32,
                         padding="post", value = pad_word)
 

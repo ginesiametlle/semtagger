@@ -1,37 +1,34 @@
 #!/bin/bash
-# this script trains a new semantic tagger on the input data
+# this script trains a new semantic tagger on input data
 
 
 # employ a model for each target language
 for idx in ${!PMB_LANGS[*]} ; do
     l=${PMB_LANGS[$idx]}
-    LWEMB=${EMB_WORD_PRETRAINED[$idx]}
-    LCEMB=${EMB_CHAR_PRETRAINED[$idx]}
-    LWEMB_TRAINABLE=0
-    LCEMB_TRAINABLE=0
 
     MODEL_GIVEN_PATH="${MODEL_GIVEN_DIR}/${l}/tagger.hdf5"
     MODEL_PATH_INFO="${MODEL_GIVEN_DIR}/${l}/tagger_params.pkl"
 
     # use default or pretrained word embeddings
-    if [ ! -f ${LWEMB} ] || [ -z ${LWEMB} ] && [ ! ${EMB_USE_WORDS} -eq 0 ]; then
+    LWEMB=${EMB_WORD_PRETRAINED[$idx]}
+    LWEMB_TRAINABLE=0
+    if [ ! -f ${LWEMB} ] || [ -z ${LWEMB} ]; then
         LWEMB=${EMB_ROOT}/${l}/wemb_${l}.txt
         LWEMB_TRAINABLE=0
     fi
 
     # use default or pretrained character embeddings
+    LCEMB=${EMB_CHAR_PRETRAINED[$idx]}
+    LCEMB_TRAINABLE=0
     if [ ! -f ${LCEMB} ] || [ -z ${LCEMB} ] && [ ! ${EMB_USE_CHARS} -eq 0 ]; then
         LCEMB=${EMB_ROOT}/${l}/cemb_${l}.txt
         LCEMB_TRAINABLE=1
     fi
 
-    if [ ${EMB_USE_WORDS} -eq 0 ]; then
-        LWEMB="''"
-    fi
+    # unused embeddings
     if [ ${EMB_USE_CHARS} -eq 0 ]; then
         LCEMB="''"
     fi
-
 
     # use an existing model if it exists
     if [ -f ${MODEL_GIVEN_PATH} ] && [ ${GET_MODEL} -eq 0 ]; then
@@ -47,7 +44,7 @@ for idx in ${!PMB_LANGS[*]} ; do
         rm -f ${PMB_EXTDIR}/${l}/wsents_${l}.sem
         rm -f ${PMB_EXTDIR}/${l}/csents_${l}.txt
 
-        python3 ${DIR_MODELS}/semtagger_fit.py ${DIR_ROOT} \
+        python3 ${DIR_MODELS}/semtagger_train.py ${DIR_ROOT} \
                 --raw_pmb_data ${PMB_EXTDIR}/${l}/pmb_${l}.sem \
                 --raw_extra_data ${PMB_EXTDIR}/${l}/extra_${l}.sem \
                 --output_words ${PMB_EXTDIR}/${l}/wsents_${l}.sem \

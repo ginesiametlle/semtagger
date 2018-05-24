@@ -1,9 +1,10 @@
 #!/usr/bin/python3
-# this script initializes character embedding vectors for a set of characters
+# this script writes out embedding vectors for a set of characters
+# the vectors are initialized by sampling from a normal distribution
 
 import sys
 import string
-import numpy.random
+import numpy.random as npr
 
 
 # target language
@@ -23,6 +24,6 @@ print("[INFO] Character vectors for (" + str(lang) + ") have dimensionality " + 
 with open(emb_file, 'w') as ofile:
     for c in emb_chars:
         if c.isprintable() and (ord(c) == 32 or not c.isspace()):
-        	vectorstr = ' '.join([str(x) for x in numpy.random.normal(0, 1, ndims)])
+        	vectorstr = ' '.join([str(x) for x in npr.normal(0, 1, ndims)])
         	ofile.write(c + ' ' + vectorstr + '\n')
 

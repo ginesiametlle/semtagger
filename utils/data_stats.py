@@ -15,16 +15,12 @@ import pygal
 import cairosvg
 import seaborn as sns
 
-import operator
-import itertools
-from functools import reduce
-
 from sklearn.metrics import confusion_matrix
 
 
 def plot_dist_tags(sents, vocab, outimg, outfile, padwords=[]):
     """
-    Plot the amount of words per tag in a dataset
+    Plot the amount of IV and OOV words per tag in a dataset
             Inputs:
                 - sents: list of sentences represented as a list of (word, tag, sym) items
                 - words: set containing words in the vocabulary
@@ -32,6 +28,7 @@ def plot_dist_tags(sents, vocab, outimg, outfile, padwords=[]):
                 - outfile: output text file
                 - padwords: set of words to be ignored
     """
+    # compute the number of IV and OOV words per tag
     count = {}
     for sent in sents:
         if sent:
@@ -43,6 +40,7 @@ def plot_dist_tags(sents, vocab, outimg, outfile, padwords=[]):
                     if sym not in vocab:
                         count[tag][1] += 1
 
+    # output in svg format
     xdata = sorted(count.keys(), key=lambda x: count[x][0], reverse=True)
     ydata_oov = list([count[x][1] for x in xdata])
     ydata_rest = list([count[x][0] - count[x][1] for x in xdata])
@@ -56,7 +54,7 @@ def plot_dist_tags(sents, vocab, outimg, outfile, padwords=[]):
     line_chart.render_to_file(outimg)
     cairosvg.svg2svg(url=outimg, write_to=outimg)
 
-    # output text
+    # output in text format
     with open(outfile, 'w') as tfile:
         tfile.write("tag\t#OOVs\t#IVs\t#words\tratio\n")
         for i in range(len(xdata)):
@@ -73,12 +71,12 @@ def plot_accuracy(history, keys, labels, test_acc, outfile):
             Inputs:
                 - history: object obtained from calling Keras fit() function
                 - keys: key values to access the metrics in history
-                - labels: names of the metrics that match keys
-                - test_acc: accuracy obtained on the test set (constant)
+                - labels: names of the metrics which match `keys`
+                - test_acc: accuracy obtained on the test set
                 - outfile: output file
     """
+    # build chart
     hist = pd.DataFrame(history.history)
-
     chart = pygal.Line(width=1600, height=800, x_label_rotation=0, x_title='Number of training epochs', y_title='Sem-tagging accuracy')
     xdata = [x+1 for x in range(len(hist[keys[0]]))]
     chart.x_labels = xdata
@@ -93,35 +91,35 @@ def plot_accuracy(history, keys, labels, test_acc, outfile):
     ytest=[test_acc] * len(xdata)
     chart.add(None, ytest, show_dots=False, stroke_style={'width': 2})
 
+    # output in svg format
     chart.render_to_file(outfile)
     cairosvg.svg2svg(url=outfile, write_to=outfile)
 
 
-def plot_confusion_matrix(predicted, true, ignore_tag, classes, outfile, ymap, vocab=[], normalize=True):
+def plot_confusion_matrix(act, pred, classes, ignore_class, ymap, outfile, vocab=[], normalize=True):
     """
     Plot a confusion matrix
             Inputs:
-                - predicted: predicted labels
-                - true: true labels
-                - ignore_tag: tag to be ignored
-                - classes: set containing all output classes
+                - act: array of actual numerical vectors
+                - pred: array of predicted numerical vectors
+                - classes: set containing all output classes to consider
+                - ignore_class: numerical value to be ignored
                 - outfile: output file
-                - ymap: map to transform predicted and true labels
+                - ymap: map to class numerical values
                 - vocab: set containing all words in the vocabulary
                 - normalize: normalize confusion matrix
     """
-	# turn the obtained labels to readable string classes (exclude pads)
-    y_pred = predicted
-    y_true = true
-
+	# turn class numerical values into readable strings using the mapping provided
+    y_true = act
+    y_pred = pred
     if ymap:
         y_pred = []
         y_true = []
-        for i in range(len(true)):
-            for j in range(len(true[i])):
-                if true[i][j] != ignore_tag:
-                    y_pred += [ymap[predicted[i][j]]]
-                    y_true += [ymap[true[i][j]]]
+        for i in range(len(act)):
+            for j in range(len(act[i])):
+                if act[i][j] != ignore_class:
+                    y_pred += [ymap[pred[i][j]]]
+                    y_true += [ymap[act[i][j]]]
 
     # compute confusion matrix
     cm = confusion_matrix(y_true, y_pred, labels=classes)
@@ -133,7 +131,7 @@ def plot_confusion_matrix(predicted, true, ignore_tag, classes, outfile, ymap, v
     cm = pd.DataFrame(cm, index=classes, columns=classes)
 
     # transform confusion matrix to a heatmap and output
-    fig, ax = plt.subplots(figsize=(25,25))
+    fig, ax = plt.subplots(figsize=(25, 25))
     b = sns.heatmap(cm, fmt='', ax=ax, cmap="BuPu", square=True, xticklabels=True, yticklabels=True)
     b.set_xlabel("Predicted sem-tags", fontsize=20)
     b.set_ylabel("Actual sem-tags", fontsize=20)

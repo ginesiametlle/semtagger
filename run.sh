@@ -24,9 +24,9 @@ PRED_OUTPUT=${DIR_DATA}/sample/qa_en.sem
 
 # point to a directory containing the model to store/load with option --model, -m
 if [ ! ${RUN_GRID_SEARCH} -eq 0 ]; then
-	  MODEL_GIVEN_DIR=${MODEL_ROOT}/"${MODEL_TYPE}-${MODEL_ACTIVATION_OUTPUT}-gs"
+	  MODEL_GIVEN_DIR="${MODEL_ROOT}/${MODEL_TYPE}-${MODEL_ACTIVATION_OUTPUT}-gs"
 else
-	  MODEL_GIVEN_DIR=${MODEL_ROOT}/${MODEL_TYPE}-${MODEL_ACTIVATION_OUTPUT}-${MODEL_SIZE}-${MODEL_LAYERS}-${MODEL_BATCH_SIZE}
+	  MODEL_GIVEN_DIR="${MODEL_ROOT}/${MODEL_TYPE}-${MODEL_ACTIVATION_OUTPUT}-${MODEL_SIZE}-${MODEL_LAYERS}-${MODEL_BATCH_SIZE}"
 fi
 
 if [ ! ${EMB_USE_WORDS} -eq 0 ]; then
@@ -90,18 +90,18 @@ if [ ${n_pmb_langs} -ne ${n_cpretrained} ]; then
 fi
 
 if [ ${n_extra_files} -ne ${n_extra_langs} ] && [ ! ${PMB_EXTRA_DATA} -eq 0 ]; then
-    echo "[ERROR] The specified number of additional data files and their corresponding languages do not match"
+    echo "[ERROR] The specified number of additional data directories and their corresponding languages do not match"
     exit
 fi
 
 
 if [ ! ${PARAMS_TRAIN} -eq 0 ]; then
-    # DOWNLOAD AND PREPARE DATA
+    # download and prepare data
     echo '[INFO] Preparing data...'
     . ${DIR_DATA}/prepare_data.sh
     echo '[INFO] Finished preparing data'
 
-    # TRAIN A MODEL
+    # train a model
     echo "[INFO] Training ${MODEL_TYPE} models for semantic tagging..."
     . ${DIR_MODELS}/semtagger_train.sh
     echo "[INFO] A ${MODEL_TYPE} model was succesfully trained"
@@ -109,7 +109,7 @@ fi
 
 
 if [ ! ${PARAMS_PREDICT} -eq 0 ]; then
-    # PREDICT USING A TRAINED MODEL
+    # predict using a trained model
     echo "[INFO] Predicting sem-tags using a ${MODEL_TYPE} model..."
     . ${DIR_MODELS}/semtagger_predict.sh
     echo '[INFO] Finished tagging'

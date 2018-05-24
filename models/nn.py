@@ -9,6 +9,7 @@ from keras.layers import TimeDistributed, Bidirectional
 from keras_contrib.layers import CRF
 
 from models.metrics import strict_accuracy_K
+
 from utils.keras_mapper import get_optimizer, get_loss
 
 
@@ -55,7 +56,7 @@ def get_model(args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix
     """
     Obtains a neural model as a combination of layers
         Inputs:
-            - base_args: command line arguments
+            - args: parsed command line arguments
             - num_tags: number of output tags
             - max_slen: maximum number of words in a sentence
             - num_words: size of the word embedding vocabulary
@@ -130,7 +131,7 @@ def get_model(args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix
 
     # batch normalization layer
     if args.batch_normalization:
-        model = BatchNormalization(model)
+        model = BatchNormalization()(model)
 
     # recurrent layers
     num_units = args.model_size
@@ -139,7 +140,7 @@ def get_model(args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix
         model = layer(model)
         # batch normalization layer
         if args.batch_normalization:
-            model = BatchNormalization(model)
+            model = BatchNormalization()(model)
         # halve hidden units for each new layer
         num_units = int(num_units / 2)
 

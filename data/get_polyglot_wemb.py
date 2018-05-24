@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# this script writes out the Polyglot embeddings for a given language
+# this script writes out the Polyglot embeddings from a compressed file
 
 import sys
 import pickle

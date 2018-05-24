@@ -1,5 +1,5 @@
 #!/bin/bash
-# this script prepares the data needed to train/test a sem-tagger
+# this script prepares the data needed to train and test a universal semantic tagger
 
 
 # download the PMB
@@ -92,7 +92,7 @@ for idx in ${!PMB_LANGS[*]} ; do
     lwpretrained=${EMB_WORD_PRETRAINED[$idx]}
 
     # only generate word embeddings when there are no pretrained ones
-    if [ ! -f ${lwpretrained} ] || [ -z ${lwpretrained} ] && [ ! ${EMB_USE_WORDS} -eq 0 ]; then
+    if [ ! -f ${lwpretrained} ] || [ -z ${lwpretrained} ]; then
         # use glove embeddings for english
         if [ ${l} == "en" ]; then
             echo "[INFO] Obtaining GloVe word embeddings for ${l}..."
