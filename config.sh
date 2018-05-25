@@ -57,7 +57,7 @@ PMB_LANGS=("en")
 
 # use additional semantically tagged data (boolean, default: 0)
 # set this option to 0 if you do not have access to additional data
-PMB_EXTRA_DATA=0
+PMB_EXTRA_DATA=1
 
 # directories with additional semantically tagged data (array)
 # each directory listed is assumed to contain a number of files
@@ -77,7 +77,7 @@ PMB_EXTRA_LANGS=("en")
 EMB_USE_WORDS=1
 
 # whether or not to use character embeddings (boolean, default: 0)
-EMB_USE_CHARS=0
+EMB_USE_CHARS=1
 
 # pretrained word embeddings for each one of the PMB languages (array)
 # the files listed are assumed to be in the same order as PMB_LANGS
@@ -103,10 +103,10 @@ EMB_GLOVE_MODEL="glove.840B.300d"
 ##########################
 
 # proportion of tagged sentences to use for testing (float, default: 0.0)
-RUN_TEST_SIZE=0.0
+RUN_TEST_SIZE=0.2
 
 # proportion of tagged sentences to use for development (float, default: 0.0)
-RUN_DEV_SIZE=0.0
+RUN_DEV_SIZE=0.1
 
 # run grid-search for hyperparameter optimization (boolean, default: 0)
 # grid-search is time-consuming and can change the hyperparameters defined in this file
@@ -137,17 +137,17 @@ RUN_RESNET_DEPTH=4
 MODEL_TYPE="bgru"
 
 # directory where to store the trained model (string)
-MODEL_ROOT=${DIR_MODELS}/bin
+MODEL_ROOT=/works/csisv19/joan/models/bin
 
 # training epochs (int, default: 10)
 MODEL_EPOCHS=10
 
 # units in the first layer of the neural model (int, default: 300)
-MODEL_SIZE=300
+MODEL_SIZE=200
 
 # number of recurrent layers of the neural model
 # note that the number of hidden units is halved on each layer (int, default: 1)
-MODEL_LAYERS=1
+MODEL_LAYERS=2
 
 # standard deviation for the noise normal distribution (float, default: 0.0)
 MODEL_SIGMA=0.0
@@ -158,7 +158,7 @@ MODEL_ACTIVATION_HIDDEN="relu"
 
 # activation function on the output layer (string)
 # allowed values: "softmax", "crf"
-MODEL_ACTIVATION_OUTPUT="softmax"
+MODEL_ACTIVATION_OUTPUT="crf"
 
 # loss function (string)
 # allowed values: "mean_squared_error", "mean_absolute_error", "categorical_hinge", "categorical_cross_entropy"
@@ -172,7 +172,7 @@ MODEL_OPTIMIZER="adam"
 MODEL_DROPOUT=0.1
 
 # batch size (int, default: 1024)
-MODEL_BATCH_SIZE=1024
+MODEL_BATCH_SIZE=2048
 
 # use batch normalization (boolean, default: 1)
 MODEL_BATCH_NORMALIZATION=1

@@ -6,6 +6,7 @@ import os
 sys.path.append(sys.argv[1])
 #sys.stderr = open('/dev/null', 'w')
 #os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 import pickle
 import numpy as np
