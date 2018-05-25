@@ -287,7 +287,7 @@ plot_keys = ['strict_accuracy_K']
 plot_labels = ['Training data']
 if args.dev_size > 0:
     plot_keys += ['val_strict_accuracy_K']
-    plot_keys += ['Dev. data']
+    plot_labels += ['Dev. data']
 plot_accuracy(history,
               plot_keys,
               plot_labels,
