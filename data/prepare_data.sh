@@ -25,7 +25,7 @@ for l in ${PMB_LANGS[@]} ; do
         rm -f ${PMB_EXTDIR}/${l}/pmb_${l}.sem
         mkdir -p ${PMB_EXTDIR}/${l}
         # determine data locations according to PMB version
-        numsents=0
+        numfiles=0
         if [ ${PMB_VER} == "1.0.0" ]; then
             pmb_data_sources=(${PMB_ROOT}/data/*)
         elif [ ${PMB_VER} == "2.0.0" ]; then
@@ -40,15 +40,15 @@ for l in ${PMB_LANGS[@]} ; do
                         python3 ${DIR_DATA}/get_pmb_tags.py ${ddir}/${l}.drs.xml \
                                 ${PMB_EXTDIR}/${l}/pmb_${l}.sem
                         # feedback output
-                        numsents=$((${numsents} + 1))
-                        if ! ((${numsents} % 1000)) && [ ${numsents} -ge 1000 ] ; then
-                            echo "[INFO] Processed ${numsents} sentences (${l})..."
+                        numfiles=$((${numfiles} + 1))
+                        if ! ((${numfiles} % 1000)) && [ ${numfiles} -ge 1000 ] ; then
+                            echo "[INFO] Processed ${numfiles} files (${l})..."
                         fi
                     fi
                 done
             done
         done
-        echo "[INFO] Extracted PMB data contains ${numsents} sentences (${l})"
+        echo "[INFO] Extracted PMB data from ${numfiles} files (${l})"
     fi
 done
 
@@ -56,30 +56,41 @@ done
 # extract semantic tags from the extra available data
 echo "[INFO] Extracting extra tag data..."
 if [ ! ${PMB_EXTRA_DATA} -eq 0 ]; then
+    # remove remaining temporary files
+    for l in ${PMB_LANGS[@]} ; do
+        rm -f ${PMB_EXTDIR}/${l}/extra_${l}.sem.tmp
+    done
+
     for idx in ${!PMB_EXTRA_LANGS[*]} ; do
         l=${PMB_EXTRA_LANGS[$idx]}
         if [ ! -f ${PMB_EXTDIR}/${l}/extra_${l}.sem ] || [ ! ${GET_EXTRA} -eq 0 ]; then
             rm -f ${PMB_EXTDIR}/${l}/extra_${l}.sem
             mkdir -p ${PMB_EXTDIR}/${l}
             # iterate over files in the extra directory
-            numsents=0
+            numfiles=0
             for srcfile in ${PMB_EXTRA_SRC[$idx]}/* ; do
                 # add file contents to existing data
-                awk 'BEGIN{ FS="\t" } { print $1 "\t" $2 } END{ print "" }' ${srcfile} \
-                    >> ${PMB_EXTDIR}/${l}/extra_${l}.sem
+                awk 'BEGIN{ FS="\t" } { if ( NF > 1 ) print $1 "\t" $2 ; else print "" }' ${srcfile} \
+                    >> ${PMB_EXTDIR}/${l}/extra_${l}.sem.tmp
                 # feedback output
-                numsents=$((${numsents} + 1))
-                if ! ((${numsents} % 1000)) && [ ${numsents} -ge 1000 ] ; then
-                    echo "[INFO] Processed ${numsents} sentences (${l})..."
+                numfiles=$((${numfiles} + 1))
+                if ! ((${numfiles} % 1000)) && [ ${numfiles} -ge 1000 ] ; then
+                    echo "[INFO] Processed ${numfiles} files (${l})..."
                 fi
             done
-            echo "[INFO] Extracted extra data contains ${numsents} sentences (${l})"
+            echo "[INFO] Extracted extra data from ${numfiles} files (${l})"
+        fi
+    done
+    for l in ${PMB_LANGS[@]} ; do
+        if [ -f ${PMB_EXTDIR}/${l}/extra_${l}.sem.tmp ]; then
+            mv -f ${PMB_EXTDIR}/${l}/extra_${l}.sem.tmp ${PMB_EXTDIR}/${l}/extra_${l}.sem
         fi
     done
 else
     # ensure removal of remaining additional data
     for l in ${PMB_LANGS[@]} ; do
         rm -f ${PMB_EXTDIR}/${l}/extra_${l}.sem
+        rm -f ${PMB_EXTDIR}/${l}/extra_${l}.sem.tmp
     done
 fi
 echo "[INFO] Extraction of tag data completed"

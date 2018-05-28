@@ -159,7 +159,7 @@ MODEL_ACTIVATION_HIDDEN="relu"
 
 # activation function on the output layer (string)
 # allowed values: "softmax", "crf"
-MODEL_ACTIVATION_OUTPUT="softmax"
+MODEL_ACTIVATION_OUTPUT="crf"
 
 # loss function (string)
 # allowed values: "mean_squared_error", "mean_absolute_error", "categorical_hinge", "categorical_cross_entropy"

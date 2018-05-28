@@ -126,8 +126,9 @@ def plot_accuracy(history, keys, labels, test_acc, outimg, outfile):
         chart.add(label, hist[key], show_dots=False, stroke_style={'width': 6, 'dasharray': '3, 8', 'linecap': 'round', 'linejoin': 'round'})
 
     # plot a horizontal line representing accuracy on the test set
-    ytest=[test_acc] * len(xdata)
-    chart.add(None, ytest, show_dots=False, stroke_style={'width': 2})
+    if test_acc > 0:
+        ytest=[test_acc] * len(xdata)
+        chart.add(None, ytest, show_dots=False, stroke_style={'width': 2})
 
     # output in svg format
     chart.render_to_file(outimg)

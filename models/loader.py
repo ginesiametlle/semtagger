@@ -97,6 +97,26 @@ def load_embeddings(emb_file, oovs=[], pads=[], sep=' ', lower=False, case_dim=T
     return word2idx, np.asarray(emb_matrix), emb_dim
 
 
+def _match_word_vocab(word, vocab):
+    """
+    Attempt to modify a word so that is becomes an IV word
+    The word remains unchanged if no IV modifications exist
+        Inputs:
+            - word: word
+            - vocab: vocabulary
+        Outputs:
+            - potentially modified version of the input word
+    """
+    if word not in vocab:
+        if word.lower() in vocab:
+            return word.lower()
+        elif word.upper() in vocab:
+            return word.upper()
+        elif word.capitalize() in vocab:
+            return word.capitalize()
+    return word
+
+
 def load_conll(conll_file, extra='', vocab=[], oovs={}, pads={}, padding_tag='PAD', default_tag='NIL', ignore_tags=[], len_perc=1.0, lower=False, mwe=True, unk_case=True):
     """
     Reads a file in the conll format and produces processed unique sentences
@@ -183,15 +203,12 @@ def load_conll(conll_file, extra='', vocab=[], oovs={}, pads={}, padding_tag='PA
                         if vocab and word not in vocab and word not in split_chars:
                             if re.match('^[0-9\.\,-]+$', word):
                                 word = oovs['number']
-                            elif word.lower() in vocab:
-                                word = word.lower()
-                            elif word.upper() in vocab:
-                                word = word.upper()
-                            elif word.capitalize() in vocab:
-                                word = word.capitalize()
-                            elif '~' in word or '-' in word and mwe:
+                            elif _match_word_vocab(word, vocab) != word:
+                                word = _match_word_vocab(word, vocab)
+                            elif ' ' in word or '~' in word or '-' in word and mwe:
                                 # attempt to split multi-word expressions
-                                constituents = re.split('[\s~ | \s-]+', word)
+                                constituents_text = re.split('[\s~ | \s-]+', word)
+                                constituents = [_match_word_vocab(w, vocab) for w in constituents_text]
                                 if all([True if c in vocab else False for c in constituents]):
                                     next_words += constituents[:-1]
                                     next_tags += ([tag] * (len(constituents) - 1))
@@ -478,15 +495,12 @@ def load_conll_notags(unfile, vocab=[], oovs={}, pads={}, lower=False, mwe=True,
                     if vocab and word not in vocab and word not in split_chars:
                         if re.match('^[0-9\.\,-]+$', word):
                             word = oovs['number']
-                        elif word.lower() in vocab:
-                            word = word.lower()
-                        elif word.upper() in vocab:
-                            word = word.upper()
-                        elif word.capitalize() in vocab:
-                            word = word.capitalize()
-                        elif '~' in word or '-' in word and mwe:
+                        elif _match_word_vocab(word, vocab) != word:
+                            word = _match_word_vocab(word, vocab)
+                        elif ' ' in word or '~' in word or '-' in word and mwe:
                             # attempt to split multi-word expressions
-                            constituents = re.split('[\s~ | \s-]+', word)
+                            constituents_text = re.split('[\s~ | \s-]+', word)
+                            constituents = [_match_word_vocab(w, vocab) for w in constituents_text]
                             if all([True if c in vocab else False for c in constituents]):
                                 next_words += constituents[:-1]
                                 next_syms += constituents[:-1]

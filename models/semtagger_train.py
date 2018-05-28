@@ -119,7 +119,7 @@ X_word, y_tag = wordsents2sym(word_sents,
 #### INFO
 # plot length distribution
 plot_dist_lengths([len(s) for s in word_sents], max_slen,
-                  10, 200, 1000, 13000,
+                  10, 140, 1000, 13000,
                   os.path.dirname(args.output_model) + '/length_dist.svg')
 
 # compute word-based inputs

@@ -36,12 +36,12 @@ def grid_search_params(base_args, cv_samples, X, y, ignore_y, num_tags, max_slen
     args = deepcopy(base_args)
     # define model parameters possible values
     grid_params = OrderedDict()
-    grid_params['epochs'] = [10, 15, 20]
-    grid_params['batch_size'] = [512, 1024, 2048]
-    grid_params['optimizer'] = ['rmsprop', 'adam', 'nadam']
-    grid_params['dropout'] = [0.1, 0.2, 0.3]
-    grid_params['model_size'] = [100, 150, 200]
-    grid_params['num_layers'] = [1, 2, 3]
+    grid_params['epochs'] = [10, 15]
+    grid_params['batch_size'] = [512, 1024]
+    grid_params['optimizer'] = ['adam', 'nadam']
+    grid_params['dropout'] = [0.1, 0.2]
+    grid_params['model_size'] = [150, 200]
+    grid_params['num_layers'] = [2, 3]
 
     # define parameter combinations
     grid_space = np.array(np.meshgrid(grid_params['epochs'],
