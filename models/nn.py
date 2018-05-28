@@ -97,15 +97,15 @@ def get_model(args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix
         shortcut = x
         for _ in range(min(1, args.resnet_depth)):
             # build a residual block
-            x = Conv2D(max_slen, kernel_size=(3, 3), padding='same', data_format='channels_first')(x)
+            x = Conv2D(max_slen, kernel_size=(4, 4), padding='same', data_format='channels_first')(x)
             if args.batch_normalization:
                 x = BatchNormalization()(x)
             x = LeakyReLU()(x)
 
             if args.dropout:
-                x = Dropout(args.dropout)(x)
+                x = Dropout(0.2)(x)
 
-            x = Conv2D(max_slen, kernel_size=(3, 3), padding='same', data_format='channels_first')(x)
+            x = Conv2D(max_slen, kernel_size=(4, 4), padding='same', data_format='channels_first')(x)
             if args.batch_normalization:
                 x = BatchNormalization()(x)
 
@@ -146,6 +146,8 @@ def get_model(args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix
 
     # output layer
     if args.output_activation == 'crf':
+        # the crf layer optimizes marginal likelihoods of each class
+        # the joint likelihood becomes the product of marginal probabilities
         model = TimeDistributed(Dense(num_units, activation='relu'))(model)
         crf = CRF(num_tags, learn_mode='marginal')
         out = crf(model)
@@ -166,8 +168,8 @@ def get_model(args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix
 
 
     ## COMPILE NETWORK
-    # for now this is only a single loss function
-    # we use negative log-likelihood when the last layer is a CRF layer
+    # a single loss function is employed
+    # the crf layer uses categorical cross-entropy as a loss function when in marginal mode
     if args.output_activation == 'crf':
         model_losses = [crf.loss_function]
     else:

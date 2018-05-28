@@ -65,7 +65,7 @@ def plot_dist_tags(sents, vocab, outimg, outfile, padwords=[]):
             tfile.write(str(ydata_oov[i] / (ydata_oov[i] + ydata_rest[i])) + '\n')
 
 
-def plot_accuracy(history, keys, labels, test_acc, outfile):
+def plot_accuracy(history, keys, labels, test_acc, outimg, outfile):
     """
     Plot the obtained accuracy scores against training epochs
             Inputs:
@@ -73,7 +73,8 @@ def plot_accuracy(history, keys, labels, test_acc, outfile):
                 - keys: key values to access the metrics in history
                 - labels: names of the metrics which match `keys`
                 - test_acc: accuracy obtained on the test set
-                - outfile: output file
+                - outimg: output image
+                - outfile: output text file
     """
     # build chart
     hist = pd.DataFrame(history.history)
@@ -92,8 +93,18 @@ def plot_accuracy(history, keys, labels, test_acc, outfile):
     chart.add(None, ytest, show_dots=False, stroke_style={'width': 2})
 
     # output in svg format
-    chart.render_to_file(outfile)
-    cairosvg.svg2svg(url=outfile, write_to=outfile)
+    chart.render_to_file(outimg)
+    cairosvg.svg2svg(url=outimg, write_to=outimg)
+
+    # output in text format
+    with open(outfile, 'w') as tfile:
+        header = str(keys[0]) + ''.join(["\t" + str(key) for key in keys[1:]])
+        tfile.write(header + '\n')
+        for i in range(len(hist[keys[0]])):
+            tfile.write(str(hist[keys[0]][i]))
+            for key in keys[1:]:
+                 tfile.write("\t" + str(hist[key][i]))
+            tfile.write("\n")
 
 
 def plot_confusion_matrix(act, pred, classes, ignore_class, ymap, outfile, vocab=[], normalize=True):

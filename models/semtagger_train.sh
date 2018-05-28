@@ -44,6 +44,9 @@ for idx in ${!PMB_LANGS[*]} ; do
         rm -f ${PMB_EXTDIR}/${l}/wsents_${l}.sem
         rm -f ${PMB_EXTDIR}/${l}/csents_${l}.txt
 
+        # save a copy of the configuration file for reference
+        cp ${DIR_ROOT}/config.sh ${MODEL_GIVEN_DIR}/${l}/tagger_config.sh
+
         python3 ${DIR_MODELS}/semtagger_train.py ${DIR_ROOT} \
                 --raw_pmb_data ${PMB_EXTDIR}/${l}/pmb_${l}.sem \
                 --raw_extra_data ${PMB_EXTDIR}/${l}/extra_${l}.sem \
