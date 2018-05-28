@@ -181,6 +181,7 @@ if args.use_chars:
 #############################
 ### PREPARE TAGGING MODEL ###
 #############################
+sys.exit()
 
 # build input and output data for the model
 y_train = y_tag_train

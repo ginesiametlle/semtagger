@@ -223,15 +223,17 @@ def load_conll(conll_file, extra='', vocab=[], oovs={}, pads={}, padding_tag='PA
             if not line or (len(next_words) > 3 and next_words[-4] in ['.', '?', '!']):
                 if len(next_words) > sent_base_length:
                     if not line:
+                        # fix sem-tags in questions
+                        if next_words[-1] == '?':
+                            if 'begin' in pads and next_words[1].lower() in question_words:
+                                next_tags[1] = 'QUE'
+                            if 'begin' not in pads and next_words[0].lower() in question_words:
+                                next_tags[0] = 'QUE'
+
                         if 'end' in pads:
                             next_words.append(pads['end'])
                             next_tags.append(padding_tag)
                             next_syms.append('')
-
-                        # fix sem-tags in questions
-                        if next_words[-1] == '?':
-                            if next_words[0].lower() in question_words:
-                                next_tags[0] = 'QUE'
 
                         if ''.join(next_words) not in dup_sents:
                             sents.append(list(zip(next_words, next_tags, next_syms)))
@@ -252,15 +254,18 @@ def load_conll(conll_file, extra='', vocab=[], oovs={}, pads={}, padding_tag='PA
                         split_words = next_words[:-3]
                         split_tags = next_tags[:-3]
                         split_syms = next_syms[:-3]
+
+                        # fix sem-tags in questions
+                        if split_words[-1] == '?':
+                            if 'begin' in pads and split_words[1].lower() in question_words:
+                                split_tags[1] = 'QUE'
+                            if 'begin' not in pads and split_words[0].lower() in question_words:
+                                split_tags[0] = 'QUE'
+
                         if 'end' in pads:
                             split_words.append(pads['end'])
                             split_tags.append(padding_tag)
                             split_syms.append('')
-
-                        # fix sem-tags in questions
-                        if split_words[-1] == '?':
-                            if split_words[0].lower() in question_words:
-                                split_tags[0] = 'QUE'
 
                         if ''.join(next_words) not in dup_sents:
                             sents.append(list(zip(split_words, split_tags, split_syms)))
@@ -508,7 +513,7 @@ def load_conll_notags(unfile, vocab=[], oovs={}, pads={}, lower=False, mwe=True,
                     next_indexs.append(windex)
 
 
-            # stack the current sentence upon seeing an empty line or a full stop
+            # stack the current sentence upon seeing an empty line or a sentence end mark
             if not line or (len(next_words) > 3 and next_words[-4] in ['.', '?', '!']):
                 if len(next_words) > sent_base_length:
                     if not line:
