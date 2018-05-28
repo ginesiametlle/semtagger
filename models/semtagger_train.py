@@ -291,7 +291,9 @@ if args.dev_size > 0:
 plot_accuracy(history,
               plot_keys,
               plot_labels,
-              test_acc, os.path.dirname(args.output_model) + '/semtag_acc.svg')
+              test_acc,
+              os.path.dirname(args.output_model) + '/semtag_acc.svg',
+              os.path.dirname(args.output_model) + '/semtag_acc.txt')
 
 
 #######################
