@@ -126,7 +126,7 @@ RUN_MWE=1
 
 # depth of the residual network applied on character embedding features (int, default: 4)
 # the residual network helps turn character embeddings into word-like representations
-RUN_RESNET_DEPTH=4
+RUN_RESNET_DEPTH=6
 
 #####################
 # MODEL PARAMETERS ##
@@ -140,7 +140,7 @@ MODEL_TYPE="bgru"
 MODEL_ROOT=/works/csisv19/joan/models/bin
 
 # training epochs (int, default: 10)
-MODEL_EPOCHS=10
+MODEL_EPOCHS=13
 
 # units in the first layer of the neural model (int, default: 300)
 MODEL_SIZE=200
@@ -158,7 +158,7 @@ MODEL_ACTIVATION_HIDDEN="relu"
 
 # activation function on the output layer (string)
 # allowed values: "softmax", "crf"
-MODEL_ACTIVATION_OUTPUT="crf"
+MODEL_ACTIVATION_OUTPUT="softmax"
 
 # loss function (string)
 # allowed values: "mean_squared_error", "mean_absolute_error", "categorical_hinge", "categorical_cross_entropy"
