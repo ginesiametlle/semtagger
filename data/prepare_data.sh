@@ -65,7 +65,7 @@ if [ ! ${PMB_EXTRA_DATA} -eq 0 ]; then
             numsents=0
             for srcfile in ${PMB_EXTRA_SRC[$idx]}/* ; do
                 # add file contents to existing data
-                awk 'BEGIN{ FS="\t" } { print $2 "\t" $1 } END{ print "" }' ${srcfile} \
+                awk 'BEGIN{ FS="\t" } { print $1 "\t" $2 } END{ print "" }' ${srcfile} \
                     >> ${PMB_EXTDIR}/${l}/extra_${l}.sem
                 # feedback output
                 numsents=$((${numsents} + 1))

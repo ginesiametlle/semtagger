@@ -148,7 +148,6 @@ def get_model(args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix
     if args.output_activation == 'crf':
         # the crf layer optimizes marginal likelihoods of each class
         # the joint likelihood becomes the product of marginal probabilities
-        model = TimeDistributed(Dense(num_units, activation='relu'))(model)
         crf = CRF(num_tags, learn_mode='marginal')
         out = crf(model)
     else:

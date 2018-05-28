@@ -17,7 +17,7 @@ emb_chars = [str(x) for x in sys.argv[2]]
 emb_file = sys.argv[3]
 
 # determine the number of dimensions
-ndims = 32
+ndims = 16
 print("[INFO] Character vectors for (" + str(lang) + ") have dimensionality " + str(ndims))
 
 # write out in text format

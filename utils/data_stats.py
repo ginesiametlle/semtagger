@@ -67,29 +67,33 @@ def plot_dist_tags(sents, vocab, outimg, outfile, padwords=[]):
             tfile.write(str(ydata_oov[i] / (ydata_oov[i] + ydata_rest[i])) + '\n')
 
 
-def plot_dist_lengths(lengths, step, limit, outimg):
+def plot_dist_lengths(lengths, length_limit, x_step, max_x, y_step, max_y, outimg):
     """
     Plot a length distribution over sentences
             Inputs:
                 - lengths: list of numerical lenghts
-                - limit: maximum allowed length
-                - step: step in the horizontal axis
+                - length_limit: maximum allowed length
+                - x_step: step in the horizontal axis
+                - max_x: maximum value in the horizontal axis
+                - y_step: step in the vertical axis
+                - max_y: maximum value in the vertical axis
                 - outimg: output image
     """
     # count number of occurrences for each length value
     c = Counter(lengths)
-    max_val = max(c.keys())
+    max_val = min(max_x, max(max_x, max(c.keys())))
 
     # output in svg format
-    xdata = list(range(1, max_val + step + 1))
-    ydata_used = [c[k] if k in c and k <= limit else 0 for k in xdata]
-    ydata_unused = [c[k] if k in c and k > limit else 0 for k in xdata]
+    xdata = list(range(1, max_val + x_step + 1))
+    ydata_used = [c[k] if k in c and k <= length_limit else 0 for k in xdata]
+    ydata_unused = [c[k] if k in c and k > length_limit else 0 for k in xdata]
 
     line_chart = pygal.StackedBar(width=1600, height=800, x_label_rotation=-45,
                                   x_title = 'Number of words', y_title = 'Number of sentences',
                                   show_minor_x_labels=False)
     line_chart.x_labels = xdata
-    line_chart.x_labels_major = list(set([x // step * step for x in xdata]))
+    line_chart.x_labels_major = list(set([x // x_step * x_step for x in xdata]))
+    line_chart.y_labels = range(0, max_y + 1, y_step)
     line_chart.add('Discarded data', ydata_unused)
     line_chart.add('Used data', ydata_used)
 
