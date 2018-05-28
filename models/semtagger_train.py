@@ -23,7 +23,8 @@ from models.optimizer import grid_search_params
 from models.metrics import strict_accuracy_N
 
 from utils.input2feats import wordsents2sym, charsents2sym
-from utils.data_stats import plot_dist_tags, plot_accuracy, plot_confusion_matrix
+from utils.data_stats import plot_dist_tags, plot_dist_lengths
+from utils.data_stats import plot_accuracy, plot_confusion_matrix
 
 #sys.stderr = sys.__stderr__
 
@@ -115,6 +116,10 @@ X_word, y_tag = wordsents2sym(word_sents,
                               DEFAULT_TAG,
                               pad_word['pad'],
                               PADDING_TAG)
+
+#### INFO
+# plot length distribution
+plot_dist_lengths([len(s) for s in word_sents], 10, max_slen, os.path.dirname(args.output_model) + '/length_dist.svg')
 
 # compute word-based inputs
 if args.use_words:
