@@ -99,7 +99,7 @@ def load_embeddings(emb_file, oovs=[], pads=[], sep=' ', lower=False, case_dim=T
 
 def _match_word_vocab(word, vocab):
     """
-    Attempt to modify a word so that is becomes an IV word
+    Attempt to modify a word so that it becomes an IV word
     The word remains unchanged if no IV modifications exist
         Inputs:
             - word: word
