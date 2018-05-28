@@ -43,6 +43,7 @@ GET_MODEL=0
 
 # version of the PMB to use (string)
 # currently available versions are "1.0.0" and "2.0.0"
+# note that PMB version 2.0.0 takes a long time to be processed
 PMB_VER="1.0.0"
 
 # root directory where to store the PMB (string)
@@ -61,13 +62,13 @@ PMB_EXTRA_DATA=1
 
 # directories with additional semantically tagged data (array)
 # each directory listed is assumed to contain a number of files
-# each file is assumed to contain [TAG]\t[WORD] lines
+# each file is assumed to contain [WORD]\t[TAG] lines
 # each file is assumed to contain empty lines denoting the end of a sentence
-PMB_EXTRA_SRC=("/home/joan/pmb_sem_tok/en")
+PMB_EXTRA_SRC=("/home/joan/pmb_extra/en/gold/train" "/home/joan/pmb_extra/en/silver/train")
 
 # languages corresponding to the data of each directory with extra data (array)
 # allowed values: "en", "de", "it", "nl"
-PMB_EXTRA_LANGS=("en")
+PMB_EXTRA_LANGS=("en" "en")
 
 ################
 ## EMBEDDINGS ##
@@ -124,7 +125,7 @@ RUN_WORD_LEN=0.98
 # handle multi-word expressions (boolean, default: 1)
 RUN_MWE=1
 
-# depth of the residual network applied on character embedding features (int, default: 4)
+# depth of the residual network applied on character embedding features (int, default: 6)
 # the residual network helps turn character embeddings into word-like representations
 RUN_RESNET_DEPTH=6
 
@@ -140,9 +141,9 @@ MODEL_TYPE="bgru"
 MODEL_ROOT=/works/csisv19/joan/models/bin
 
 # training epochs (int, default: 10)
-MODEL_EPOCHS=13
+MODEL_EPOCHS=10
 
-# units in the first layer of the neural model (int, default: 300)
+# units in the first layer of the neural model (int, default: 200)
 MODEL_SIZE=200
 
 # number of recurrent layers of the neural model
@@ -158,7 +159,7 @@ MODEL_ACTIVATION_HIDDEN="relu"
 
 # activation function on the output layer (string)
 # allowed values: "softmax", "crf"
-MODEL_ACTIVATION_OUTPUT="softmax"
+MODEL_ACTIVATION_OUTPUT="crf"
 
 # loss function (string)
 # allowed values: "mean_squared_error", "mean_absolute_error", "categorical_hinge", "categorical_cross_entropy"
