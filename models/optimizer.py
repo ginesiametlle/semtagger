@@ -101,7 +101,7 @@ def grid_search_params(base_args, cv_samples, X, y, ignore_y, num_tags, max_slen
                               max_slen, num_words, wemb_dim, wemb_matrix,
                               max_wlen, num_chars, cemb_dim, cemb_matrix)
             history = model.fit(X_cv_train, np.array(y_cv_train), batch_size = int(cell[1]), epochs=int(cell[0]), validation_split=0.0, verbose=1)
-            
+
             # obtain accuracy on the evaluation block
             p_cv_dev = model.predict(X_cv_dev, verbose=0)
             p_cv_dev = np.argmax(p_cv_dev, axis=-1) + 1
