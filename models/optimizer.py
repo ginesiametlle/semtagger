@@ -77,9 +77,6 @@ def grid_search_params(base_args, cv_samples, X, y, ignore_y, num_tags, max_slen
         args.dropout = float(cell[3])
         args.model_size = int(cell[4])
         args.num_layers = int(cell[5])
-        model = get_model(args, num_tags,
-                          max_slen, num_words, wemb_dim, wemb_matrix,
-                          max_wlen, num_chars, cemb_dim, cemb_matrix)
 
         # rotate the block used for evaluation for each sample
         for _ in range(cv_samples):
@@ -100,8 +97,11 @@ def grid_search_params(base_args, cv_samples, X, y, ignore_y, num_tags, max_slen
             y_cv_train = y_cv_train[block_size:]
 
             # fit the model
-            history = model.fit(X_cv_train, np.array(y_cv_train), batch_size = int(cell[1]), epochs=int(cell[0]), validation_split=0.0, verbose=0)
-
+            model = get_model(args, num_tags,
+                              max_slen, num_words, wemb_dim, wemb_matrix,
+                              max_wlen, num_chars, cemb_dim, cemb_matrix)
+            history = model.fit(X_cv_train, np.array(y_cv_train), batch_size = int(cell[1]), epochs=int(cell[0]), validation_split=0.0, verbose=1)
+            
             # obtain accuracy on the evaluation block
             p_cv_dev = model.predict(X_cv_dev, verbose=0)
             p_cv_dev = np.argmax(p_cv_dev, axis=-1) + 1
