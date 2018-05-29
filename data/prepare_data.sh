@@ -169,8 +169,13 @@ for idx in ${!PMB_LANGS[*]} ; do
             rm -f ${EMB_ROOT_LANG}/cemb_${l}.txt
             mkdir -p ${EMB_ROOT_LANG}
             pushd ${EMB_ROOT_LANG} > /dev/null
-            wchars=$(cat ${PMB_EXTDIR}/${l}/pmb_${l}.sem | \
+            if [ ! -f ${PMB_EXTDIR}/${l}/extra_${l}.sem ]; then
+                wchars=$(cat ${PMB_EXTDIR}/${l}/pmb_${l}.sem | \
                                 sed 's/./&\n/g' | LC_COLLATE=C sort -u | tr -d '\n')
+            else
+                wchars=$(cat ${PMB_EXTDIR}/${l}/pmb_${l}.sem ${PMB_EXTDIR}/${l}/extra_${l}.sem | \
+                                sed 's/./&\n/g' | LC_COLLATE=C sort -u | tr -d '\n')
+            fi
             python3 ${DIR_DATA}/get_random_cemb.py $l ${wchars} ${EMB_ROOT_LANG}/cemb_${l}.txt
             popd > /dev/null
         fi
