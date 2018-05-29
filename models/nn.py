@@ -95,7 +95,7 @@ def get_model(args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix
         # build word-like features from character features using a residual network
         # the residual network is constructed by stacking residual blocks
         shortcut = x
-        for _ in range(max(1, int(args.resnet_depth))):
+        for _ in range(max(1, args.resnet_depth)):
             # build a residual block
             x = Conv2D(max_slen, kernel_size=(4, 4), padding='same', data_format='channels_first')(x)
             if args.batch_normalization:
