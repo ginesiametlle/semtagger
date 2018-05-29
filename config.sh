@@ -103,11 +103,11 @@ EMB_GLOVE_MODEL="glove.840B.300d"
 ## TRAINING AND TESTING ##
 ##########################
 
-# proportion of tagged sentences to use for testing (float, default: 0.0)
-RUN_TEST_SIZE=0.0
+# proportion of tagged sentences to use for testing (float, default: 0.00)
+RUN_TEST_SIZE=0.00
 
-# proportion of tagged sentences to use for development (float, default: 0.0)
-RUN_DEV_SIZE=0.0
+# proportion of tagged sentences to use for development (float, default: 0.00)
+RUN_DEV_SIZE=0.00
 
 # run grid-search for hyperparameter optimization (boolean, default: 0)
 # grid-search is time-consuming and can change the hyperparameters defined in this file
@@ -140,8 +140,8 @@ MODEL_TYPE="bgru"
 # directory where to store the trained model (string)
 MODEL_ROOT=${DIR_MODELS}/bin
 
-# training epochs (int, default: 15)
-MODEL_EPOCHS=15
+# training epochs (int, default: 10)
+MODEL_EPOCHS=10
 
 # units in the first layer of the neural model (int, default: 200)
 MODEL_SIZE=200
@@ -167,13 +167,13 @@ MODEL_LOSS="categorical_cross_entropy"
 
 # optimizer (string)
 # allowed values: "sgd", "adagrad", "adadelta", "rmsprop", "adam", "nadam"
-MODEL_OPTIMIZER="adam"
+MODEL_OPTIMIZER="nadam"
 
 # dropout rate on each layer (float, default: 0.1)
 MODEL_DROPOUT=0.1
 
-# batch size (int, default: 512)
-MODEL_BATCH_SIZE=512
+# batch size (int, default: 256)
+MODEL_BATCH_SIZE=256
 
 # use batch normalization (boolean, default: 1)
 MODEL_BATCH_NORMALIZATION=1
