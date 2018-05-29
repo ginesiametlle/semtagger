@@ -15,12 +15,12 @@ PARAMS_TRAIN=0
 PARAMS_PREDICT=0
 
 # point to a file containing untagged sentence data with option --input, -i
-# an example file is given in data/sample/qa_en.off
-PRED_INPUT=${DIR_DATA}/sample/qa_en.off
+# an example file is given in qa/sample/questions.off
+PRED_INPUT=${DIR_ROOT}/qa/sample/questions.off
 
 # point to a file containing sem-tag predictions for the input file with option --output, -o
-# the resulting file will have the same format as data/sample/qa_en.gold
-PRED_OUTPUT=${DIR_DATA}/sample/qa_en.sem
+# the resulting file will have the same format as qa/sample/questions.gold
+PRED_OUTPUT=${DIR_ROOT}/qa/sample/questions.sem
 
 # point to a directory containing the model to store/load with option --model, -m
 if [ ! ${RUN_GRID_SEARCH} -eq 0 ]; then
