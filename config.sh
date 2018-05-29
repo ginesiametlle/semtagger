@@ -140,8 +140,8 @@ MODEL_TYPE="bgru"
 # directory where to store the trained model (string)
 MODEL_ROOT=${DIR_MODELS}/bin
 
-# training epochs (int, default: 10)
-MODEL_EPOCHS=10
+# training epochs (int, default: 15)
+MODEL_EPOCHS=15
 
 # units in the first layer of the neural model (int, default: 200)
 MODEL_SIZE=200
@@ -172,8 +172,8 @@ MODEL_OPTIMIZER="adam"
 # dropout rate on each layer (float, default: 0.1)
 MODEL_DROPOUT=0.1
 
-# batch size (int, default: 1024)
-MODEL_BATCH_SIZE=1024
+# batch size (int, default: 512)
+MODEL_BATCH_SIZE=512
 
 # use batch normalization (boolean, default: 1)
 MODEL_BATCH_NORMALIZATION=1
