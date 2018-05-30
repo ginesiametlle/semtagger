@@ -2,22 +2,27 @@
 # this script predicts semantic tags using a trained neural model
 
 import sys
-import os
 sys.path.append(sys.argv[1])
-#sys.stderr = open('/dev/null', 'w')
-#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-#os.environ["CUDA_VISIBLE_DEVICES"]="1"
+
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ["CUDA_VISIBLE_DEVICES"]="0,1,2,3"
 
 import pickle
 import numpy as np
+
+import tensorflow as tf
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+
+import keras
+keras.backend.tensorflow_backend.set_session(tf.Session(config=config))
 
 from models.argparser import get_args
 from models.loader import load_conll_notags, make_char_seqs
 from models.nn import get_model
 
 from utils.input2feats import wordsents2sym, charsents2sym
-
-#sys.stderr = sys.__stderr__
 
 
 # parse input arguments

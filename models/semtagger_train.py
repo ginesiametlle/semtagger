@@ -2,18 +2,24 @@
 # this script trains a neural model for semantic tagging
 
 import sys
-import os
 sys.path.append(sys.argv[1])
-#sys.stderr = open('/dev/null', 'w')
-#os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-#os.environ["CUDA_VISIBLE_DEVICES"]="1"
+
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ["CUDA_VISIBLE_DEVICES"]="0,1,2,3"
 
 import random
 import pickle
-
 import numpy as np
 
 from sklearn.model_selection import train_test_split, StratifiedKFold
+
+import tensorflow as tf
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+
+import keras
+keras.backend.tensorflow_backend.set_session(tf.Session(config=config))
 
 from models.argparser import get_args
 from models.loader import load_embeddings, load_conll, write_conll
