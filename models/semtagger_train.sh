@@ -48,7 +48,7 @@ for idx in ${!PMB_LANGS[*]} ; do
         cp ${DIR_ROOT}/config.sh ${MODEL_GIVEN_DIR}/${l}/tagger_config.sh
 
         python3 ${DIR_MODELS}/semtagger_train.py ${DIR_ROOT} \
-                --raw_pmb_data ${PMB_EXTDIR}/${l}/pmb_${l}.sem \
+                --raw_pmb_data ${PMB_EXTDIR}/${l}/sem_${l}.sem \
                 --raw_extra_data ${PMB_EXTDIR}/${l}/extra_${l}.sem \
                 --output_words ${PMB_EXTDIR}/${l}/wsents_${l}.sem \
                 --output_chars ${PMB_EXTDIR}/${l}/csents_${l}.sem \

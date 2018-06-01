@@ -16,11 +16,13 @@ emb_file = sys.argv[3]
 
 # unpickle embedding file
 words, embeddings = pickle.load(open(emb_pkl, 'rb'), encoding='latin-1')
-print("[INFO] Loaded Polyglot (" + str(lang) + ") embeddings with shape {}".format(embeddings.shape))
 
 # write out in text format
 with open(emb_file, 'w') as ofile:
     for i in range(len(words)):
         vectorstr = ' '.join([str(x) for x in embeddings[i].tolist()])
         ofile.write(words[i] + ' ' + vectorstr + '\n')
+
+# feedback
+print("[INFO] Loaded Polyglot (" + str(lang) + ") embeddings with shape {}".format(embeddings.shape))
 

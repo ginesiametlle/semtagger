@@ -37,16 +37,14 @@ def grid_search_params(base_args, cv_samples, X, y, ignore_y, num_tags, max_slen
     # define model parameters possible values
     grid_params = OrderedDict()
     grid_params['epochs'] = [15, 20]
-    grid_params['batch_size'] = [512, 1024]
-    grid_params['optimizer'] = ['adam', 'nadam']
-    grid_params['dropout'] = [0.1, 0.2]
-    grid_params['model_size'] = [160, 200]
+    grid_params['batch_size'] = [150, 200]
+    grid_params['dropout'] = [0.15, 0.20]
+    grid_params['model_size'] = [150, 200]
     grid_params['num_layers'] = [2, 3]
 
     # define parameter combinations
     grid_space = np.array(np.meshgrid(grid_params['epochs'],
                                       grid_params['batch_size'],
-                                      grid_params['optimizer'],
                                       grid_params['dropout'],
                                       grid_params['model_size'],
                                       grid_params['num_layers'])).T.reshape(-1,len(grid_params))
@@ -71,12 +69,11 @@ def grid_search_params(base_args, cv_samples, X, y, ignore_y, num_tags, max_slen
     for i in range(grid_space.shape[0]):
         current_acc = 0
         cell = grid_space[i]
-        print('[INFO] Performing ' + str(cv_samples) + '-fold cross-validation using the hyper-parameter set', cell)
+        print('[INFO] Performing ' + str(cv_samples) + '-fold cross-validation with hyper-parameters', cell)
 
-        args.optimizer = cell[2]
-        args.dropout = float(cell[3])
-        args.model_size = int(cell[4])
-        args.num_layers = int(cell[5])
+        args.dropout = float(cell[2])
+        args.model_size = int(cell[3])
+        args.num_layers = int(cell[4])
 
         # rotate the block used for evaluation for each sample
         for _ in range(cv_samples):
@@ -100,7 +97,7 @@ def grid_search_params(base_args, cv_samples, X, y, ignore_y, num_tags, max_slen
             model = get_model(args, num_tags,
                               max_slen, num_words, wemb_dim, wemb_matrix,
                               max_wlen, num_chars, cemb_dim, cemb_matrix)
-            history = model.fit(X_cv_train, np.array(y_cv_train), batch_size = int(cell[1]), epochs=int(cell[0]), validation_split=0.0, verbose=1)
+            history = model.fit(X_cv_train, np.array(y_cv_train), batch_size = int(cell[1]), epochs=int(cell[0]), validation_split=0.0, verbose=0)
 
             # obtain accuracy on the evaluation block
             p_cv_dev = model.predict(X_cv_dev, verbose=0)
@@ -119,9 +116,8 @@ def grid_search_params(base_args, cv_samples, X, y, ignore_y, num_tags, max_slen
     print('[INFO] The best set of hyper-parameters found is', best_params)
     args.epochs = int(best_params[0])
     args.batch_size = int(best_params[1])
-    args.optimizer = best_params[2]
-    args.dropout = float(best_params[3])
-    args.model_size = int(best_params[4])
-    args.num_layers = int(best_params[5])
+    args.dropout = float(best_params[2])
+    args.model_size = int(best_params[3])
+    args.num_layers = int(best_params[4])
     return args
 

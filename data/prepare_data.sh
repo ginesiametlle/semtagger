@@ -2,59 +2,55 @@
 # this script prepares the data needed to train and test a universal semantic tagger
 
 
-# download the PMB
-echo "[INFO] Downloading the PMB (version ${PMB_VER})..."
+# download the PMB Universal Semantic Tags release
+echo "[INFO] Downloading the PMB Universal Semantic Tags release ${PMB_VER}..."
 if [ ! -d ${PMB_ROOT} ] || [ ! ${GET_PMB} -eq 0 ]; then
     rm -rf ${PMB_ROOT}
     mkdir -p ${PMB_ROOT}
     pushd ${PMB_ROOT} > /dev/null
-    wget -q --show-progress "pmb.let.rug.nl/releases/pmb-${PMB_VER}.zip"
-    unzip -qq "pmb-${PMB_VER}.zip"
-    rm -f "pmb-${PMB_VER}.zip"
-    mv pmb-${PMB_VER}/* .
-    rm -rf "pmb-${PMB_VER}"
+    wget -q "pmb.let.rug.nl/releases/sem-${PMB_VER}.zip"
+    unzip -qq "sem-${PMB_VER}.zip"
+    rm -f "sem-${PMB_VER}.zip"
+    mv sem-${PMB_VER}/* .
+    rm -rf "sem-${PMB_VER}"
     popd > /dev/null
 fi
-echo "[INFO] Finished downloading the PMB"
-
+echo "[INFO] Finished downloading PMB data"
 
 # extract semantic tags from sentences in the PMB
-echo "[INFO] Extracting tag data from the PMB..."
+echo "[INFO] Extracting PMB data..."
 for l in ${PMB_LANGS[@]} ; do
-    if [ ! -f ${PMB_EXTDIR}/${l}/pmb_${l}.sem ] || [ ! ${GET_PMB} -eq 0 ]; then
-        rm -f ${PMB_EXTDIR}/${l}/pmb_${l}.sem
+    if [ ! -f ${PMB_EXTDIR}/${l}/sem_${l}.sem ] || [ ! ${GET_PMB} -eq 0 ]; then
+        rm -f ${PMB_EXTDIR}/${l}/sem_${l}.sem
         mkdir -p ${PMB_EXTDIR}/${l}
-        # determine data locations according to PMB version
         numfiles=0
-        if [ ${PMB_VER} == "1.0.0" ]; then
-            pmb_data_sources=(${PMB_ROOT}/data/*)
-        elif [ ${PMB_VER} == "2.0.0" ]; then
+        # currently only English is available
+        if [ ${l} == "en" ]; then
+            # determine data locations according to PMB version
             pmb_data_sources=(${PMB_ROOT}/data/gold/* ${PMB_ROOT}/data/silver/*)
-        fi
-        # iterate over p-parts in the PMB
-        for pmb_data_source in ${pmb_data_sources[@]} ; do
-            for pdir in ${pmb_data_source} ; do
-                # iterate over d-parts in p-parts
-                for ddir in ${pdir}/* ; do
-                    if [ -f ${ddir}/${l}.drs.xml ]; then
-                        python3 ${DIR_DATA}/get_pmb_tags.py ${ddir}/${l}.drs.xml \
-                                ${PMB_EXTDIR}/${l}/pmb_${l}.sem
-                        # feedback output
-                        numfiles=$((${numfiles} + 1))
-                        if ! ((${numfiles} % 1000)) && [ ${numfiles} -ge 1000 ] ; then
-                            echo "[INFO] Processed ${numfiles} files (${l})..."
-                        fi
+            # iterate over files in the PMB
+            for pmb_data_source in ${pmb_data_sources[@]} ; do
+                for pmb_file in ${pmb_data_source} ; do
+                    # add file contents to existing data
+                    awk 'BEGIN{ FS="\t" } { if ( NF > 1 ) print $1 "\t" $2 ; else print "" } END{ print "" }' ${pmb_file} \
+                        >> ${PMB_EXTDIR}/${l}/sem_${l}.sem
+                    # feedback output
+                    numfiles=$((${numfiles} + 1))
+                    if ! ((${numfiles} % 10000)) && [ ${numfiles} -ge 10000 ]; then
+                        echo "[INFO] Processed ${numfiles} files (${l})..."
                     fi
                 done
             done
-        done
+        else
+            echo -e "NIL\t.\n" >> ${PMB_EXTDIR}/${l}/sem_${l}.sem
+        fi
         echo "[INFO] Extracted PMB data from ${numfiles} files (${l})"
     fi
 done
 
 
 # extract semantic tags from the extra available data
-echo "[INFO] Extracting extra tag data..."
+echo "[INFO] Extracting EXTRA data..."
 if [ ! ${PMB_EXTRA_DATA} -eq 0 ]; then
     # remove remaining temporary files
     for l in ${PMB_LANGS[@]} ; do
@@ -66,19 +62,19 @@ if [ ! ${PMB_EXTRA_DATA} -eq 0 ]; then
         if [ ! -f ${PMB_EXTDIR}/${l}/extra_${l}.sem ] || [ ! ${GET_EXTRA} -eq 0 ]; then
             rm -f ${PMB_EXTDIR}/${l}/extra_${l}.sem
             mkdir -p ${PMB_EXTDIR}/${l}
-            # iterate over files in the extra directory
             numfiles=0
+            # iterate over files in the extra directory
             for srcfile in ${PMB_EXTRA_SRC[$idx]}/* ; do
                 # add file contents to existing data
-                awk 'BEGIN{ FS="\t" } { if ( NF > 1 ) print $1 "\t" $2 ; else print "" }' ${srcfile} \
+                awk 'BEGIN{ FS="\t" } { if ( NF > 1 ) print $1 "\t" $2 ; else print "" } END{ print "" }' ${srcfile} \
                     >> ${PMB_EXTDIR}/${l}/extra_${l}.sem.tmp
                 # feedback output
                 numfiles=$((${numfiles} + 1))
-                if ! ((${numfiles} % 1000)) && [ ${numfiles} -ge 1000 ] ; then
+                if ! ((${numfiles} % 10000)) && [ ${numfiles} -ge 10000 ] ; then
                     echo "[INFO] Processed ${numfiles} files (${l})..."
                 fi
             done
-            echo "[INFO] Extracted extra data from ${numfiles} files (${l})"
+            echo "[INFO] Extracted EXTRA data from ${numfiles} files (${l})"
         fi
     done
     for l in ${PMB_LANGS[@]} ; do
@@ -93,7 +89,7 @@ else
         rm -f ${PMB_EXTDIR}/${l}/extra_${l}.sem.tmp
     done
 fi
-echo "[INFO] Extraction of tag data completed"
+echo "[INFO] Extraction of sem-tag data completed"
 
 
 # extract word embeddings or use pretrained ones
@@ -104,7 +100,7 @@ for idx in ${!PMB_LANGS[*]} ; do
 
     # only generate word embeddings when there are no pretrained ones
     if [ ! -f ${lwpretrained} ] || [ -z ${lwpretrained} ]; then
-        # use glove embeddings for english
+        # use GloVe embeddings for English
         if [ ${l} == "en" ]; then
             echo "[INFO] Obtaining GloVe word embeddings for ${l}..."
             EMB_ROOT_EN=${EMB_ROOT}/${l}
@@ -117,14 +113,14 @@ for idx in ${!PMB_LANGS[*]} ; do
                 else
                     GLOVE_LINK=${EMB_GLOVE_MODEL}
                 fi
-                wget -q --show-progress "nlp.stanford.edu/data/${GLOVE_LINK}.zip"
+                wget -q "nlp.stanford.edu/data/${GLOVE_LINK}.zip"
                 unzip -qq "${GLOVE_LINK}.zip"
                 rm -f "${GLOVE_LINK}.zip"
                 find . ! -name "${EMB_GLOVE_MODEL}.txt" -type f -exec rm -f {} +
                 mv "${EMB_GLOVE_MODEL}.txt" "wemb_${l}.txt"
                 popd > /dev/null
             fi
-        # use polyglot embeddings for languages other than english
+        # use Polyglot embeddings for languages other than English
         else
             echo "[INFO] Obtaining Polyglot embeddings for ${l}..."
             EMB_ROOT_LANG=${EMB_ROOT}/${l}
@@ -133,13 +129,13 @@ for idx in ${!PMB_LANGS[*]} ; do
                 mkdir -p ${EMB_ROOT_LANG}
                 pushd ${EMB_ROOT_LANG} > /dev/null
                 if [ ${l} == "de" ]; then
-                    curl -L -s -o --progress-bar polyglot-${l} \
+                    curl -L -s -o polyglot-${l} \
                          "https://docs.google.com/uc?id=0B5lWReQPSvmGaXJoQnlJa2x5RUU&export=download"
                 elif [ ${l} == "it" ]; then
                     curl -L -s -o polyglot-${l} \
                          "https://docs.google.com/uc?id=0B5lWReQPSvmGM2gwSVdQVF9EOEk&export=download"
                 elif [ ${l} == "nl" ]; then
-                    curl -L -s -o --progress-bar polyglot-${l} \
+                    curl -L -s -o polyglot-${l} \
                          "https://docs.google.com/uc?id=0B5lWReQPSvmGNUprVTVNY3I3eDA&export=download"
                 else
                     echo "[ERROR] Language ${l} does not appear to be a language in the PMB"
@@ -160,20 +156,21 @@ echo "[INFO] Preparing character embeddings..."
 for idx in ${!PMB_LANGS[*]} ; do
     l=${PMB_LANGS[$idx]}
     lcpretrained=${EMB_CHAR_PRETRAINED[$idx]}
+
     # only generate character embeddings when there are no pretrained ones
     if [ ! -f ${lcpretrained} ] || [ -z ${lcpretrained} ] && [ ! ${EMB_USE_CHARS} -eq 0 ]; then
         # use Gaussian initialization
-        echo "[INFO] Initializing character embedding weights for ${l}..."
+        echo "[INFO] Initializing character embedding vectors for ${l}..."
         EMB_ROOT_LANG=${EMB_ROOT}/${l}
         if [ ! -d ${EMB_ROOT_LANG} ] || [ ! -f ${EMB_ROOT_LANG}/cemb_${l}.txt ] || [ ! ${GET_EMBS} -eq 0 ]; then
             rm -f ${EMB_ROOT_LANG}/cemb_${l}.txt
             mkdir -p ${EMB_ROOT_LANG}
             pushd ${EMB_ROOT_LANG} > /dev/null
             if [ ! -f ${PMB_EXTDIR}/${l}/extra_${l}.sem ]; then
-                wchars=$(cat ${PMB_EXTDIR}/${l}/pmb_${l}.sem | \
+                wchars=$(cat ${PMB_EXTDIR}/${l}/sem_${l}.sem | \
                                 sed 's/./&\n/g' | LC_COLLATE=C sort -u | tr -d '\n')
             else
-                wchars=$(cat ${PMB_EXTDIR}/${l}/pmb_${l}.sem ${PMB_EXTDIR}/${l}/extra_${l}.sem | \
+                wchars=$(cat ${PMB_EXTDIR}/${l}/sem_${l}.sem ${PMB_EXTDIR}/${l}/extra_${l}.sem | \
                                 sed 's/./&\n/g' | LC_COLLATE=C sort -u | tr -d '\n')
             fi
             python3 ${DIR_DATA}/get_random_cemb.py $l ${wchars} ${EMB_ROOT_LANG}/cemb_${l}.txt

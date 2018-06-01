@@ -131,6 +131,6 @@ with open(args.output_pred_file, 'w') as ofile:
             if widx in wpos2tag:
                 tgt_tag = max(set(wpos2tag[widx]), key=wpos2tag[widx].count)
             # write out
-            ofile.write(tgt_word + '\t' + str(minfo['idx2tag'][tgt_tag]) + '\n')
+            ofile.write(str(minfo['idx2tag'][tgt_tag]) + '\t' + tgt_word + '\n')
         ofile.write('\n')
 

@@ -189,7 +189,7 @@ def load_conll(conll_file, extra='', vocab=[], oovs={}, pads={}, padding_tag='PA
                 if len(line.split('\t')) != 2:
                     raise IOError('[WARNING] Exception in `load_conll`: Input file has the wrong format')
                 else:
-                    word, tag = line.split('\t')
+                    tag, word = line.split('\t')
                     sym = word
                     # map ignored tags to the default tag
                     if tag in ignore_tags:
@@ -347,7 +347,7 @@ def write_conll(conll_file, sents):
                 for element in sent:
                     word = element[0]
                     tag = element[1]
-                    ofile.write(str(word) + '\t' + str(tag) + '\n')
+                    ofile.write(str(tag) + '\t' + str(word) + '\n')
                 ofile.write('\n')
 
 
@@ -422,7 +422,7 @@ def write_chars(ofile, char_sents):
                 for element in sent:
                     chars = element[0]
                     tag = element[1]
-                    ofile.write(' '.join([str(x) for x in chars]) + '\t' + str(tag) + '\n')
+                    ofile.write(str(tag) + '\t' + ' '.join([str(x) for x in chars]) + '\n')
                 ofile.write('\n')
 
 

@@ -41,14 +41,14 @@ def get_layer(args, num_units):
                                   dropout=args.dropout,
                                   recurrent_dropout=args.dropout,
                                   return_sequences=True),
-                             merge_mode = 'concat')
+                             merge_mode = 'sum')
     if args.model == 'bgru':
         return Bidirectional(GRU(units=num_units,
                                  activation=args.hidden_activation,
                                  dropout=args.dropout,
                                  recurrent_dropout=args.dropout,
                                  return_sequences=True),
-                             merge_mode = 'concat')
+                             merge_mode = 'sum')
     return None
 
 
@@ -97,15 +97,12 @@ def get_model(args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix
         shortcut = x
         for _ in range(max(1, args.resnet_depth)):
             # build a residual block
-            x = Conv2D(max_slen, kernel_size=(4, 4), padding='same', data_format='channels_first')(x)
+            x = Conv2D(max_slen, kernel_size=(3, 3), padding='same', data_format='channels_first')(x)
             if args.batch_normalization:
                 x = BatchNormalization()(x)
             x = LeakyReLU()(x)
 
-            if args.dropout:
-                x = Dropout(0.2)(x)
-
-            x = Conv2D(max_slen, kernel_size=(4, 4), padding='same', data_format='channels_first')(x)
+            x = Conv2D(max_slen, kernel_size=(3, 3), padding='same', data_format='channels_first')(x)
             if args.batch_normalization:
                 x = BatchNormalization()(x)
 
@@ -141,8 +138,6 @@ def get_model(args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix
         # batch normalization layer
         if args.batch_normalization:
             model = BatchNormalization()(model)
-        # halve hidden units for each new layer
-        num_units = int(num_units / 2)
 
     # output layer
     if args.output_activation == 'crf':
@@ -178,9 +173,9 @@ def get_model(args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix
     # define metrics
     # we employ Keras default accuracy and our strict accuracy metric
     if args.output_activation == 'crf':
-        model_metrics = [crf.accuracy, strict_accuracy_K]
+        model_metrics = [strict_accuracy_K]
     else:
-        model_metrics = ['accuracy', strict_accuracy_K]
+        model_metrics = [strict_accuracy_K]
 
     # define optimizer
     model_opt = get_optimizer(args.optimizer)

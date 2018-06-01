@@ -25,7 +25,7 @@ def plot_dist_tags(sents, vocab, outimg, outfile, padwords=[]):
     Plot the amount of IV and OOV words per tag in a dataset
             Inputs:
                 - sents: list of sentences represented as a list of (word, tag, sym) items
-                - words: set containing words in the vocabulary
+                - vocab: set containing words in the vocabulary
                 - outimg: output image
                 - outfile: output text file
                 - padwords: set of words to be ignored
@@ -47,7 +47,8 @@ def plot_dist_tags(sents, vocab, outimg, outfile, padwords=[]):
     ydata_oov = list([count[x][1] for x in xdata])
     ydata_rest = list([count[x][0] - count[x][1] for x in xdata])
 
-    line_chart = pygal.StackedBar(width=1600, height=800, x_label_rotation=-45, y_title='Number of words')
+    line_chart = pygal.StackedBar(width=1300, height=800, x_label_rotation=-45,
+                                  y_title='Number of words')
     line_chart.x_labels = xdata
     line_chart.add('OOVs', ydata_oov)
     line_chart.add('IVs + OOVs', ydata_rest)
@@ -88,14 +89,14 @@ def plot_dist_lengths(lengths, length_limit, x_step, max_x, y_step, max_y, outim
     ydata_used = [c[k] if k in c and k <= length_limit else 0 for k in xdata]
     ydata_unused = [c[k] if k in c and k > length_limit else 0 for k in xdata]
 
-    line_chart = pygal.StackedBar(width=1600, height=800, x_label_rotation=-45,
-                                  x_title = 'Number of words', y_title = 'Number of sentences',
+    line_chart = pygal.StackedBar(width=1300, height=800, x_label_rotation=-45,
+                                  x_title='Number of words', y_title='Number of sentences',
                                   show_minor_x_labels=False)
     line_chart.x_labels = xdata
     line_chart.x_labels_major = list(set([x // x_step * x_step for x in xdata]))
     line_chart.y_labels = range(0, max_y + 1, y_step)
-    line_chart.add('Discarded data', ydata_unused)
-    line_chart.add('Used data', ydata_used)
+    line_chart.add('Truncated data', ydata_unused)
+    line_chart.add('Unchanged data', ydata_used)
 
     # circumvent potential svg styling problems
     line_chart.render_to_file(outimg)
@@ -115,15 +116,17 @@ def plot_accuracy(history, keys, labels, test_acc, outimg, outfile):
     """
     # build chart
     hist = pd.DataFrame(history.history)
-    chart = pygal.Line(width=1600, height=800, x_label_rotation=0, x_title='Number of training epochs', y_title='Sem-tagging accuracy')
-    xdata = [x+1 for x in range(len(hist[keys[0]]))]
+    chart = pygal.Line(width=1300, height=800, x_label_rotation=0,
+                       x_title='Number of training epochs', y_title='Sem-tagging accuracy')
+    xdata = [x + 1 for x in range(len(hist[keys[0]]))]
     chart.x_labels = xdata
 
     # plot all metrics
     for i in range(len(keys)):
         key = keys[i]
         label = labels[i]
-        chart.add(label, hist[key], show_dots=False, stroke_style={'width': 6, 'dasharray': '3, 8', 'linecap': 'round', 'linejoin': 'round'})
+        chart.add(label, hist[key], show_dots=False,
+                  stroke_style={'width': 4, 'dasharray': '3, 8', 'linecap': 'round', 'linejoin': 'round'})
 
     # plot a horizontal line representing accuracy on the test set
     if test_acc > 0:
@@ -181,11 +184,12 @@ def plot_confusion_matrix(act, pred, classes, ignore_class, ymap, outfile, vocab
 
     # transform confusion matrix to a heatmap and output
     fig, ax = plt.subplots(figsize=(25, 25))
+    sns.set(font_scale=2)
     b = sns.heatmap(cm, fmt='', ax=ax, cmap="BuPu", square=True, xticklabels=True, yticklabels=True)
-    b.set_xlabel("Predicted sem-tags", fontsize=20)
-    b.set_ylabel("Actual sem-tags", fontsize=20)
-    b.set_xticklabels(b.get_yticklabels(), fontsize=12)
-    b.set_yticklabels(b.get_yticklabels(), fontsize=12)
+    b.set_xlabel("Predicted sem-tags", fontsize=28)
+    b.set_ylabel("Actual sem-tags", fontsize=28)
+    b.set_xticklabels(b.get_yticklabels(), fontsize=13)
+    b.set_yticklabels(b.get_yticklabels(), fontsize=13)
     plt.draw()
     plt.savefig(outfile)
 

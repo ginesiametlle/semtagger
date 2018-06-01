@@ -41,13 +41,12 @@ GET_MODEL=0
 ## PARALLEL MEANING BANK ##
 ###########################
 
-# version of the PMB to use (string)
-# currently available versions are "1.0.0" and "2.0.0"
-# note that PMB version 2.0.0 takes a long time to be processed
-PMB_VER="1.0.0"
+# version of the PMB Universal Semantic Tags release to use (string)
+# currently available versions are "0.1.0"
+PMB_VER="0.1.0"
 
 # root directory where to store the PMB (string)
-PMB_ROOT=${DIR_DATA}/pmb/pmb-${PMB_VER}
+PMB_ROOT=${DIR_DATA}/pmb/sem-${PMB_VER}
 
 # directory where to store data extracted from the PMB (string)
 PMB_EXTDIR=${DIR_DATA}/pmb
@@ -62,7 +61,7 @@ PMB_EXTRA_DATA=0
 
 # directories with additional semantically tagged data (array)
 # each directory listed is assumed to contain a number of files
-# each file is assumed to contain [WORD]\t[TAG] lines
+# each file is assumed to contain [TAG]\t[WORD] lines
 # each file is assumed to contain empty lines denoting the end of a sentence
 PMB_EXTRA_SRC=("/home/joan/pmb_extra/en/gold/train" "/home/joan/pmb_extra/en/silver/train")
 
@@ -97,7 +96,7 @@ EMB_ROOT=${DIR_DATA}/embeddings
 
 # version of the GloVe word embeddings to use for English as default (string)
 # allowed values: "glove.6B.{50/100/200/300}d", "glove.42B.300d", "glove.840B.300d"
-EMB_GLOVE_MODEL="glove.840B.300d"
+EMB_GLOVE_MODEL="glove.6B.300d"
 
 ##########################
 ## TRAINING AND TESTING ##
@@ -125,9 +124,9 @@ RUN_WORD_LEN=0.98
 # handle multi-word expressions (boolean, default: 1)
 RUN_MWE=1
 
-# depth of the residual network applied on character embedding features (int, default: 6)
+# depth of the residual network applied on character embedding features (int, default: 8)
 # the residual network helps turn character embeddings into word-like representations
-RUN_RESNET_DEPTH=6
+RUN_RESNET_DEPTH=8
 
 #####################
 # MODEL PARAMETERS ##
@@ -140,15 +139,14 @@ MODEL_TYPE="bgru"
 # directory where to store the trained model (string)
 MODEL_ROOT=${DIR_MODELS}/bin
 
-# training epochs (int, default: 10)
-MODEL_EPOCHS=10
+# training epochs (int, default: 25)
+MODEL_EPOCHS=25
 
-# units in the first layer of the neural model (int, default: 200)
-MODEL_SIZE=200
+# units in the first layer of the neural model (int, default: 150)
+MODEL_SIZE=150
 
-# number of recurrent layers of the neural model
-# note that the number of hidden units is halved on each layer (int, default: 1)
-MODEL_LAYERS=1
+# number of recurrent layers of the neural model (int, default: 2)
+MODEL_LAYERS=2
 
 # standard deviation for the noise normal distribution (float, default: 0.0)
 MODEL_SIGMA=0.0
@@ -169,11 +167,11 @@ MODEL_LOSS="categorical_cross_entropy"
 # allowed values: "sgd", "adagrad", "adadelta", "rmsprop", "adam", "nadam"
 MODEL_OPTIMIZER="nadam"
 
-# dropout rate on each layer (float, default: 0.1)
-MODEL_DROPOUT=0.1
+# dropout rate on each layer (float, default: 0.25)
+MODEL_DROPOUT=0.25
 
-# batch size (int, default: 256)
-MODEL_BATCH_SIZE=256
+# batch size (int, default: 150)
+MODEL_BATCH_SIZE=150
 
 # use batch normalization (boolean, default: 1)
 MODEL_BATCH_NORMALIZATION=1

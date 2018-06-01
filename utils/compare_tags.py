@@ -26,8 +26,8 @@ with open(pred_file) as p:
                 print('[ERROR] The tagged files are not properly formatted')
                 sys.exit(1)
             elif len(pred_lines[i].split()) > 1:
-                pword, ptag = pred_lines[i].split()[:2]
-                gword, gtag = gold_lines[i].split()[:2]
+                ptag, pword = pred_lines[i].split()[:2]
+                gtag, gword = gold_lines[i].split()[:2]
                 if pword != gword:
                     print('[ERROR] The tagged file and the gold standard file do not match')
                     sys.exit(1)
