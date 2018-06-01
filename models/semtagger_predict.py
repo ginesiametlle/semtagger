@@ -100,7 +100,7 @@ elif params.use_chars:
                       cemb_dim = minfo['cemb_dim'], cemb_matrix = minfo['cemb_matrix'])
 
 model.load_weights(args.output_model)
-model.summary()
+#model.summary()
 
 # predict tags using the model
 p = model.predict(X, verbose = min(1, minfo['params'].verbose))
