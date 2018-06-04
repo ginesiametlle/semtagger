@@ -4,7 +4,7 @@
 
 # download the PMB Universal Semantic Tags release
 echo "[INFO] Downloading the PMB Universal Semantic Tags release ${PMB_VER}..."
-if [ ! -d ${PMB_ROOT} ] || [ ! ${GET_PMB} -eq 0 ]; then
+if [ ! -d ${PMB_ROOT} ] || [ ! ${GET_PMB} -eq 0 ] && [ ! ${PMB_MAIN_DATA} -eq 0 ]; then
     rm -rf ${PMB_ROOT}
     mkdir -p ${PMB_ROOT}
     pushd ${PMB_ROOT} > /dev/null
@@ -20,7 +20,7 @@ echo "[INFO] Finished downloading PMB data"
 # extract semantic tags from sentences in the PMB
 echo "[INFO] Extracting PMB data..."
 for l in ${PMB_LANGS[@]} ; do
-    if [ ! -f ${PMB_EXTDIR}/${l}/sem_${l}.sem ] || [ ! ${GET_PMB} -eq 0 ]; then
+    if [ ! -f ${PMB_EXTDIR}/${l}/sem_${l}.sem ] || [ ! ${GET_PMB} -eq 0 ] && [ ! ${PMB_MAIN_DATA} -eq 0 ]; then
         rm -f ${PMB_EXTDIR}/${l}/sem_${l}.sem
         mkdir -p ${PMB_EXTDIR}/${l}
         numfiles=0
@@ -45,6 +45,10 @@ for l in ${PMB_LANGS[@]} ; do
             echo -e "NIL\t.\n" >> ${PMB_EXTDIR}/${l}/sem_${l}.sem
         fi
         echo "[INFO] Extracted PMB data from ${numfiles} files (${l})"
+    else
+        rm -f ${PMB_EXTDIR}/${l}/sem_${l}.sem
+        mkdir -p ${PMB_EXTDIR}/${l}
+        echo -e "NIL\t.\n" >> ${PMB_EXTDIR}/${l}/sem_${l}.sem
     fi
 done
 

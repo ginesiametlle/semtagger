@@ -37,7 +37,7 @@ with open(pred_file) as p:
             else:
                 sentences += 1
 
-        if len(pred_lines[-1].split()) > 1:
+        if len(gold_lines[-1].split()) > 1:
             sentences += 1
 
 print('[INFO] THE TAGGING ACCURACY IS', correct_tags / total_tags)

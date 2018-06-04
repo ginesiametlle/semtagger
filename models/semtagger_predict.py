@@ -50,7 +50,7 @@ if params.use_words:
                               minfo['oov_sym']['unknown'],
                               minfo['DEFAULT_TAG'],
                               minfo['pad_word']['pad'],
-                              minfo['DEFAULT_TAG'])
+                              minfo['PADDING_TAG'])
 
 # compute character-based inputs
 if params.use_chars:

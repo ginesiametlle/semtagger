@@ -41,6 +41,9 @@ GET_MODEL=0
 ## PARALLEL MEANING BANK ##
 ###########################
 
+# use semantically tagged data from the PMB (boolean, default: 1)
+PMB_MAIN_DATA=0
+
 # version of the PMB Universal Semantic Tags release to use (string)
 # currently available versions are "0.1.0"
 PMB_VER="0.1.0"
