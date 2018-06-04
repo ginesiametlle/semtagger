@@ -12,6 +12,8 @@ pred_file = sys.argv[1]
 gold_file = sys.argv[2]
 
 # compare the two files and compute tagging accuracy
+print('[INFO] Evaluating ' + pred_file + ' (predicted)')
+print('[INFO] Using ' + gold_file + ' as reference (gold)')
 sentences = 0
 total_tags = 0
 correct_tags = 0
@@ -44,6 +46,6 @@ print('[INFO] THE TAGGING ACCURACY IS', correct_tags / total_tags)
 print('[INFO]', sentences, 'sentences')
 print('[INFO]', total_tags, 'tags')
 print('[INFO]', correct_tags, 'correct tags')
-print('[INFO]', total_tags-correct_tags, 'incorrect tags')
+print('[INFO]', total_tags - correct_tags, 'incorrect tags')
 sys.exit(0)
 
