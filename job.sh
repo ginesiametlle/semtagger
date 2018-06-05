@@ -1,46 +1,54 @@
 #!/bin/bash
+# this script trains a model and evaluates on all the available data subsets for a given language
 
 #SBATCH --time=20:00:00
 #SBATCH --mem=20GB
 
-TAGGER_HOME="/home/joan/semtagger"
-PMB_HOME="${TAGGER_HOME}/data/pmb"
+# root directory where this script is located
+DIR_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# target language code
+# allowed values: "en", "de", "it", "nl"
+EVAL_LANG="en"
+
+# load configuration options
+. ${DIR_ROOT}/config.sh
 
 # train a new model
-. ${TAGGER_HOME}/run.sh --train
+. ${DIR_ROOT}/run.sh --train
 
-# predict sem-tags for gold/train
-OPTIND=1
-. ${TAGGER_HOME}/run.sh --predict --input ${PMB_HOME}/en/gold/gold_train.off --output ${PMB_HOME}/en/gold/gold_train.sem
+# predict and evaluate on gold/train
+if [ -f ${PMB_EXTDIR}/${EVAL_LANG}/gold/train.off ] && [ -f ${PMB_EXTDIR}/${EVAL_LANG}/gold/train.gold ]; then
+	OPTIND=1
+	. ${DIR_ROOT}/run.sh --predict --input ${PMB_EXTDIR}/${EVAL_LANG}/gold/train.off --output ${PMB_EXTDIR}/${EVAL_LANG}/gold/train.sem
+	python3 ${DIR_ROOT}/utils/compare_tags.py ${PMB_EXTDIR}/${EVAL_LANG}/gold/train.sem ${PMB_EXTDIR}/${EVAL_LANG}/gold/train.gold
+fi
 
-# predict sem-tags for gold/test
-OPTIND=1
-. ${TAGGER_HOME}/run.sh --predict --input ${PMB_HOME}/en/gold/gold_test.off --output ${PMB_HOME}/en/gold/gold_test.sem
+# predict and evaluate on gold/test
+if [ -f ${PMB_EXTDIR}/${EVAL_LANG}/gold/test.off ] && [ -f ${PMB_EXTDIR}/${EVAL_LANG}/gold/test.gold ]; then
+	OPTIND=1
+	. ${DIR_ROOT}/run.sh --predict --input ${PMB_EXTDIR}/${EVAL_LANG}/gold/test.off --output ${PMB_EXTDIR}/${EVAL_LANG}/gold/test.sem
+	python3 ${DIR_ROOT}/utils/compare_tags.py ${PMB_EXTDIR}/${EVAL_LANG}/gold/test.sem ${PMB_EXTDIR}/${EVAL_LANG}/gold/test.gold
+fi
 
-# predict sem-tags for silver/train
-OPTIND=1
-. ${TAGGER_HOME}/run.sh --predict --input ${PMB_HOME}/en/silver/silver_train.off --output ${PMB_HOME}/en/silver/silver_train.sem
+# predict and evaluate on silver/train
+if [ -f ${PMB_EXTDIR}/${EVAL_LANG}/silver/train.off ] && [ -f ${PMB_EXTDIR}/${EVAL_LANG}/silver/train.gold ]; then
+	OPTIND=1
+	. ${DIR_ROOT}/run.sh --predict --input ${PMB_EXTDIR}/${EVAL_LANG}/silver/train.off --output ${PMB_EXTDIR}/${EVAL_LANG}/silver/train.sem
+	python3 ${DIR_ROOT}/utils/compare_tags.py ${PMB_EXTDIR}/${EVAL_LANG}/silver/train.sem ${PMB_EXTDIR}/${EVAL_LANG}/silver/train.gold
+fi
 
 # predict sem-tags for silver/test
-OPTIND=1
-. ${TAGGER_HOME}/run.sh --predict --input ${PMB_HOME}/en/silver/silver_test.off --output ${PMB_HOME}/en/silver/silver_test.sem
+if [ -f ${PMB_EXTDIR}/${EVAL_LANG}/silver/test.off ] && [ -f ${PMB_EXTDIR}/${EVAL_LANG}/silver/test.gold ]; then
+	OPTIND=1
+	. ${DIR_ROOT}/run.sh --predict --input ${PMB_EXTDIR}/${EVAL_LANG}/silver/test.off --output ${PMB_EXTDIR}/${EVAL_LANG}/silver/test.sem
+	python3 ${DIR_ROOT}/utils/compare_tags.py ${PMB_EXTDIR}/${EVAL_LANG}/silver/test.sem ${PMB_EXTDIR}/${EVAL_LANG}/silver/test.gold
+fi
 
 # predict sem-tags for WebQuestions
-OPTIND=1
-. ${TAGGER_HOME}/run.sh --predict --input ${TAGGER_HOME}/qa/sample/questions.off --output ${TAGGER_HOME}/qa/sample/questions.sem
-
-# evaluate accuracy on gold/train
-python3 ${TAGGER_HOME}/utils/compare_tags.py ${PMB_HOME}/en/gold/gold_train.sem ${PMB_HOME}/en/gold/train/gold_train.gold
-
-# evaluate accuracy on gold/test
-python3 ${TAGGER_HOME}/utils/compare_tags.py ${PMB_HOME}/en/gold/gold_test.sem ${PMB_HOME}/en/gold/test/gold_test.gold
-
-# evaluate accuracy on silver/train
-python3 ${TAGGER_HOME}/utils/compare_tags.py ${PMB_HOME}/en/silver/silver_train.sem ${PMB_HOME}/en/silver/train/silver_train.gold
-
-# evaluate accuracy on silver/test
-python3 ${TAGGER_HOME}/utils/compare_tags.py ${PMB_HOME}/en/silver/silver_test.sem ${PMB_HOME}/en/silver/test/silver_test.gold
-
-# evaluate accuracy WebQuestions
-python3 ${TAGGER_HOME}/utils/compare_tags.py ${TAGGER_HOME}/qa/sample/questions.sem ${TAGGER_HOME}/qa/sample/questions.gold
+if [ -f ${DIR_ROOT}/qa/${EVAL_LANG}/sample/questions.off ] && [ -f ${DIR_ROOT}/qa/${EVAL_LANG}/sample/questions.gold ]; then
+	OPTIND=1
+	. ${DIR_ROOT}/run.sh --predict --input ${DIR_ROOT}/qa/${EVAL_LANG}/sample/questions.off --output ${DIR_ROOT}/qa/${EVAL_LANG}/sample/questions.sem
+	python3 ${DIR_ROOT}/utils/compare_tags.py ${DIR_ROOT}/qa/${EVAL_LANG}/sample/questions.sem ${DIR_ROOT}/qa/${EVAL_LANG}/sample/questions.gold
+fi
 

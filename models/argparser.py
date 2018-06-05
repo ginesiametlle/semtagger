@@ -19,7 +19,7 @@ def get_args():
     parser.add_argument('--use_chars', help='Use character features', type=int, default=0)
     parser.add_argument('--output_model', help='Output model file', type=str, default='')
     parser.add_argument('--output_model_info', help='Output model parameters file', type=str, default='')
-    parser.add_argument('--lang', help='Language code as in ISO 639-1', type=str, default='en')
+    parser.add_argument('--lang', help='Language code', type=str, default='en')
     parser.add_argument('--model', help='Type of neural model', type=str, default='bgru')
     parser.add_argument('--epochs', help='Number of training epochs', type=int, default=25)
     parser.add_argument('--model_size', help='Number of units on the first layer', type=int, default=150)

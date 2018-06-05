@@ -8,6 +8,9 @@ DIR_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # load configuration options
 . ${DIR_ROOT}/config.sh
 
+# set random seed
+RANDOM=7937
+
 # train a tagger model with option --train, -t
 PARAMS_TRAIN=0
 
@@ -15,12 +18,12 @@ PARAMS_TRAIN=0
 PARAMS_PREDICT=0
 
 # point to a file containing untagged sentence data with option --input, -i
-# an example file is given in qa/sample/questions.off
-PRED_INPUT=${DIR_ROOT}/qa/sample/questions.off
+# an example file is given in qa/en/sample/questions.off
+PRED_INPUT=${DIR_ROOT}/qa/en/sample/questions.off
 
 # point to a file containing sem-tag predictions for the input file with option --output, -o
-# the resulting file will have the same format as qa/sample/questions.gold
-PRED_OUTPUT=${DIR_ROOT}/qa/sample/questions.sem
+# the resulting file will have the same format as qa/en/sample/questions.gold
+PRED_OUTPUT=${DIR_ROOT}/qa/en/sample/questions.sem
 
 # point to a directory containing the model to store/load with option --model, -m
 if [ ! ${RUN_GRID_SEARCH} -eq 0 ]; then

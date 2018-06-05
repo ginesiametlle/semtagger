@@ -54,9 +54,13 @@ PMB_ROOT=${DIR_DATA}/pmb/sem-${PMB_VER}
 # directory where to store data extracted from the PMB (string)
 PMB_EXTDIR=${DIR_DATA}/pmb
 
-# languages of the PMB (ISO 639-1) for which to extract tagged sentences (array)
+# codes of PMB languages for which to extract tagged sentences (array)
 # allowed values: "en", "de", "it", "nl"
 PMB_LANGS=("en")
+
+# proportion of PMB tagged sentences to include in the test set (float, default: 0.10)
+# the remaining sentences are included in the training set
+PMB_TEST_SIZE=0.10
 
 # use additional semantically tagged data (boolean, default: 0)
 # set this option to 0 if you do not have access to additional data
@@ -66,11 +70,11 @@ PMB_EXTRA_DATA=0
 # each directory listed is assumed to contain a number of files
 # each file is assumed to contain [TAG]\t[WORD] lines
 # each file is assumed to contain empty lines denoting the end of a sentence
-PMB_EXTRA_SRC=("/home/joan/pmb_extra/en/gold/train" "/home/joan/pmb_extra/en/silver/train")
+PMB_EXTRA_SRC=()
 
 # languages corresponding to the data of each directory with extra data (array)
 # allowed values: "en", "de", "it", "nl"
-PMB_EXTRA_LANGS=("en" "en")
+PMB_EXTRA_LANGS=()
 
 ################
 ## EMBEDDINGS ##
@@ -79,8 +83,8 @@ PMB_EXTRA_LANGS=("en" "en")
 # whether or not to use word embeddings (boolean, default: 1)
 EMB_USE_WORDS=1
 
-# whether or not to use character embeddings (boolean, default: 0)
-EMB_USE_CHARS=0
+# whether or not to use character embeddings (boolean, default: 1)
+EMB_USE_CHARS=1
 
 # pretrained word embeddings for each one of the PMB languages (array)
 # the files listed are assumed to be in the same order as PMB_LANGS
@@ -99,16 +103,18 @@ EMB_ROOT=${DIR_DATA}/embeddings
 
 # version of the GloVe word embeddings to use for English as default (string)
 # allowed values: "glove.6B.{50/100/200/300}d", "glove.42B.300d", "glove.840B.300d"
-EMB_GLOVE_MODEL="glove.6B.300d"
+EMB_GLOVE_MODEL="glove.840B.300d"
 
 ##########################
 ## TRAINING AND TESTING ##
 ##########################
 
-# proportion of tagged sentences to use for testing (float, default: 0.00)
+# proportion of sentences in the training set to use for testing purposes (float, default: 0.00)
+# these sentences are deducted from the training set and are evaluated after training
 RUN_TEST_SIZE=0.00
 
-# proportion of tagged sentences to use for development (float, default: 0.00)
+# proportion of sentences in the training set to use for development purposes (float, default: 0.00)
+# these sentences are deducted from the training set and are evaluated after each training epoch
 RUN_DEV_SIZE=0.00
 
 # run grid-search for hyperparameter optimization (boolean, default: 0)
@@ -158,7 +164,7 @@ MODEL_SIGMA=0.0
 # allowed values: "sigmoid", "tanh", "relu"
 MODEL_ACTIVATION_HIDDEN="relu"
 
-# activation function on the output layer (string)
+# type of output layer (string)
 # allowed values: "softmax", "crf"
 MODEL_ACTIVATION_OUTPUT="crf"
 
