@@ -28,7 +28,7 @@ Note that trained models are stored/loaded using the directory defined in [confi
 
 It is advisable to run a tokenizer such as [Elephant](http://gmb.let.rug.nl/elephant/about.php) on your additional data (if any).
 
-Furthermore, if you have the means to identify multiword expressions, you can represent them as a single token using a white spaces, tildes or hyphens (as in ```ice cream```, ```ice~cream``` or ```ice-cream```).
+Furthermore, if you have the means to identify multiword expressions, you can represent them as a single token using white spaces, tildes or hyphens (as in ```ice cream```, ```ice~cream``` or ```ice-cream```).
 
 ### References
 
