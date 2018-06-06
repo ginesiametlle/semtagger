@@ -62,6 +62,9 @@ if [ ! ${PMB_MAIN_DATA} -eq 0 ]; then
                             echo "[INFO] Processed ${PMB_NUMFILES} files (${l})..."
                         fi
                     done
+                    # map UNK tags to NIL
+                    sed -i 's/UNK\t/NIL\t/g' ${p_train}
+                    sed -i 's/UNK\t/NIL\t/g' ${p_test}
                     # create files with removed semantic tags
                     awk 'BEGIN{ FS="\t" } { if ( NF > 1 ) print $2 ; else print "" }' ${p_train} \
                         >> ${p_tdir}/train.off
@@ -117,6 +120,7 @@ if [ ! ${PMB_EXTRA_DATA} -eq 0 ]; then
     for l in ${PMB_LANGS[@]} ; do
         if [ -f ${PMB_EXTDIR}/${l}/extra_${l}.sem.tmp ]; then
             mv -f ${PMB_EXTDIR}/${l}/extra_${l}.sem.tmp ${PMB_EXTDIR}/${l}/extra_${l}.sem
+            sed -i 's/UNK\t/NIL\t/g' ${PMB_EXTDIR}/${l}/extra_${l}.sem
         fi
     done
 else
@@ -165,7 +169,10 @@ for idx in ${!PMB_LANGS[*]} ; do
                 rm -f ${EMB_ROOT_LANG}/wemb_${l}.txt
                 mkdir -p ${EMB_ROOT_LANG}
                 pushd ${EMB_ROOT_LANG} > /dev/null
-                if [ ${l} == "de" ]; then
+                if [ ${l} == "en" ]; then
+                    curl -L -s -o polyglot-${l} \
+                         "https://docs.google.com/uc?id=0B5lWReQPSvmGVWFuckc4S0tUTHc&export=download"
+                elif [ ${l} == "de" ]; then
                     curl -L -s -o polyglot-${l} \
                          "https://docs.google.com/uc?id=0B5lWReQPSvmGaXJoQnlJa2x5RUU&export=download"
                 elif [ ${l} == "it" ]; then

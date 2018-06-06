@@ -69,9 +69,6 @@ oov_sym['UNKNOWN'] = '<UNK>'
 PADDING_TAG = 'PAD'
 # default sem-tag to which special words are mapped
 DEFAULT_TAG = 'NIL'
-# list of sem-tags which we do not want to consider when displaying results
-# these correspond to coarse sem-tags from the Universal Semantic Tagset
-IGNORE_TAGS = set(['ANA', 'ACT', 'ATT', 'COM', 'UNE', 'DXS', 'LOG', 'MOD', 'DSC', 'NAM', 'EVE', 'TNS', 'TIM', 'UNK'])
 
 # parse input arguments
 args = get_args()
@@ -103,7 +100,6 @@ tag2idx, word_sents, max_slen = load_conll(args.raw_pmb_data,
                                            pads = pad_word,
                                            padding_tag = PADDING_TAG,
                                            default_tag = DEFAULT_TAG,
-                                           ignore_tags = IGNORE_TAGS,
                                            len_perc = args.sent_len_perc,
                                            lower = False,
                                            mwe = args.multi_word,

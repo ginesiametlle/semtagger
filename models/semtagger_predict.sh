@@ -9,7 +9,7 @@ for l in ${PMB_LANGS[@]} ; do
     MODEL_PATH_INFO="${MODEL_GIVEN_DIR}/${l}/tagger_params.pkl"
 
     # use an existing model if it exists
-    if [ -f ${MODEL_GIVEN_PATH} ] && [ ${GET_MODEL} -eq 0 ]; then
+    if [ -f ${MODEL_GIVEN_PATH} ]; then
         echo "[INFO] A matching trained model was found for '${l}'"
         echo "[INFO] Using the model in ${MODEL_GIVEN_PATH}"
         python3 ${DIR_MODELS}/semtagger_predict.py ${DIR_ROOT} \

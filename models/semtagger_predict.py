@@ -103,7 +103,7 @@ model.load_weights(args.output_model)
 #model.summary()
 
 # predict tags using the model
-p = model.predict(X, verbose = min(1, minfo['params'].verbose))
+p = model.predict(X, verbose = min(1, params.verbose))
 p = np.argmax(p, axis=-1) + 1
 
 # reconstruct the original file with tags

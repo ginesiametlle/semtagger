@@ -117,7 +117,7 @@ def _match_word_vocab(word, vocab):
     return word
 
 
-def load_conll(conll_file, extra='', vocab=[], oovs={}, pads={}, padding_tag='PAD', default_tag='NIL', ignore_tags=[], len_perc=1.0, lower=False, mwe=True, unk_case=True):
+def load_conll(conll_file, extra='', vocab=[], oovs={}, pads={}, padding_tag='PAD', default_tag='NIL', len_perc=1.0, lower=False, mwe=True, unk_case=True):
     """
     Reads a file in the conll format and produces processed unique sentences
         Inputs:
@@ -128,7 +128,6 @@ def load_conll(conll_file, extra='', vocab=[], oovs={}, pads={}, padding_tag='PA
             - pads: dictionary with delimiter words to include in the sentences (valid keys: begin, end)
             - padding_tag: tag to use for padding
             - default_tag: tag to use by default
-            - ignore_tags: list of input tags to be ignored and mapped to the default tag
             - len_perc: percentile of allowed sentence lengths
             - lower: lowercase words in the input data
             - mwe: handle multi-word expressions
@@ -191,16 +190,13 @@ def load_conll(conll_file, extra='', vocab=[], oovs={}, pads={}, padding_tag='PA
                 else:
                     tag, word = line.split('\t')
                     sym = word
-                    # map ignored tags to the default tag
-                    if tag in ignore_tags:
-                        tag = default_tag
-
-                    if word != 'ø':
-                        num_words += 1
-                        if lower:
-                            word = word.lower()
-                        # use an heuristic and try to map oov words
-                        if vocab and word not in vocab and word not in split_chars:
+                    num_words += 1
+                    # lowercase when indicated
+                    if lower:
+                        word = word.lower()
+                    # use an heuristic and try to map oov words
+                    if vocab and word not in vocab:
+                        if word not in split_chars:
                             if re.match('^[0-9\.\,-]+$', word):
                                 word = oovs['number']
                             elif _match_word_vocab(word, vocab) != word:
@@ -216,25 +212,26 @@ def load_conll(conll_file, extra='', vocab=[], oovs={}, pads={}, padding_tag='PA
                                     word = constituents[-1]
                                     sym = constituents[-1]
                                 else:
-                                    #print('[INFO] Word ' + word + ' not in the embedding vocabulary')
                                     if unk_case and word[0].isupper():
                                         word = oovs['UNKNOWN']
                                     else:
                                         word = oovs['unknown']
                                     num_oovs += 1
                             else:
-                                #print('[INFO] Word ' + word + ' not in the embedding vocabulary')
                                 if unk_case and word[0].isupper():
                                     word = oovs['UNKNOWN']
                                 else:
                                     word = oovs['unknown']
                                 num_oovs += 1
+                        else:
+                            word = oovs['unknown']
+                            num_oovs += 1
 
-                        next_words.append(word)
-                        next_tags.append(tag)
-                        next_syms.append(sym)
-                        if tag not in tag2idx:
-                            tag2idx[tag] = len(tag2idx) + 1
+                    next_words.append(word)
+                    next_tags.append(tag)
+                    next_syms.append(sym)
+                    if tag not in tag2idx:
+                        tag2idx[tag] = len(tag2idx) + 1
 
             # stack the current sentence upon seeing an empty line or a sentence end mark
             if not line or (len(next_words) > 3 and next_words[-4] in ['.', '?', '!']):
@@ -485,14 +482,13 @@ def load_conll_notags(unfile, vocab=[], oovs={}, pads={}, lower=False, mwe=True,
                 # add new original word
                 windex += 1
                 input_words.append(word)
-
-                if word != 'ø':
-                    num_words += 1
-                    if lower:
-                        word = word.lower()
-
-                    # use an heuristic and try to map oov words
-                    if vocab and word not in vocab and word not in split_chars:
+                num_words += 1
+                # lowercase when indicated
+                if lower:
+                    word = word.lower()
+                # use an heuristic and try to map oov words
+                if vocab and word not in vocab:
+                    if word not in split_chars:
                         if re.match('^[0-9\.\,-]+$', word):
                             word = oovs['number']
                         elif _match_word_vocab(word, vocab) != word:
@@ -508,24 +504,24 @@ def load_conll_notags(unfile, vocab=[], oovs={}, pads={}, lower=False, mwe=True,
                                 word = constituents[-1]
                                 sym = constituents[-1]
                             else:
-                                #print('[INFO] Word ' + word + ' not in the embedding vocabulary')
                                 if unk_case and word[0].isupper():
                                     word = oovs['UNKNOWN']
                                 else:
                                     word = oovs['unknown']
                                 num_oovs += 1
                         else:
-                            #print('[INFO] Word ' + word + ' not in the embedding vocabulary')
                             if unk_case and word[0].isupper():
                                 word = oovs['UNKNOWN']
                             else:
                                 word = oovs['unknown']
                             num_oovs += 1
+                    else:
+                        word = oovs['unknown']
+                        num_oovs += 1
 
-                    next_words.append(word)
-                    next_syms.append(sym)
-                    next_indexs.append(windex)
-
+                next_words.append(word)
+                next_syms.append(sym)
+                next_indexs.append(windex)
 
             # stack the current sentence upon seeing an empty line or a sentence end mark
             if not line or (len(next_words) > 3 and next_words[-4] in ['.', '?', '!']):

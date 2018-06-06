@@ -20,18 +20,16 @@ def strict_accuracy_K(act, pred):
     # numerical values of the predicted classes
     pred_argm = K.argmax(pred, axis=-1)
     # determines where the classes are incorrect or not
-    incorrect = K.cast(K.not_equal(act_argm, pred_argm), dtype='float32')
+    incorrect = K.cast(K.not_equal(act_argm, pred_argm), dtype='int32')
     # determines where the classes are correct or not
-    correct = K.cast(K.equal(act_argm, pred_argm), dtype='float32')
+    correct = K.cast(K.equal(act_argm, pred_argm), dtype='int32')
     # determines where the classes are ignored or not
-    padding = K.cast(K.equal(act_argm, 0), dtype='float32')
+    padding = K.cast(K.equal(act_argm, 0), dtype='int32')
     # subtract padding from correct predictions and check equality to 1
     corr_preds = K.sum(K.cast(K.equal(correct - padding, 1), dtype='float32'))
     incorr_preds = K.sum(K.cast(K.equal(incorrect - padding, 1), dtype='float32'))
-    total_preds = corr_preds + incorr_preds
     # actual accuracy without padding
-    accuracy = corr_preds / total_preds
-    return accuracy
+    return corr_preds / (corr_preds + incorr_preds)
 
 
 def strict_accuracy_N(act, pred, ignore_class=0):
@@ -54,7 +52,7 @@ def strict_accuracy_N(act, pred, ignore_class=0):
         act_classes = sent[0]
         pred_classes = sent[1]
         for t in range(len(act_classes)):
-            if act_classes[t] != ignore_class:
+            if act_classes[t] != int(ignore_class):
                 total_preds += 1
                 if pred_classes[t] == act_classes[t]:
                     corr_preds += 1
