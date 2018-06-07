@@ -22,6 +22,8 @@ A recent version of Python 3 with the packages listed in [requirements.txt](./re
 
 One can edit [config.sh](./config.sh) for fine control over the employed features and model architecture.
 
+It is recommended that you edit [config.sh](./config.sh) in order to use models which are suitable for your system, especially when not using a GPU for computations.
+
 Note that trained models are stored/loaded using the directory defined in [config.sh](./config.sh) when the ```--model``` option is not provided.
 
 ### Comments
