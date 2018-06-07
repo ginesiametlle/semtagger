@@ -582,6 +582,12 @@ def load_conll_notags(unfile, max_slen, vocab=[], oovs={}, pads={}, lower=False,
                         next_syms = [''] + next_syms
                         next_indexs = [-1] + next_indexs
 
+                else:
+                    input_sents.append(input_words)
+                    input_words = []
+                    windex = -1
+                    num_raw_sents += 1
+
         # double check the last sentence
         if len(next_words) > sent_base_length:
             if 'end' in pads:
