@@ -460,8 +460,6 @@ def load_conll_notags(unfile, max_slen, vocab=[], oovs={}, pads={}, lower=False,
 
     # number of words from which to split sentences
     LIMIT_SENT_LEN = max_slen
-    if 'begin' in pads:
-        LIMIT_SENT_LEN -= 1
 
     sents = []
     if 'begin' in pads:
@@ -539,7 +537,7 @@ def load_conll_notags(unfile, max_slen, vocab=[], oovs={}, pads={}, lower=False,
                 next_indexs.append(windex)
 
             # stack the current sentence upon seeing an empty line or a sentence end mark
-            if not line or (len(next_words) > 3 and next_words[-4] in sent_split_words) or (len(next_words) >= LIMIT_SENT_LEN):
+            if not line or (len(next_words) > 3 and next_words[-4] in sent_split_words) or (len(next_words) >= LIMIT_SENT_LEN and len(sent_split_words.intersection(next_words)) < 1):
                 if len(next_words) > sent_base_length:
                     # split when an empty line marks a sentence end
                     if not line:
