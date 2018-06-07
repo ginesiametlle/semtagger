@@ -122,9 +122,9 @@ RUN_DEV_SIZE=0.00
 # the hyperparameters here defined are shared among models for all languages otherwise
 RUN_GRID_SEARCH=0
 
-# maximum sentence length allowed, as a percentile on the sentence length distribution (float, default: 0.90)
+# maximum sentence length allowed, as a percentile on the sentence length distribution (float, default: 0.95)
 # the number of words in a sentence for creating word-based features is computed based on this number
-RUN_SENT_LEN=0.90
+RUN_SENT_LEN=0.95
 
 # maximum word length allowed, as a percentile on the word length distribution (float, default: 0.98)
 # the number of characters in a word for creating character-based features is computed based on this number

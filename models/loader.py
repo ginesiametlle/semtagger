@@ -151,7 +151,10 @@ def load_conll(conll_file, extra='', vocab=[], oovs={}, pads={}, padding_tag='PA
     split_chars = set([',', '.', ':', '-', '~', "'", '"'])
 
     # question words mapped to the QUE sem-tag
-    question_words = set(['what', 'where', 'when', 'who', 'why'])
+    question_words = set(['what', 'where', 'when', 'who', 'why', 'how'])
+
+    # punctuation that denotes when a sentence finishes
+    sent_split_words = set(['.', '?', '!', ';', '—'])
 
     sents = []
     lengths = []
@@ -234,8 +237,9 @@ def load_conll(conll_file, extra='', vocab=[], oovs={}, pads={}, padding_tag='PA
                         tag2idx[tag] = len(tag2idx) + 1
 
             # stack the current sentence upon seeing an empty line or a sentence end mark
-            if not line or (len(next_words) > 3 and next_words[-4] in ['.', '?', '!']):
+            if not line or (len(next_words) > 3 and next_words[-4] in sent_split_words):
                 if len(next_words) > sent_base_length:
+                    # split when an empty line marks a sentence end
                     if not line:
                         # fix sem-tags in questions
                         if next_words[-1] == '?':
@@ -264,6 +268,7 @@ def load_conll(conll_file, extra='', vocab=[], oovs={}, pads={}, padding_tag='PA
                         next_syms = []
                         num_raw_sents += 1
                         num_sents += 1
+                    # split when punctuation marks a sentence end
                     else:
                         split_words = next_words[:-3]
                         split_tags = next_tags[:-3]
@@ -316,6 +321,8 @@ def load_conll(conll_file, extra='', vocab=[], oovs={}, pads={}, padding_tag='PA
                     tag2counts[stag] += 1
             else:
                 num_dup += 1
+            num_raw_sents += 1
+            num_sents += 1
 
     # find the allowed sentence length
     max_len = sorted(lengths)[math.ceil((len(lengths)-1) * len_perc)]
@@ -423,11 +430,12 @@ def write_chars(ofile, char_sents):
                 ofile.write('\n')
 
 
-def load_conll_notags(unfile, vocab=[], oovs={}, pads={}, lower=False, mwe=True, unk_case=True):
+def load_conll_notags(unfile, max_slen, vocab=[], oovs={}, pads={}, lower=False, mwe=True, unk_case=True):
     """
     Reads a file containing unlabelled data and produces processed sentences
         Inputs:
             - unfile: path to a file with data
+            - max_slen: maximum allowed sentence length
             - vocab: set containing all words to use as vocabulary
             - oovs: dictionary with aliases to replace oovs with (valid keys: number, unknown, UNKNOWN)
             - pads: dictionary with delimiter words to include in the sentences (valid keys: begin, end)
@@ -443,12 +451,19 @@ def load_conll_notags(unfile, vocab=[], oovs={}, pads={}, lower=False, mwe=True,
     # special characters used for splitting words
     split_chars = set([',', '.', ':', '-', '~', "'", '"'])
 
+    # punctuation that denotes when a sentence finishes
+    sent_split_words = set(['.', '?', '!', ';', '—'])
+
     input_sents = []
     input_words = []
     windex = -1
 
-    sents = []
+    # number of words from which to split sentences
+    LIMIT_SENT_LEN = max_slen
+    if 'begin' in pads:
+        LIMIT_SENT_LEN -= 1
 
+    sents = []
     if 'begin' in pads:
         next_words = [pads['begin']]
         next_syms = ['']
@@ -524,8 +539,9 @@ def load_conll_notags(unfile, vocab=[], oovs={}, pads={}, lower=False, mwe=True,
                 next_indexs.append(windex)
 
             # stack the current sentence upon seeing an empty line or a sentence end mark
-            if not line or (len(next_words) > 3 and next_words[-4] in ['.', '?', '!']):
+            if not line or (len(next_words) > 3 and next_words[-4] in sent_split_words) or (len(next_words) >= LIMIT_SENT_LEN):
                 if len(next_words) > sent_base_length:
+                    # split when an empty line marks a sentence end
                     if not line:
                         if 'end' in pads:
                             next_words.append(pads['end'])
@@ -540,7 +556,8 @@ def load_conll_notags(unfile, vocab=[], oovs={}, pads={}, lower=False, mwe=True,
                         next_indexs = []
                         num_raw_sents += 1
                         num_sents += 1
-                    else:
+                    # split when punctuation marks a sentence end
+                    elif len(next_words) > 3 and next_words[-4] in sent_split_words:
                         split_words = next_words[:-3]
                         split_syms = next_syms[:-3]
                         split_indexs = next_indexs[:-3]
@@ -553,6 +570,15 @@ def load_conll_notags(unfile, vocab=[], oovs={}, pads={}, lower=False, mwe=True,
                         next_syms = next_syms[-3:]
                         next_indexs = next_indexs[-3:]
                         num_sents += 1
+                    # split when the maximum sentence length is reached
+                    # a bad guess is better than not guessing when predicting tags
+                    else:
+                        sents.append(list(zip(next_words, next_indexs, next_syms)))
+                        next_words = []
+                        next_syms = []
+                        next_indexs = []
+                        num_sents += 1
+
                     if 'begin' in pads:
                         next_words = [pads['begin']] + next_words
                         next_syms = [''] + next_syms
@@ -568,6 +594,8 @@ def load_conll_notags(unfile, vocab=[], oovs={}, pads={}, lower=False, mwe=True,
             input_sents.append(input_words)
             input_words = []
             windex = -1
+            num_raw_sents += 1
+            num_sents += 1
 
     # find the allowed sentence length
     print('[INFO] Number of unlabelled OOV words: ' + str(num_oovs) + ' / ' + str(num_words))

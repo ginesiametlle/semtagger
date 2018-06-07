@@ -34,6 +34,7 @@ params = minfo['params']
 
 # read and featurize unlabelled data
 word_inputs, word_sents = load_conll_notags(args.input_pred_file,
+                                            minfo['max_slen'],
                                             vocab = minfo['word2idx'].keys(),
                                             oovs = minfo['oov_sym'],
                                             pads = minfo['pad_word'],
