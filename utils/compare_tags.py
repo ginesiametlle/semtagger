@@ -18,6 +18,12 @@ sentences = 0
 total_tags = 0
 correct_tags = 0
 
+# question words mapped to the QUE sem-tag
+question_words = set(['what', 'where', 'when', 'who', 'why', 'how'])
+
+# indicates when a predicted QUE sem-tag occurs at the start of a sentence
+question_tag = False
+
 with open(pred_file) as p:
     with open(gold_file) as g:
         pred_lines = p.readlines()
@@ -35,12 +41,22 @@ with open(pred_file) as p:
                     sys.exit(1)
                 if ptag == gtag:
                     correct_tags += 1
+                elif ptag == 'QUE' and pword.lower() in question_words and i > 0 and len(pred_lines[i-1].split()) <= 1:
+                    question_tag = True
+                elif ptag == 'QUE' and pword.lower() in question_words and i == 0:
+                    question_tag = True
                 total_tags += 1
             else:
+                if i > 0 and pred_lines[i-1].split()[1] == '?' and question_tag:
+                    correct_tags += 1
                 sentences += 1
+                question_tag = False
 
         if len(gold_lines[-1].split()) > 1:
+            if gold_lines[-1].split()[1] == '?' and question_tag:
+                correct_tags += 1
             sentences += 1
+            question_tag = False
 
 print('[INFO] THE TAGGING ACCURACY IS', correct_tags / total_tags)
 print('[INFO] Number of sentences:', sentences)
