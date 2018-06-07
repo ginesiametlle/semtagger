@@ -321,9 +321,9 @@ minfo['PADDING_TAG'] = PADDING_TAG
 minfo['tag2idx'] = tag2idx
 minfo['idx2tag'] = idx2tag
 minfo['num_tags'] = num_tags
+minfo['word2idx'] = word2idx
+minfo['max_slen'] = max_slen
 if args.use_words:
-    minfo['word2idx'] = word2idx
-    minfo['max_slen'] = max_slen
     minfo['num_words'] = num_words
     minfo['wemb_dim'] = wemb_dim
     minfo['wemb_matrix'] = wemb_matrix
