@@ -5,7 +5,6 @@ __pycache__/
 
 # files in the data directory
 data/*/
-!data/sample/
 
 # files in the tools directory
 tools/*/

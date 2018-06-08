@@ -97,6 +97,7 @@ elif params.use_words:
 elif params.use_chars:
     model = get_model(minfo['params'],
                       num_tags = minfo['num_tags'],
+                      max_slen = minfo['max_slen'],
                       max_wlen = minfo['max_wlen'], num_chars = minfo['num_chars'],
                       cemb_dim = minfo['cemb_dim'], cemb_matrix = minfo['cemb_matrix'])
 
