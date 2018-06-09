@@ -17,7 +17,7 @@ emb_chars = [str(x) for x in sys.argv[2]]
 emb_file = sys.argv[3]
 
 # number of embedding dimensions
-ndims = 24
+ndims = 18
 
 # write out in text format
 with open(emb_file, 'w') as ofile:

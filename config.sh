@@ -133,9 +133,9 @@ RUN_WORD_LEN=0.98
 # handle multi-word expressions (boolean, default: 1)
 RUN_MWE=1
 
-# depth of the residual network applied on character embedding features (int, default: 8)
+# depth of the residual network applied on character embedding features (int, default: 6)
 # the residual network helps turn character embeddings into word-like representations
-RUN_RESNET_DEPTH=8
+RUN_RESNET_DEPTH=6
 
 #####################
 # MODEL PARAMETERS ##
@@ -148,14 +148,14 @@ MODEL_TYPE="bgru"
 # directory where to store the trained model (string)
 MODEL_ROOT=${DIR_MODELS}/bin
 
-# training epochs (int, default: 25)
-MODEL_EPOCHS=25
+# training epochs (int, default: 20)
+MODEL_EPOCHS=20
 
-# units in the first layer of the neural model (int, default: 150)
-MODEL_SIZE=150
+# units in the first layer of the neural model (int, default: 200)
+MODEL_SIZE=200
 
-# number of recurrent layers of the neural model (int, default: 2)
-MODEL_LAYERS=2
+# number of recurrent layers of the neural model (int, default: 1)
+MODEL_LAYERS=1
 
 # standard deviation for the noise normal distribution (float, default: 0.0)
 MODEL_SIGMA=0.0
@@ -176,8 +176,8 @@ MODEL_LOSS="categorical_cross_entropy"
 # allowed values: "sgd", "adagrad", "adadelta", "rmsprop", "adam", "nadam"
 MODEL_OPTIMIZER="nadam"
 
-# dropout rate on each layer (float, default: 0.25)
-MODEL_DROPOUT=0.25
+# dropout rate on each layer (float, default: 0.30)
+MODEL_DROPOUT=0.30
 
 # batch size (int, default: 150)
 MODEL_BATCH_SIZE=150

@@ -100,7 +100,7 @@ def get_model(args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix
             x = Conv2D(max_slen, kernel_size=(3, 3), padding='same', data_format='channels_first')(x)
             if args.batch_normalization:
                 x = BatchNormalization()(x)
-            x = LeakyReLU()(x)
+            x = LeakyReLU(alpha=0.01)(x)
 
             x = Conv2D(max_slen, kernel_size=(3, 3), padding='same', data_format='channels_first')(x)
             if args.batch_normalization:
@@ -108,7 +108,7 @@ def get_model(args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix
 
             # merge input and shortcut
             x = add([shortcut, x])
-            x = LeakyReLU()(x)
+            x = LeakyReLU(alpha=0.01)(x)
             shortcut = x
 
         # finish building the character model
@@ -143,7 +143,6 @@ def get_model(args, num_tags=0, max_slen=0, num_words=0, wemb_dim=0, wemb_matrix
     if args.output_activation == 'crf':
         # the crf layer optimizes marginal likelihoods of each class
         # the joint likelihood becomes the product of marginal probabilities
-        model = TimeDistributed(Dense(int(num_units/2), activation=args.hidden_activation))(model)
         crf = CRF(num_tags, learn_mode='marginal')
         out = crf(model)
     else:
