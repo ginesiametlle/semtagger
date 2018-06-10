@@ -148,11 +148,11 @@ MODEL_TYPE="bgru"
 # directory where to store the trained model (string)
 MODEL_ROOT=${DIR_MODELS}/bin
 
-# training epochs (int, default: 20)
-MODEL_EPOCHS=20
+# training epochs (int, default: 12)
+MODEL_EPOCHS=12
 
-# units in the first layer of the neural model (int, default: 200)
-MODEL_SIZE=200
+# units in the first layer of the neural model (int, default: 300)
+MODEL_SIZE=300
 
 # number of recurrent layers of the neural model (int, default: 1)
 MODEL_LAYERS=1
@@ -174,10 +174,10 @@ MODEL_LOSS="categorical_cross_entropy"
 
 # optimizer (string)
 # allowed values: "sgd", "rmsprop", "adam", "adamax", "nadam"
-MODEL_OPTIMIZER="adam"
+MODEL_OPTIMIZER="adamax"
 
-# dropout rate on each layer (float, default: 0.30)
-MODEL_DROPOUT=0.30
+# dropout rate on each layer (float, default: 0.32)
+MODEL_DROPOUT=0.32
 
 # batch size (int, default: 150)
 MODEL_BATCH_SIZE=150
