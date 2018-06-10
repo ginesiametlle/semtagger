@@ -40,7 +40,7 @@ from utils.data_stats import plot_accuracy, plot_confusion_matrix
 ###################
 
 # set random seeds to ensure comparability of results
-rnd_seed = 7937
+rnd_seed = 7393
 random.seed(rnd_seed)
 np.random.seed(rnd_seed)
 
