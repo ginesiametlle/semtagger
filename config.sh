@@ -142,14 +142,14 @@ RUN_RESNET_DEPTH=6
 #####################
 
 # type of neural model to use (string)
-# allowed values: "rnn", "lstm", "blstm", "gru", "bgru"
+# allowed values: "lstm", "blstm", "gru", "bgru"
 MODEL_TYPE="bgru"
 
 # directory where to store the trained model (string)
 MODEL_ROOT=${DIR_MODELS}/bin
 
-# training epochs (int, default: 12)
-MODEL_EPOCHS=12
+# training epochs (int, default: 10)
+MODEL_EPOCHS=10
 
 # units in the first layer of the neural model (int, default: 300)
 MODEL_SIZE=300
