@@ -173,8 +173,8 @@ MODEL_ACTIVATION_OUTPUT="crf"
 MODEL_LOSS="categorical_cross_entropy"
 
 # optimizer (string)
-# allowed values: "sgd", "adagrad", "adadelta", "rmsprop", "adam", "nadam"
-MODEL_OPTIMIZER="nadam"
+# allowed values: "sgd", "rmsprop", "adam", "adamax", "nadam"
+MODEL_OPTIMIZER="adam"
 
 # dropout rate on each layer (float, default: 0.30)
 MODEL_DROPOUT=0.30
