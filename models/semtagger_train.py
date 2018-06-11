@@ -6,7 +6,7 @@ sys.path.append(sys.argv[1])
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-os.environ["CUDA_VISIBLE_DEVICES"] = '0,1,2,3'
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
 import random
 import pickle
@@ -40,7 +40,7 @@ from utils.data_stats import plot_accuracy, plot_confusion_matrix
 ###################
 
 # set random seeds to ensure comparability of results
-rnd_seed = 7393
+rnd_seed = 2609
 random.seed(rnd_seed)
 np.random.seed(rnd_seed)
 
