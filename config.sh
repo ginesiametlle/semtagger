@@ -174,10 +174,10 @@ MODEL_LOSS="categorical_cross_entropy"
 
 # optimizer (string)
 # allowed values: "sgd", "rmsprop", "adam", "adamax", "nadam"
-MODEL_OPTIMIZER="adamax"
+MODEL_OPTIMIZER="adam"
 
-# dropout rate on each layer (float, default: 0.12)
-MODEL_DROPOUT=0.12
+# dropout rate on each layer (float, default: 0.10)
+MODEL_DROPOUT=0.10
 
 # batch size (int, default: 150)
 MODEL_BATCH_SIZE=150
