@@ -2,7 +2,9 @@
 
 ### About this repository
 
-This repository provides a universal semantic tagger which can be easily trained on the [Parallel Meaning Bank](http://pmb.let.rug.nl).
+This repository provides a universal semantic tagger which can be easily trained on the [Parallel Meaning Bank](http://pmb.let.rug.nl). 
+
+It was developed as part of the master's thesis titled "Universal semantic tagging methods and their applications", submitted at both Saarland University and the University of Groningen.
 
 A recent version of Python 3 with the packages listed in [requirements.txt](./requirements.txt) is expected.
 
