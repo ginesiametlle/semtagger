@@ -99,7 +99,7 @@ EMB_CHAR_PRETRAINED=("")
 # root directory where to store word embeddings for English (string)
 # GloVe embeddings are only used if no pretrained embeddings are given
 # languages other than English use Polyglot embeddings instead
-EMB_ROOT=/works/csisv12/joan/embeddings
+EMB_ROOT=${DIR_DATA}/embeddings
 
 # version of the GloVe word embeddings to use for English as default (string)
 # allowed values: "glove.6B.{50/100/200/300}d", "glove.42B.300d", "glove.840B.300d"
@@ -146,7 +146,7 @@ RUN_RESNET_DEPTH=6
 MODEL_TYPE="bgru"
 
 # directory where to store the trained model (string)
-MODEL_ROOT=/works/csisv12/joan/models/bin
+MODEL_ROOT=${DIR_MODELS}/bin
 
 # training epochs (int, default: 10)
 MODEL_EPOCHS=10
