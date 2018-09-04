@@ -44,11 +44,3 @@ if [ -f ${PMB_EXTDIR}/${EVAL_LANG}/silver/test.off ] && [ -f ${PMB_EXTDIR}/${EVA
 	. ${DIR_ROOT}/run.sh --predict --input ${PMB_EXTDIR}/${EVAL_LANG}/silver/test.off --output ${PMB_EXTDIR}/${EVAL_LANG}/silver/test.sem
 	python3 ${DIR_ROOT}/utils/compare_tags.py ${PMB_EXTDIR}/${EVAL_LANG}/silver/test.sem ${PMB_EXTDIR}/${EVAL_LANG}/silver/test.gold
 fi
-
-# predict sem-tags for WebQuestions
-if [ -f ${DIR_ROOT}/qa/${EVAL_LANG}/sample/questions.off ] && [ -f ${DIR_ROOT}/qa/${EVAL_LANG}/sample/questions.gold ]; then
-	OPTIND=1
-	. ${DIR_ROOT}/run.sh --predict --input ${DIR_ROOT}/qa/${EVAL_LANG}/sample/questions.off --output ${DIR_ROOT}/qa/${EVAL_LANG}/sample/questions.sem
-	python3 ${DIR_ROOT}/utils/compare_tags.py ${DIR_ROOT}/qa/${EVAL_LANG}/sample/questions.sem ${DIR_ROOT}/qa/${EVAL_LANG}/sample/questions.gold
-fi
-
