@@ -4,7 +4,7 @@
 
 This repository provides a universal semantic tagger which can be easily trained on the [Parallel Meaning Bank](http://pmb.let.rug.nl). 
 
-It was developed as part of the master's thesis titled "Universal semantic tagging methods and their applications", submitted at both Saarland University and the University of Groningen.
+It was developed as part of the master's thesis titled _Universal semantic tagging methods and their applications_, submitted at both Saarland University and the University of Groningen. The results there reported can be reproduced by running the script ```$ ./job.sh``` and defining the appropriate configuration options.
 
 A recent version of Python 3 with the packages listed in [requirements.txt](./requirements.txt) is expected.
 
